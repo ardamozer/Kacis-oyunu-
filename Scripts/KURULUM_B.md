@@ -330,11 +330,82 @@ oyuncu ilerleyebilmeli. Buyumus ates ezilemiyorsa oyun oynanamaz hale gelir.
 
 ---
 
+# BOLUM 6 — Karabas (DogCompanion)
+
+`FireMonster` PLAN.md revizesiyle kesildi (bkz. Bolum 5 notu). Sirada Karabas var.
+
+## 6.1 Kopek objesi
+
+1. `Hierarchy → sag tik → 2D Object → Sprites → Square` · adi **`Karabas`**
+2. **Tag → Dog** ⚠️ Bolum 0.5'te olusturdugunuz tag
+3. **Scale**: X = `0.9`, Y = `0.7`
+4. **Position**: baslangicta sikisacagi yere koyun, orn. X = `4`, Y = `-3.3`
+5. Sprite Renderer → **Color** → kahverengi/siyah (Karabas)
+6. **Add Component → Audio Source**
+   - **Play On Awake** ❌ (kod kendi PlayOneShot ile calistiriyor)
+7. **Add Component → Dog Companion**
+8. **Add Component → Test Dog Trigger** (benim test script'im)
+
+> Fiziksel carpisma/Rigidbody GEREKMEZ — kopek sadece X ekseninde MoveTowards
+> ile hareket ediyor, zeminin Y'sinde sabit kaliyor. Coklu kat varsa bu
+> basitlestirme yeterli olmayabilir, o zaman Kisi A ile konusun.
+
+## 6.2 Inspector alanlarini bagla
+
+`Karabas` objesini sec, **Dog Companion** bileseninde:
+
+| Alan | Deger |
+|---|---|
+| **Follow Distance** | `1.5` |
+| **Follow Speed** | `4` |
+| **Player** | bos birak (kod Tag ile bulur) |
+| **Fire Detect Range** | `1.0` |
+| **Audio Source** | bos birak (kod kendi bulur) |
+| **Whine Clip** | ses dosyaniz varsa surukleyin, yoksa bos birakin (sessiz calisir) |
+| **Happy Bark Clip** | ayni sekilde opsiyonel |
+| **Heart Particle Prefab** | opsiyonel — yoksa sadece ses/log calisir, hata vermez |
+
+⚠️ Ses klipleri (`whineClip`, `happyBarkClip`) henuz asset olarak yoksa **bos
+birakin** — kod `null` kontrolu yapiyor, hata firlatmaz, sessiz calisir.
+ASSETS.md'de ses kaynagi netlesince doldurun.
+
+`Test Dog Trigger` bileseninde:
+
+| Alan | Deger |
+|---|---|
+| **Interact Range** | `3` |
+
+## 6.3 Test listesi
+
+**Play**'e bas ve sunlari sirayla dogrula:
+
+| # | Test | Beklenen |
+|---|---|---|
+| 1 | Oyuncuyu kopege yaklastir, uzaklastir | (Whine Clip bagliysa) yakinken daha yuksek sesle inleme, uzakta hic yok |
+| 2 | Yakinken `E` | Console: `[TEST] OnPetted() cagrildi.` — kopek hareket etmiyor, sadece ses/kalp |
+| 3 | Yakinken `R` | Console: `[TEST] OnRescued() cagrildi.` — mutlu havlama sesi (varsa) |
+| 4 | Yakinken `T` | Console: `[TEST] StartFollowing() cagrildi.` — kopek artik oyuncuyu takip ediyor |
+| 5 | Takip sirasinda uzaklas | Kopek `Follow Distance` mesafesine kadar arkandan geliyor, sonra duruyor |
+| 6 | Takip sirasinda buyumus (kizarmis) bir `FloorFire`'in ustunden gec | Kopek kisa bir ziplama yapip atesi sonduruyor |
+| 7 | `E`, `R`, `T` — uzaktayken (Interact Range disi) | Hicbir seyi tetiklemiyor |
+
+## 6.4 Calismiyorsa
+
+| Belirti | Sebep |
+|---|---|
+| Inleme hic duyulmuyor | **Whine Clip** bos, veya **Audio Source** eksik |
+| `E`/`R`/`T` hicbir sey yapmiyor | Oyuncu **Interact Range** disinda, veya Player'da **Tag = Player** degil |
+| Kopek takip etmiyor | Once `T` ile **StartFollowing** cagirmadiniz (Stuck/Freed halinde yurumuyor, bu KASITLI) |
+| Kopek atesi sondurmuyor | Ates **buyumus (IsGrown)** olmali — kucukken kopek dokunmaz, kucuk ateste zaten zarar da yok |
+| Kopek zeminin altina/ustune batiyor | Baslangic Y konumu zeminle hizali degil, Position Y'yi elle ayarlayin |
+
+---
+
 # Commit
 
 ```bash
 git pull
 git add .
-git commit -m "duvar canavari, alev mermisi ve yer atesi"
+git commit -m "duvar canavari, alev mermisi, yer atesi ve Karabas takip sistemi"
 git push
 ```
