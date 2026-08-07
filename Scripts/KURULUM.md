@@ -126,7 +126,109 @@ Hedef: itfaiyeci **agir ama cevik** hissettirsin. Buz gibi kaymasin, tas gibi de
 
 ---
 
+---
+
+## 7. Su sistemi (plana gore saat 5-10 isi)
+
+Once hareket calissin, sonra buraya gecin.
+
+### 7a. Namlu noktasi
+
+1. **Player**'a sag tik → **Create Empty**, adini **Nozzle** yapin
+2. `Transform → Position`: X = **0.5**, Y = **0.2**
+   *(Karakterin onunde, bel hizasinda. Sprite'a gore ayarlayin.)*
+
+### 7b. Component'leri ekleyin
+
+**Player**'i secin → **Add Component** ile ikisini de ekleyin:
+
+**Water Tank**
+| Alan | Deger |
+|---|---|
+| Max Water | 100 |
+| Start Water | 100 |
+| Low Warning Percent | 0.25 |
+
+**Water Gun**
+| Alan | Deger |
+|---|---|
+| Water Per Second | 15 |
+| Damage Per Second | 20 |
+| Range | 3.5 |
+| Width | 1.2 |
+| **Nozzle** | Hierarchy'den **Nozzle** objesini surukleyin |
+| **Hit Layers** | Acilir menuden **Enemy**'i secin |
+| Spray Effect / Spray Sound | Simdilik bos birakin |
+
+⚠️ **Hit Layers'i bos birakirsaniz su hicbir seye isabet etmez.** En sik hata bu.
+
+### 7c. Test icin sahte bir dusman
+
+Kisi B'nin dusmanlari gelmeden test etmek icin:
+
+1. `2D Object → Sprites → Square`, adi **TestEnemy**, **Layer → Enemy**
+2. **Add Component → Box Collider 2D**
+3. Yeni bir script: `Assets/Scripts/Player/TestDummy.cs`
+
+```csharp
+using UnityEngine;
+
+// Sadece test icin. Kisi B'nin gercek dusmanlari gelince silin.
+public class TestDummy : MonoBehaviour, IWaterDamageable
+{
+    public float health = 60f;
+
+    public void TakeWater(float amount)
+    {
+        health -= amount;
+        Debug.Log($"Isabet! Kalan can: {health:F0}");
+        if (health <= 0f) Destroy(gameObject);
+    }
+}
+```
+
+4. Bu script'i **TestEnemy**'ye ekleyin
+
+### 7d. Su kaynagi (musluk)
+
+1. `2D Object → Sprites → Square`, adi **Musluk**, mavi renk verin
+2. **Add Component → Box Collider 2D** → **Is Trigger** ✅ isaretleyin
+3. **Add Component → Water Source**
+   - Type: **Infinite**
+   - Refill Per Second: **30**
+
+### 7e. Test
+
+**Play** → sol fare tusu (veya `Ctrl`) basili tutun:
+
+- Onunuze mavi bir kutu ciziliyor mu? (Player secili iken Scene penceresinde gorunur)
+- TestEnemy'ye dogru sikinca konsolda "Isabet!" yaziyor mu? 3 saniyede olmeli.
+- Yukari ok basili tutup sikinca huzme yukari donuyor mu?
+- ~7 saniye sonra su bitip sikma duruyor mu?
+- Musluga girip beklerseniz doluyor mu?
+
+| Belirti | Sebep |
+|---|---|
+| Su sikmiyor | `Fire1` tusu: sol fare veya `Ctrl`. Player'da WaterGun var mi? |
+| Sikiyor ama hasar yok | **Hit Layers** bos, ya da TestEnemy'nin Layer'i **Enemy** degil |
+| Su hic bitmiyor | Water Tank component'i eklenmemis |
+| Musluk doldurmuyor | Collider'da **Is Trigger** isaretsiz |
+
+### 7f. Denge ayari
+
+Su sinirli olmasi **gerilim** yaratmali, **sinir bozmamali**. Hedef his:
+"dikkatli kullanmam lazim", asla "susuz kaldim, ne yapacagim?".
+
+- Cok sik susuz kaliyorsaniz → `waterPerSecond`'i dusurun (15 → 10)
+- Hic bitmiyorsa → yukseltin (15 → 20)
+- Dusmanlar cok gec oluyorsa → `damagePerSecond`'i yukseltin
+
+⚠️ Seviye tasarlarken: **her odada erisilebilir en az bir Infinite kaynak.**
+Yoksa oyuncu kilitlenir.
+
+---
+
 ## Sirada ne var
 
-Bu calisinca haber verin — su sistemi (`WaterTank`, `WaterGun`, `WaterSource`) hazir.
-Plana gore saat 5-10 arasi is o.
+Su sistemi calisinca haber verin — `PlayerHealth` (3 kalp, hasar, ekran sarsintisi,
+ekran kenari alev efekti) hazirlanacak. Plana gore saat 10-12 isi o.
