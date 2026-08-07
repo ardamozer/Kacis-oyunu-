@@ -14,18 +14,22 @@ ve zaman planı orada. Benim sorumluluğum **Kişi B** satırları.
 ## Oyun
 
 Yandan görünüm 2D platformer, Unity 6000.0.x LTS, 2D Built-In template.
-Bir itfaiyeciyiz, yanan evde **Pamuk** adlı kediyi kurtarıyoruz. Su tabancamız var, suyu sınırlı
-ve evdeki musluk/akvaryum/küvetten dolduruyoruz. Sonunda kedi bizi kurtarırken ölüyor,
-çıkışta öldürülemeyen dev bir alev bizi durduruyor ve kedinin hayaleti gelip bizi kurtarıyor.
+Bir itfaiyeciyiz, yanan evde **Karabaş** adlı köpeği kurtarıyoruz. Su tabancamız var,
+suyu sınırlı ve evdeki musluk/akvaryum/küvetten dolduruyoruz.
 
-Oyunun bütün değeri o final sahnesinde. Geri kalan her şey ona hizmet ediyor.
+Köpeği sıkışmış halde buluruz, alevi söndürüp kurtarırız, birlikte çıkışa yürürüz.
+Yolda Karabaş yerdeki ateşlerin üstüne atlayıp söndürerek bize yardım eder.
+Sonunda **bizi kurtarırken ölür.** Çıkışta öldürülemeyen dev bir alev bizi durdurur ve
+tam ölmek üzereyken **Karabaş'ın hayaleti** gelip bizi kurtarır.
+
+**Oyunun bütün değeri o final sahnesinde. Geri kalan her şey ona hizmet ediyor.**
 
 ## Benim sorumluluğum
 
 - `Assets/Scripts/Enemies/` — duvar canavarı, yer ateşi, doğan canavar
-- `Assets/Scripts/Cat/` — kedi arkadaş (takip, ateş söndürme, sevilme)
-- `Assets/Scripts/Ending/` — kedinin ölümü, boss sahnesi, hayalet, final
-- `Assets/Prefabs/Enemies/`, `Assets/Prefabs/Cat/`
+- `Assets/Scripts/Dog/` — Karabaş (takip, ateş söndürme, sevilme, sıkışma/kurtarılma)
+- `Assets/Scripts/Ending/` — Karabaş'ın ölümü, boss sahnesi, hayalet, final
+- `Assets/Prefabs/Enemies/`, `Assets/Prefabs/Dog/`
 - `Assets/Scenes/TestScene_B.unity` — sadece benim test sahnem
 
 ## Uymam gereken katı kurallar
@@ -36,22 +40,24 @@ Oyunun bütün değeri o final sahnesinde. Geri kalan her şey ona hizmet ediyor
 2. **`Assets/Scripts/Player/` ve `Assets/Scripts/Systems/` klasörlerine dokunmam.** Kişi A'nın.
 3. **`Assets/Scripts/Shared/GameContracts.cs` dosyasını tek başıma değiştirmem.**
    Değişmesi gerekiyorsa önce Kişi A ile konuşurum.
-4. Kişi A'nın yazacağı şu sınıflar **henüz olmayabilir** ama ben bu imzalara göre kod yazarım:
+4. Kişi A'nın yazdığı/yazacağı şu imzalara göre kod yazarım (bazıları henüz olmayabilir,
+   o zaman geçici stub yazıp kendi sahnemde test ederim):
    ```csharp
    PlayerHealth.TakeDamage(int amount)
    PlayerHealth.CurrentHealth
-   WaterTank.TrySpend(float amount)  /  WaterTank.Refill(float amount)  /  .Current  /  .Max
+   WaterTank.TrySpend(float amount) / Refill(float amount) / .Current / .Max
+   PlayerController.FacingDirection / .IsGrounded / .CanControl
    ```
-   Yoksa geçici bir stub yazıp kendi sahnemde test ederim, entegrasyonda gerçeğiyle değişir.
 5. Benim yazıp Kişi A'nın çağıracağı imzalar — **bunları değiştirirsem A'nın kodu kırılır**:
    ```csharp
-   CatCompanion.OnPetted()
-   CatCompanion.StartFollowing()
-   EndingSequence.TriggerCatDeath()
+   DogCompanion.OnPetted()
+   DogCompanion.OnRescued()
+   DogCompanion.StartFollowing()
+   EndingSequence.TriggerDogDeath()
    EndingSequence.TriggerBossScene()
    ```
 6. Düşmanlarım `IWaterDamageable` (suyla ölenler) ve `IStompable` (zıplayarak ezilenler)
-   arayüzlerini uygular.
+   arayüzlerini uygular. İkisi de `GameContracts.cs`'te hazır.
 7. **Git: tek branch `main`. Her push'tan önce `git pull`.** 30-45 dakikada bir commit.
 
 ## Yapım sıram (PLAN.md'deki Kişi B tablosu)
@@ -62,13 +68,26 @@ Oyunun bütün değeri o final sahnesinde. Geri kalan her şey ona hizmet ediyor
 | 4-8 | `FloorFire` — üstünde dolan bar, zıplanınca söner, dolarsa canavara dönüşür → prefab |
 | 8-10 | `FireMonster` — doğan canavar, oyuncuya saldırır → prefab |
 | 10-12 | UYKU |
-| 12-16 | `CatCompanion` — takip, ateş söndürme, `OnPetted`, miyavlama |
-| 16-19 | Kediyi bulma anı, kamera odağı, `StartFollowing` |
-| **19-24** | **`EndingSequence` — kedi ölümü + boss sahnesi + hayalet + final** ⚠️ en kritik |
+| 12-16 | `DogCompanion` — takip, ateş söndürme, `OnPetted`, havlama |
+| 16-19 | Sıkışmış köpek + kurtarma anı, kamera odağı, `OnRescued` → `StartFollowing` |
+| **19-24** | **`EndingSequence` — köpeğin ölümü + boss + hayalet + final** ⚠️ en kritik |
 | 24-26 | UYKU |
 | 26-30 | Final sahnesi cilası |
 | 30-33 | Ses efektleri, partiküller |
 | 33-43 | Kişi A ile denge, bug avı, test |
+
+## Tasarım kararları (bunları sorgulamadan uygula, ekipçe kararlaştırıldı)
+
+- **Köpek takibi basit olacak.** Oyuncunun 2 birim gerisindeki noktaya `MoveTowards`.
+  Zıplamasın, oyuncuya çarpmasın (collider trigger), asla kaybolmasın.
+  Escort AI jam'de en çok bug üreten sistemdir, "gerçekçi" yapmaya çalışmayacağım.
+- **Köpek senaryolu ölüm dışında ölümsüz.** Oyuncunun hatasıyla ölemez.
+- **Ölüm sahnesi:** oyuncunun arkasında ateş çıkar, Karabaş atlar, ateş çok büyüktür.
+  Kontrol alınır, 3 saniye, **tüm sesler kesilir**, alev söner, yerde tasma kalır. Kansız.
+- **Boss dövüş değil, sahne.** Canı hiç azalmaz. Oyuncunun canı 1 kalbe düşünce
+  hayalet sahnesi otomatik tetiklenir. AI, saldırı deseni, denge ayarı YOK.
+- **Yeni asset aramayacağım:** boss = duvar canavarı sprite'ı ×4 büyük + koyu kırmızı.
+  Hayalet = köpek sprite'ı mavi tint + %50 saydam.
 
 ## Senden istediklerim
 
