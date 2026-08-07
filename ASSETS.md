@@ -65,28 +65,69 @@ Hepsi **pixel art**, hepsi **ticari kullanıma açık**, hepsi indirilip `Assets
 **Neden bu:** Yandan görünüm ev içi tileset bulmak zor. Mobilyalar da duvar canavarları için
 lazım — **kitaplık, tablo, dolap** var, canavarlar bunlardan çıkacak.
 
+### Alternatif B (ücretsiz, asset gerektirmiyor): SİLUET EV ⭐
+
+Aslında bu oyun için **daha iyi** olabilir. Yandan görünüm mobilyalı ev tileset'i
+gerçekten nadir — ama sizin eviniz zaten **karanlık ve yanıyor.**
+
+- Duvarlar ve zeminler: **düz koyu renk dikdörtgenler.** Unity'de Square sprite, siyaha yakın
+  koyu kahve/gri. Tileset gerekmiyor.
+- Üstüne sadece **mobilya sprite'ları** koyun (kitaplık, koltuk, dolap) — bunlar
+  penzilla'dan ya da başka bir mobilya paketinden tek tek alınabilir.
+- Ateşin turuncu ışığı zaten sahnenin %90'ını taşıyor. Duvarlar siluet olarak okunuyor.
+
+**Avantajları:**
+- Asset bağımlılığı neredeyse sıfır, stil uyumsuzluğu riski yok
+- Kat planını çizmek 10 dakika sürer, tile döşemekle uğraşmazsınız
+- "Stilize" durur, eksik durmaz — *Limbo* ve *INSIDE* bu görünümle ödül aldı
+- Ateş ve karakterler koyu zemin üzerinde **çok daha okunaklı** olur
+
+**Ne zaman bunu seçin:** penzilla'nın tile'larını döşemek 1 saatten uzun sürerse
+ya da stil uyuşmazsa. Karar anı: **saat 14-16 arası, seviye kurarken.**
+
+### Alternatif C: Kenney platformer paketleri (CC0)
+
+**https://kenney.nl/assets/new-platformer-pack** — 440 asset, CC0, hiç lisans derdi yok.
+Ev içi değil genel platform tile'ları, ama Alternatif B ile birleştirilebilir:
+yapıyı Kenney tile'larıyla, atmosferi karanlık + ateşle kurarsınız.
+
 ---
 
-## 4. Ateş — iki seçenek
+## 4. Ateş — ücretsiz
 
-### Önerilen: `Fire Animation - Pixel Art FX Sprites` ($1)
+### Önerilen: `Pixel art fires FX spritesheets`
 
-**https://brullov.itch.io/fire-animation**
+**https://piposchpatz.itch.io/pixel-art-fires-fx-spritesheets**
 
-- 5 ateş boyutu: 24x32, 20x24, 15x24, 10x24, 8x8
-- Her biri **başlangıç + döngü + sönme** animasyonu, toplam 355 kare
-- 5 renk varyasyonu
-- 4.9/5 (53 oy)
-- Ticari kullanım serbest, yeniden satmak yasak
+- **4 farklı ateş varyasyonu**, spritesheet halinde, arkaplansız versiyonlar dahil
+- Ücretsiz (name your own price)
+- 5.0/5, üretken yapay zekâ kullanılmamış
+- Lisans: **CC BY 4.0** → ticari kullanım serbest, **kredi vermek zorunlu**
+  (zaten herkese kredi vereceğiz, sorun değil)
 
-**Neden $1'a değer:** `başlangıç → döngü → sönme` yapısı sizin yer ateşi mekaniğinizle
-**birebir örtüşüyor**: ateş çıkar → bar dolar → ezilince söner. Kendiniz yapsanız saatler
-sürer. Ateş bu oyunun her yerinde, buraya $1 harcamak mantıklı.
+**Neden bu:** 4 varyasyon = duvar canavarı alevi, yer ateşi, boss alevi ve arkaplan
+ateşi için ayrı görünüm. Tek tip ateş bütün ekranda tekrarlanınca ucuz durur.
 
-### Para harcamak istemezseniz (ücretsiz)
+### Yedek: `Pixel Fire`
 
-- **https://govfx.itch.io/fire-vfx-free-pack** — 3 ateş animasyonu
-- **https://elska.itch.io/pixel-fire** — 4 kare, basit
+**https://elska.itch.io/pixel-fire**
+
+- 4 kare, tek ateş, pixel art
+- Ücretsiz, ticari kullanım serbest, **kredi zorunlu değil**
+- Yapay zekâ kullanılmamış
+
+Daha basit ama en az sürtünmeli seçenek. Yukarıdaki açılmazsa bunu alın.
+
+### ⚠️ Ücretsiz paketlerde eksik olan şey ve çözümü
+
+Ücretsiz ateşlerde sadece **döngü** animasyonu var; "tutuşma" ve "sönme" yok.
+Yer ateşi mekaniğiniz bunlara ihtiyaç duyuyor. Kodla taklit edin:
+
+- **Tutuşma:** ateşin `localScale`'ini 0'dan 1'e büyütün (~0.3 sn)
+- **Sönme:** 1'den 0'a küçültün + gri duman partikülü + "pssss" sesi
+
+Toplam ~10 satır kod, çizilmiş animasyondan neredeyse ayırt edilemez.
+Ölçek animasyonu insan gözüne çok ikna edici gelir.
 
 ---
 
@@ -140,7 +181,7 @@ Assets:
 - Firefighter character — laredgames (https://laredgames.itch.io/char-fireman)
 - Dog sprites — LuizMelo, CC0 (https://luizmelo.itch.io/pet-dogs-pack)
 - House interior tileset — penzilla (https://penzilla.itch.io/house-interior)
-- Fire animations — brullov (https://brullov.itch.io/fire-animation)
+- Fire animations — piposchpatz, CC BY 4.0 (https://piposchpatz.itch.io/pixel-art-fires-fx-spritesheets)
 - Sound effects — sfxr (https://sfxr.me)
 ```
 
