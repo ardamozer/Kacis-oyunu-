@@ -1,0 +1,55 @@
+# Unity .gitignore
+# NOT: Desenler basinda "/" YOK — boylece Unity projesi repo kokunde de
+# alt klasorde de olsa (ornek: AlevJam/Assets/...) dogru calisir.
+
+# Unity tarafindan uretilen klasorler (ASLA commit'lenmemeli, GB'larca dosya)
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+
+# Asset Store / Addressables
+[Aa]ssets/[Aa]ssetStoreTools*
+[Aa]ssets/StreamingAssets/aa/
+[Aa]ssets/StreamingAssets/aa.meta
+
+# IDE
+.vs/
+.idea/
+.vscode/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.booproj
+*.pidb
+*.svd
+*.opendb
+*.VC.db
+
+# Derleme ciktilari
+*.apk
+*.aab
+*.app
+*.unitypackage
+*.pdb
+*.mdb
+*.pdb.meta
+*.mdb.meta
+
+# Isletim sistemi
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Gecici
+*.tmp
+sysinfo.txt
+crashlytics-build.properties
