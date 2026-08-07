@@ -102,8 +102,15 @@ Boss'u AI'lı bir dövüş olarak yapmayın (8+ saat, ve zaten öldürülemiyor)
 
 ## Unity
 
-- **Sürüm: `6000.0.x LTS`** — ikiniz de BİREBİR aynı sürümü kurun. Sürüm numarasını
-  konuşup sabitleyin, buraya yazın: `Unity 6000.0.____`
+- ## 🔒 SÜRÜM KİLİTLENDİ: **`6000.5.7f1`**
+  İkiniz de **birebir bu sürümü** kurun. Farklı sürüm projeyi açtığında dosyaları
+  dönüştürür ve diğerinde proje bozulur — jam'de takımları durduran klasik hata budur.
+
+  Hub'ın listesi boş geliyorsa: **Install Editor → Archive sekmesi** → açılan
+  arşiv sayfasından `6000.5.7f1` bulup **"Install with Unity Hub"** butonuna basın.
+
+  Kurulum ekranında işaretleyin: **Web Build Support** ✅ · **Windows Build Support** ✅
+  Dil paketleri / Android / iOS / Mac / Linux ❌
 - Template: **2D (Built-In Render Pipeline)**. URP değil.
 - Proje konumu: `D:\Kacis oyunu\Game` (repo kökü `D:\Kacis oyunu`)
 - Modüller: Web Build Support ✅ / Windows Build Support ✅ / dil paketleri ❌
