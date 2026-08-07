@@ -401,11 +401,72 @@ ASSETS.md'de ses kaynagi netlesince doldurun.
 
 ---
 
+# BOLUM 7 — Sikisma + kurtarma ani (TrappedFireCover)
+
+PLAN.md "Karabas'la bag kurma" madde 3: kurtarma ani PASIF olmamali, oyuncu
+suyu sikip gercekten sondurmeli. Bu bolum `Karabas` prefabinin CHILD'i olarak
+kurulur — Kisi A'ya bagli degildir, TestScene_B'de bastan sona test edilir.
+
+## 7.1 Kurulum
+
+1. `Karabas` objesine sag tik → **2D Object → Sprites → Square** · adi
+   **`TrappedFire`**
+2. **Position**: Karabas'in TAM UZERINDE, orn. X = `0`, Y = `0.3`
+   (Karabas'i orten bir ates gibi gorunmeli)
+3. **Scale**: X = `0.7`, Y = `0.7`
+4. Sprite Renderer → **Color** → turuncu/kirmizi (WallMonster'daki gibi)
+5. **Add Component → Box Collider 2D** — **Is Trigger** ✅ gerekmez, ama
+   WaterGun/TestWaterSprayer `OverlapBox` ile IWaterDamageable arayacagi
+   icin trigger olmasi sorun yaratmaz, isaretleyebilirsiniz.
+6. **Add Component → Trapped Fire Cover**
+
+## 7.2 Inspector alanlarini bagla
+
+`TrappedFire` objesini sec, **Trapped Fire Cover** bileseninde:
+
+| Alan | Deger |
+|---|---|
+| **Dog** | bos birak (kod ebeveynde `DogCompanion`'i kendi bulur) |
+| **Max Health** | `18` |
+| **Delay Before Follow** | `1.2` |
+
+## 7.3 Karabas'i baslangicta gizle (opsiyonel ama onerilir)
+
+Sikismisken kopek govdesi tam gorunmesin diye `Karabas`'in Sprite Renderer'ini
+`TrappedFire`'in ARKASINA alin: `Karabas` → **Order in Layer** `-1`,
+`TrappedFire` → **Order in Layer** `0`.
+
+## 7.4 Test listesi
+
+**Play**'e bas, oyuncuyu `TrappedFire`'e yaklastir, su sik (`F`):
+
+| # | Test | Beklenen |
+|---|---|---|
+| 1 | Sikmaya basla | Ates beyaza calip flash yapiyor |
+| 2 | ~0.9 sn sikmeye devam et (18 can / ~20 su-sn) | Ates kuculerek kayboluyor |
+| 3 | Ates kaybolur kaybolmaz | Karabas artik gorunur (Order in Layer dogruysa) |
+| 4 | ~1.2 sn bekle | Kopek kendiliginden takibe basliyor (StartFollowing otomatik cagrildi) |
+| 5 | Ates sonmeden birak, tekrar sik | Can kaldigi yerden devam ediyor, sifirlanmiyor |
+
+`TestDogTrigger`'daki `R`/`T` tuslari hala calisir — atesi kurmadan once
+kopegi izole test etmek icin kullanislidir, biri digerini bozmaz
+(`DogCompanion.OnRescued` zaten Stuck disindaysa hicbir sey yapmiyor).
+
+## 7.5 Calismiyorsa
+
+| Belirti | Sebep |
+|---|---|
+| Su siksam da ates hic azalmiyor | `TrappedFire`'da **Box Collider 2D** yok |
+| Ates sonuyor ama kopek takip etmiyor | **Dog** alani yanlis objeyi gosteriyor, veya `Karabas` ile `TrappedFire` ayni ebeveyn altinda degil |
+| Kopek hemen atesle beraber yuruyor | `Delay Before Follow` cok kucuk — kurtarma anina nefes payi birakin |
+
+---
+
 # Commit
 
 ```bash
 git pull
 git add .
-git commit -m "duvar canavari, alev mermisi, yer atesi ve Karabas takip sistemi"
+git commit -m "sikisma ve kurtarma ani: TrappedFireCover"
 git push
 ```
