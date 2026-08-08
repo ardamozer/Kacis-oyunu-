@@ -1,0 +1,185 @@
+ALEV — SAHNE RAPORU
+Sahne: MainScene
+======================================================================
+
+### Antre   x 0..34   yukseklik 11
+----------------------------------------------------------------------
+  BASILABILIR YUZEYLER (ust yuzey yuksekligine gore):
+    ust=   1,6  x       7..11      gen=    4  Antre_Ayakkabilik
+    ust=   2,5  x    21,5..26,5    gen=    5  Antre_Konsol
+    ust=    12  x       0..34      gen=   34  Tavan_Antre
+    ust=    20  x    33,6..34,4    gen=  0,8  Duvar_34
+  ZIPLAMA KONTROLU:
+    ✔ hepsi ulasilabilir
+  ICERIK:
+    (     6,    1)  isaret     [PlayerStart] Oyuncu baslangici
+    (     6,    1)  OYUNCU     Player
+    (    14,  0,8)  isaret     [DogSilhouette] Kopek mamasi
+    (    21,    1)  isaret     [WallMonster] Antre
+    (    21,    1)  WALLMONSTER WallMonster
+    (    31,  1,2)  SU         Antre_Kalorifer
+    dekoratif ates sayisi: 2
+
+### Salon   x 34..102   yukseklik 20
+----------------------------------------------------------------------
+  BASILABILIR YUZEYLER (ust yuzey yuksekligine gore):
+    ust=   2,2  x      46..54      gen=    8  Salon_Koltuk
+    ust=   3,2  x    83,5..92,5    gen=    9  Salon_Piyano
+    ust=  2,65  x      43..49      gen=    6  Salon_T1
+    ust=  4,45  x    51,5..56,5    gen=    5  Salon_T2
+    ust=  6,25  x    59,5..64,5    gen=    5  Salon_T3
+    ust=  8,05  x      52..56      gen=    4  Salon_T4
+    ust=  9,85  x    60,3..63,8    gen=  3,5  Salon_T5
+    ust= 11,65  x    50,5..55,5    gen=    5  Salon_T6
+    ust=    20  x    33,6..34,4    gen=  0,8  Duvar_34
+    ust=    20  x   101,6..102,4   gen=  0,8  Duvar_102
+    ust= 13,45  x      60..64      gen=    4  Salon_T7
+    ust= 15,25  x    51,5..56,5    gen=    5  Salon_T8
+    ust= 17,05  x    59,5..64,5    gen=    5  Salon_T9
+  ZIPLAMA KONTROLU:
+    ✔ hepsi ulasilabilir
+  ICERIK:
+    (    37,  0,7)  SU         Salon_Akvaryum
+    (    62, 18,4)  ANAHTAR    Anahtar_Mavi
+    (    68,   12)  isaret     [WallMonster] Salon kitapligi
+    (    68,   12)  WALLMONSTER WallMonster
+    (    92,    4)  isaret     [WallMonster] Salon
+    (    92,    4)  WALLMONSTER WallMonster
+    (   102,  1,7)  KILIT      KilitliKapi_Mavi
+    dekoratif ates sayisi: 6
+
+### Mutfak   x 102..152   yukseklik 11
+----------------------------------------------------------------------
+  BASILABILIR YUZEYLER (ust yuzey yuksekligine gore):
+    ust=   2,7  x     110..122     gen=   12  Mutfak_Tezgah
+    ust=   2,3  x   128,5..135,5   gen=    7  Mutfak_Masa
+    ust=  4,05  x   137,5..142,5   gen=    5  Mutfak_Dolap1
+    ust=  5,85  x     131..135     gen=    4  Mutfak_Dolap2
+    ust=    11  x   151,6..152,4   gen=  0,8  Duvar_152
+    ust=    20  x   101,6..102,4   gen=  0,8  Duvar_102
+  ZIPLAMA KONTROLU:
+    ✔ hepsi ulasilabilir
+  ICERIK:
+    (   102,  1,7)  KILIT      KilitliKapi_Mavi
+    (   120,  3,4)  SU         Mutfak_Musluk
+    (   124,  0,5)  isaret     [FloorFire] Mutfak
+    (   124,  0,5)  FLOORFİRE  FloorFire
+    (   126,    8)  isaret     [WallMonster] Mutfak
+    (   126,    8)  WALLMONSTER WallMonster
+    (   133,  7,2)  ANAHTAR    Anahtar_Yesil
+    (   142,  0,5)  isaret     [FloorFire] Mutfak
+    (   142,  0,5)  FLOORFİRE  FloorFire
+    (   146,  0,7)  SU         Mutfak_Kuvet
+    (   152,  1,7)  KILIT      KilitliKapi_Yesil
+    dekoratif ates sayisi: 2
+
+### Koridor   x 152..188   yukseklik 11
+----------------------------------------------------------------------
+  BASILABILIR YUZEYLER (ust yuzey yuksekligine gore):
+    ust=   1,9  x   163,8..168,3   gen=  4,5  Koridor_DevrikDolap
+    ust=  3,65  x   174,3..177,8   gen=  3,5  Koridor_Raf
+    ust=    11  x   151,6..152,4   gen=  0,8  Duvar_152
+    ust=    11  x     152..188     gen=   36  Koridor_AlcakTavan
+    ust=    15  x   187,6..188,4   gen=  0,8  Duvar_188
+    ust=    12  x     152..188     gen=   36  Tavan_Koridor
+  ZIPLAMA KONTROLU:
+    ✔ hepsi ulasilabilir
+  ICERIK:
+    (   152,  1,7)  KILIT      KilitliKapi_Yesil
+    (   158,    1)  isaret     [WallMonster] Koridor 1/3
+    (   158,    1)  WALLMONSTER WallMonster
+    (   170,    4)  isaret     [WallMonster] Koridor 2/3
+    (   170,    4)  WALLMONSTER WallMonster
+    (   176,    5)  ANAHTAR    Anahtar_Mor
+    (   184,    1)  isaret     [WallMonster] Koridor 3/3
+    (   184,    1)  WALLMONSTER WallMonster
+    (   188,  1,7)  KILIT      KilitliKapi_Mor
+    (   188,    2)  isaret     [FlameWall] GERI DONUS KAPANIR. Karabas kurtulunca burada alev duvari yukselir, oyuncu ileri gitmek zorunda kalir. GORUNUR sekilde olsun.
+    dekoratif ates sayisi: 2
+
+### CocukOdasi   x 188..226   yukseklik 15
+----------------------------------------------------------------------
+  BASILABILIR YUZEYLER (ust yuzey yuksekligine gore):
+    ust=   1,8  x   206,3..209,8   gen=  3,5  Cocuk_Sandik
+    ust=   2,9  x     193..201     gen=    8  Cocuk_Ranza
+    ust=  3,65  x     214..218     gen=    4  Cocuk_Raf
+    ust=    15  x   187,6..188,4   gen=  0,8  Duvar_188
+    ust=    15  x   225,6..226,4   gen=  0,8  Duvar_226
+    ust=    16  x     188..226     gen=   38  Tavan_CocukOdasi
+  ZIPLAMA KONTROLU:
+    ✔ hepsi ulasilabilir
+  ICERIK:
+    (   188,  1,7)  KILIT      KilitliKapi_Mor
+    (   188,    2)  isaret     [FlameWall] GERI DONUS KAPANIR. Karabas kurtulunca burada alev duvari yukselir, oyuncu ileri gitmek zorunda kalir. GORUNUR sekilde olsun.
+    (   196,    6)  TAHTA      DeathDebris
+    (   196,    1)  isaret     [Dog] KARABAS
+    (   196,    1)  isaret     [CoveringFire] Karabas'i orten ates (can 50). Sondurulunce kurtulur.
+    (   196,    1)  DOGCOMPANİON Karabas
+    (   196,  1,3)  TRAPPEDFİRECOVER TrappedFire
+    (   212,  0,5)  isaret     [FloorFire] Cocuk odasi
+    (   212,  0,5)  FLOORFİRE  FloorFire
+    dekoratif ates sayisi: 2
+
+### ArkaKoridor   x 226..294   yukseklik 11
+----------------------------------------------------------------------
+  BASILABILIR YUZEYLER (ust yuzey yuksekligine gore):
+    ust=   1,9  x   235,5..240,5   gen=    5  Arka_Kasa1
+    ust=   2,1  x   259,5..264,5   gen=    5  Arka_Kasa3
+    ust=   2,1  x     286..290     gen=    4  Arka_Kasa4
+    ust=  3,45  x     248..252     gen=    4  Arka_Kasa2
+    ust=  3,85  x     273..279     gen=    6  Arka_Kiris
+    ust=    13  x   293,6..294,4   gen=  0,8  Duvar_294
+    ust=    15  x   225,6..226,4   gen=  0,8  Duvar_226
+  ZIPLAMA KONTROLU:
+    ✔ hepsi ulasilabilir
+  ICERIK:
+    (   234,  0,5)  isaret     [FloorFire] KACIS Karabas'li
+    (   234,  0,5)  FLOORFİRE  FloorFire
+    (   240,  0,8)  SU         Arka_Musluk
+    (   244,  0,5)  isaret     [FloorFire] KACIS Karabas'li
+    (   244,  0,5)  FLOORFİRE  FloorFire
+    (   246,  9,4)  TAHTA      Tahta_03 (Arka koridor)
+    (   250,    6)  isaret     [WallMonster] Arka koridor
+    (   250,    6)  WALLMONSTER WallMonster
+    (   254,  0,5)  isaret     [FloorFire] KACIS Karabas'li
+    (   254,  0,5)  FLOORFİRE  FloorFire
+    (   264,  9,4)  TAHTA      Tahta_OLUM (EndingSequence -> Death Debris)
+    (   264,    2)  TETIK      Tetik_KopeginOlumu
+    (   270,  0,5)  isaret     [FloorFire] YALNIZ
+    (   270,  0,5)  FLOORFİRE  FloorFire
+    (   274,  0,5)  isaret     [FloorFire] YALNIZ
+    (   274,  0,5)  FLOORFİRE  FloorFire
+    (   279,  0,5)  isaret     [FloorFire] YALNIZ
+    (   279,  0,5)  FLOORFİRE  FloorFire
+    (   282,  9,4)  TAHTA      Tahta_04 (Arka koridor)
+    (   286,  0,5)  isaret     [FloorFire] YALNIZ
+    (   286,  0,5)  FLOORFİRE  FloorFire
+    dekoratif ates sayisi: 3
+
+### ArkaKapi   x 294..336   yukseklik 13
+----------------------------------------------------------------------
+  BASILABILIR YUZEYLER (ust yuzey yuksekligine gore):
+    ust=   2,1  x   299,5..304,5   gen=    5  ArkaKapi_Kasa1
+    ust=   2,1  x   318,5..323,5   gen=    5  ArkaKapi_Kasa3
+    ust=  3,65  x     310..314     gen=    4  ArkaKapi_Kasa2
+    ust=    13  x   293,6..294,4   gen=  0,8  Duvar_294
+  ZIPLAMA KONTROLU:
+    ✔ hepsi ulasilabilir
+  ICERIK:
+    (   296,  0,5)  isaret     [FloorFire] YALNIZ
+    (   296,  0,5)  FLOORFİRE  FloorFire
+    (   300,    2)  TETIK      Tetik_BossSahnesi
+    (   304,  0,5)  isaret     [FloorFire] YALNIZ
+    (   304,  0,5)  FLOORFİRE  FloorFire
+    (   306,  1,2)  SU         ArkaKapi_PatlakBoru
+    (   310, 11,4)  TAHTA      Tahta_05 (Arka kapi)
+    (   314,  0,5)  isaret     [FloorFire] YALNIZ
+    (   314,  0,5)  FLOORFİRE  FloorFire
+    (   316,    6)  isaret     [WallMonster] Arka kapi
+    (   316,    6)  WALLMONSTER WallMonster
+    (   328,    1)  isaret     [Boss] Dev alev, arka kapiyi kapatir. Cani hic azalmaz.
+    (   334,    2)  CIKIS      Tetik_EvdenCikis
+    dekoratif ates sayisi: 2
+
+### HICBIR ODAYA AIT OLMAYANLAR
+----------------------------------------------------------------------

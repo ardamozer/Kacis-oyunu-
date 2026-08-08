@@ -50,12 +50,16 @@ public static class AlevSceneDump
         Add<SpawnMarker>(others, "isaret");
 
         // Kisi B'nin siniflari — isimle yakala, derleme bagimliligi kurma
-        foreach (var mb in Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
+        foreach (var mb in Object.FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include,
+                                                                   FindObjectsSortMode.None))
         {
             string t = mb.GetType().Name;
             if (t == "WallMonster" || t == "FloorFire" || t == "DogCompanion" ||
                 t == "BossCore" || t == "TrappedFireCover")
-                others.Add((mb.name, t.ToUpper(), mb.transform.position));
+            {
+                string aktif = mb.gameObject.activeInHierarchy ? "" : " [PASIF]";
+                others.Add((mb.name + aktif, t.ToUpper(), mb.transform.position));
+            }
         }
 
         GameObject player = GameObject.FindGameObjectWithTag("Player");
@@ -148,7 +152,10 @@ public static class AlevSceneDump
 
     static void Add<T>(List<(string, string, Vector2)> list, string kind) where T : Component
     {
-        foreach (var c in Object.FindObjectsByType<T>(FindObjectsSortMode.None))
+        // Pasif objeler DAHIL — boss, hayalet ve tasma sahnede devre disi
+        // basliyor, ilk surumde raporda hic gorunmuyorlardi.
+        foreach (var c in Object.FindObjectsByType<T>(FindObjectsInactive.Include,
+                                                      FindObjectsSortMode.None))
             list.Add((c.name, kind, c.transform.position));
     }
 }
