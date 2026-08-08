@@ -197,24 +197,29 @@ public class EndingSequence : MonoBehaviour
         if (dog != null)
             dir = player.position.x >= dog.transform.position.x ? 1f : -1f;
 
-        Rigidbody2D rb = player.GetComponent<Rigidbody2D>();
+        float targetX = player.position.x + dir * pushDistance;
 
+        // Kisi A'nin ForceMoveTo'su: SmoothStep'li ve sadece X'i oynatiyor,
+        // dikey hizi fizige birakiyor. Kendi elle lerp'imiz oyuncu havadayken
+        // yercekimini de iptal ediyordu — bu daha dogru.
+        PlayerController controller = player.GetComponent<PlayerController>();
+        if (controller != null)
+        {
+            yield return controller.ForceMoveTo(targetX, pushDuration);
+            yield break;
+        }
+
+        // Yedek: PlayerController yoksa (test kuklasi) duz lerp.
         Vector3 from = player.position;
-        Vector3 to = from + Vector3.right * dir * pushDistance;
-
         float t = 0f;
         while (t < pushDuration)
         {
             t += Time.deltaTime;
-            player.position = Vector3.Lerp(from, to, t / pushDuration);
-
-            // Rigidbody'nin kendi hizi bizi geri cekmesin.
-            if (rb != null) rb.linearVelocity = Vector2.zero;
-
+            Vector3 p = player.position;
+            p.x = Mathf.Lerp(from.x, targetX, t / pushDuration);
+            player.position = p;
             yield return null;
         }
-
-        player.position = to;
     }
 
     // ============================================================
