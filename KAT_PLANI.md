@@ -76,8 +76,26 @@ Tavandan yanan kirişler düşer. **Suyla sönmez, ezilerek ölmez — sadece ka
   çeşitlilik katar.
 - Yanan ev temasına birebir oturuyor.
 
-Oyuncu yaklaşınca **ünlem uyarısı** çıkar, ~0.8 sn sonra düşer. Telegraflı tehlike
-adildir; telegrafsızı sinir bozar.
+#### Oyuncu nasıl anlayacak — 4 katmanlı uyarı
+
+Tavana ünlem koymak yetmez: oyuncu **yere** bakar, ve ünlem "nereye düşeceğini"
+söylemez. Oyuncunun üç şeyi bilmesi lazım — *bir şey düşüyor / NEREYE / NE ZAMAN* —
+ve tek işaret üçünü birden veremez.
+
+| Katman | Neyi anlatır | Nasıl yapılır |
+|---|---|---|
+| **1. Yer işareti** ⭐ | **NEREYE** | Düşeceği noktada zeminde turuncu bir leke/parantez. Script zemine raycast atıp kendi konumlandırıyor. **En önemli katman bu.** |
+| **2. Hızlanan yanıp sönme** | **NE ZAMAN** | Saniyede 3'ten 14'e çıkar. Oyuncu sayaç okumadan "birazdan" olduğunu anlar. |
+| **3. Kirişin titremesi + toz** | Tehdit yukarıda | Kiriş sona doğru artan şiddetle titrer, tavandan toz döker |
+| **4. Çatırtı sesi** | Erken uyarı | **Bakmıyorken bile duyulur.** Ses en güçlü uyarı kanalı. |
+
+Yer işareti **düşme sırasında da açık kalır** — çarpma anına kadar nereye ineceğini
+göstermeye devam eder.
+
+Uyarı süresi **1 saniye.** Kısaltırsanız haksız olur.
+
+**Renk dili:** yer işareti ateşle aynı turuncu olsun. Oyuncu bu oyunda turuncuyu
+"tehlike" diye öğreniyor, yeni bir renk öğretmeyin.
 
 Yere indikten sonra zararsız bir enkaz olur, birkaç saniye durup söner.
 

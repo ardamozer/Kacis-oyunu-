@@ -25,15 +25,45 @@ public class FallingDebris : MonoBehaviour
     [Tooltip("Kapaliysa sadece DropNow() ile duser — final sahnesi icin.")]
     public bool autoTrigger = true;
 
-    [Header("Uyari")]
-    [Tooltip("Uyari ne kadar surer. 0.6-1.0 arasi adil. Kisaltirsaniz haksiz olur.")]
-    public float warningDuration = 0.8f;
+    // ===================== UYARI TASARIMI =====================
+    // Oyuncunun UC seyi bilmesi lazim: bir sey dusuyor / NEREYE / NE ZAMAN.
+    // Tek isaret ucunu birden veremez, o yuzden 4 katmanli sinyal:
+    //
+    //   1. YER ISARETI  → NEREYE. En onemlisi. Oyuncu yere bakar, tavana degil.
+    //   2. HIZLANAN YANIP SONME → NE ZAMAN. Sayi okumadan anlasilir.
+    //   3. KIRISIN TITREMESI + TOZ → tehdit yukarida, dogal ipucu
+    //   4. CATIRTI SESI → en guclu erken uyari. Bakmiyorken bile duyulur.
+    // ==========================================================
 
-    [Tooltip("Dusecegi yere konan unlem gorseli. Sahnede devre disi baslamali.")]
+    [Header("Uyari — sure")]
+    [Tooltip("Uyari ne kadar surer. 0.8-1.2 arasi adil. Kisaltirsaniz haksiz olur.")]
+    public float warningDuration = 1f;
+
+    [Header("1. Yer isareti (EN ONEMLISI)")]
+    [Tooltip("Dusecegi NOKTAYA konan isaret. Script zemine raycast atip " +
+             "kendi konumlandirir. Sahnede devre disi baslamali.")]
+    public GameObject groundMarker;
+
+    [Header("2. Kirisin uzerindeki unlem (ikincil)")]
+    [Tooltip("Opsiyonel. Kirisin uzerinde duran unlem gorseli.")]
     public GameObject warningIndicator;
 
-    [Tooltip("Uyari saniyede kac kez yanip sonsun.")]
-    public float warningBlinksPerSecond = 6f;
+    [Tooltip("Yanip sonme baslangic hizi (saniyede).")]
+    public float blinkStartRate = 3f;
+
+    [Tooltip("Dusme anindaki yanip sonme hizi. Hizlanma 'ne zaman'i anlatir.")]
+    public float blinkEndRate = 14f;
+
+    [Header("3. Kirisin titremesi")]
+    [Tooltip("Dusmeden once kiris ne kadar titresin.")]
+    public float preFallShake = 0.06f;
+
+    [Tooltip("Tavandan dokulen toz. Opsiyonel.")]
+    public ParticleSystem warningDust;
+
+    [Header("4. Ses")]
+    [Tooltip("Tahta catirtisi. Bakmiyorken bile duyulur — en guclu erken uyari.")]
+    public AudioSource creakSound;
 
     [Header("Dusme")]
     public float fallSpeed = 18f;
@@ -104,34 +134,7 @@ public class FallingDebris : MonoBehaviour
 
     IEnumerator DropRoutine(bool showWarning)
     {
-        if (showWarning && warningIndicator != null)
-        {
-            warningIndicator.SetActive(true);
-
-            float t = 0f;
-            var indicatorSprite = warningIndicator.GetComponent<SpriteRenderer>();
-
-            while (t < warningDuration)
-            {
-                t += Time.deltaTime;
-
-                if (indicatorSprite != null)
-                {
-                    bool visible = Mathf.Sin(t * warningBlinksPerSecond * Mathf.PI * 2f) > 0f;
-                    Color c = indicatorSprite.color;
-                    c.a = visible ? 1f : 0.25f;
-                    indicatorSprite.color = c;
-                }
-                yield return null;
-            }
-
-            warningIndicator.SetActive(false);
-        }
-        else if (showWarning)
-        {
-            // Gorsel atanmamissa bile bekleme suresi korunsun, oyun adil kalsin.
-            yield return new WaitForSeconds(warningDuration);
-        }
+        if (showWarning) yield return WarningRoutine();
 
         falling = true;
 
@@ -148,8 +151,75 @@ public class FallingDebris : MonoBehaviour
         }
     }
 
+    IEnumerator WarningRoutine()
+    {
+        // ---- 1. Yer isaretini dusecegi noktaya koy ----
+        // Oyuncu yere bakar, tavana degil. "NEREYE" sorusunu bu cevapliyor.
+        if (groundMarker != null)
+        {
+            RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.down, 50f, groundLayer);
+            Vector3 spot = hit.collider != null
+                ? new Vector3(transform.position.x, hit.point.y + 0.1f, 0f)
+                : new Vector3(transform.position.x, transform.position.y - 6f, 0f);
+
+            groundMarker.transform.position = spot;
+            groundMarker.SetActive(true);
+        }
+
+        if (warningIndicator != null) warningIndicator.SetActive(true);
+        if (warningDust != null) warningDust.Play();
+        if (creakSound != null) creakSound.Play();
+
+        var markerSprite = groundMarker != null
+            ? groundMarker.GetComponent<SpriteRenderer>() : null;
+        var indicatorSprite = warningIndicator != null
+            ? warningIndicator.GetComponent<SpriteRenderer>() : null;
+
+        float t = 0f;
+        float blinkPhase = 0f;
+
+        while (t < warningDuration)
+        {
+            t += Time.deltaTime;
+            float progress = Mathf.Clamp01(t / warningDuration);
+
+            // ---- 2. Hizlanan yanip sonme ----
+            // Sabit hizda yanip sonmek "ne zaman"i anlatmaz. Hizlandikca
+            // oyuncu sayi okumadan "birazdan" oldugunu anlar.
+            float rate = Mathf.Lerp(blinkStartRate, blinkEndRate, progress);
+            blinkPhase += Time.deltaTime * rate;
+            bool bright = Mathf.Sin(blinkPhase * Mathf.PI * 2f) > 0f;
+
+            SetAlpha(markerSprite, bright ? 0.95f : 0.25f);
+            SetAlpha(indicatorSprite, bright ? 1f : 0.2f);
+
+            // ---- 3. Kirisin titremesi ----
+            // Sona dogru siddetlenir. Tehdidin yukarida oldugunu dogal yoldan soyler.
+            float shake = preFallShake * progress;
+            transform.position = startPosition + (Vector3)(Random.insideUnitCircle * shake);
+
+            yield return null;
+        }
+
+        transform.position = startPosition;
+        if (warningIndicator != null) warningIndicator.SetActive(false);
+        if (warningDust != null) warningDust.Stop();
+        // Yer isareti dusme sirasinda ACIK kalir — carpma anina kadar
+        // nereye inecegini gostermeye devam etsin.
+    }
+
+    static void SetAlpha(SpriteRenderer sr, float a)
+    {
+        if (sr == null) return;
+        Color c = sr.color;
+        c.a = a;
+        sr.color = c;
+    }
+
     void Land()
     {
+        if (groundMarker != null) groundMarker.SetActive(false);
+
         falling = false;
         landed = true;
 
@@ -209,6 +279,7 @@ public class FallingDebris : MonoBehaviour
         transform.position = startPosition;
         triggered = falling = landed = false;
         if (warningIndicator != null) warningIndicator.SetActive(false);
+        if (groundMarker != null) groundMarker.SetActive(false);
         if (sprite != null)
         {
             Color c = sprite.color;
