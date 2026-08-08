@@ -118,7 +118,7 @@ SpriteRenderer:
   m_MaskInteraction: 0
   m_Sprite: {fileID: 2868101353237766674, guid: 8242c8e483377ed4cbe37bdf6a8f6366, type: 3}
   m_Color: {r: 0.85, g: 0.25, b: 0.1, a: 1}
-  m_FlipX: 1
+  m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
   m_Size: {x: 1, y: 1}
@@ -225,3 +225,7 @@ MonoBehaviour:
   maxHealth: 40
   hitFlashColor: {r: 1, g: 1, b: 1, a: 1}
   deathDuration: 0.35
+  shootClip: {fileID: 0}
+  shootVolume: 0.5
+  deathClip: {fileID: 8300000, guid: 9ab0bdfd364abab41a3b6b81018797bc, type: 3}
+  deathVolume: 0.7

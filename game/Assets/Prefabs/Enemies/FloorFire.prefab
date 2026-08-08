@@ -195,6 +195,8 @@ MonoBehaviour:
   grownCanBeStomped: 0
   maxHealth: 25
   extinguishDuration: 0.25
+  extinguishClip: {fileID: 8300000, guid: 9ab0bdfd364abab41a3b6b81018797bc, type: 3}
+  extinguishVolume: 0.7
 --- !u!114 &6952095000810266909
 MonoBehaviour:
   m_ObjectHideFlags: 0
