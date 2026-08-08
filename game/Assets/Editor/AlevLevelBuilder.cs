@@ -222,16 +222,28 @@ public static class AlevLevelBuilder
         Fire("Salon_Alev2", 36f, 18f, 1.5f, 2.1f);
         Fire("Salon_Alev3", 98f, 14f, 1.7f, 2.3f);
 
-        // ---- TIRMANIS: yerden kirislere. Zikzak, farkli genislikler. ----
-        // Yukselmeler 1.8, yatay bosluklar 3-4 → hepsi guvenli sinirlarda.
-        Solid(plats, "Salon_T1", 46f,  2.4f, 6f, 0.5f, CPlat);
-        Solid(plats, "Salon_T2", 54f,  4.2f, 5f, 0.5f, CPlat);
-        Solid(plats, "Salon_T3", 62f,  6.0f, 5f, 0.5f, CPlat);   // anahtar burada
-        Solid(plats, "Salon_T4", 54f,  7.8f, 4f, 0.5f, CPlat);
-        Solid(plats, "Salon_T5", 62f,  9.6f, 3.5f, 0.5f, CPlat); // kucuk — hassas
-        Solid(plats, "Salon_T6", 53f, 11.4f, 5f, 0.5f, CPlat);
-        Solid(plats, "Salon_T7", 62f, 13.2f, 4f, 0.5f, CPlat);
-        Solid(plats, "Salon_T8", 53f, 15.0f, 5f, 0.5f, CPlat);
+        // ---- TIRMANIS: sadece MAVI ANAHTARA kadar (y 7.8) ----
+        // ⚠️ BILEREK KIRISLERE ULASMIYOR. Eskiden yerden tepeye kadar
+        // cikiyordu ve oyuncu daha oyunun basinda kacis yoluna ulasip
+        // final tetikleyicilerine basabiliyordu — oyun kiriliyordu.
+        // En yuksek nokta 8.05; guvenlik sahanligi 12.25'te, arada 4.2 birim
+        // var (maksimum ziplama 2.87). Asagidan cikilamaz.
+        Solid(plats, "Salon_T1", 46f, 2.4f, 6f, 0.5f, CPlat);
+        Solid(plats, "Salon_T2", 54f, 4.2f, 5f, 0.5f, CPlat);
+        Solid(plats, "Salon_T3", 62f, 6.0f, 5f, 0.5f, CPlat);   // anahtar burada
+        Solid(plats, "Salon_T4", 54f, 7.8f, 4f, 0.5f, CPlat);
+
+        // ---- GUVENLIK SAHANLIKLARI ----
+        // Kacis sirasinda kiristen duserseniz buraya dusersiniz ve geri
+        // tirmanirsiniz. Yerden ULASILAMAZ (4+ birim bosluk), sadece
+        // yukaridan dusunce inilir. Olum degil, birkac saniyelik bedel.
+        Solid(plats, "Salon_Sahanlik_Sol", 58f, 12.0f, 32f, 0.6f, CPlat);
+        Solid(plats, "Salon_Sahanlik_Sag", 90f, 12.0f, 22f, 0.6f, CPlat);
+
+        Solid(plats, "Salon_Geri_1", 48f, 13.8f, 5f, 0.5f, CPlat);
+        Solid(plats, "Salon_Geri_2", 42f, 15.6f, 5f, 0.5f, CPlat);
+        Solid(plats, "Salon_Geri_3", 94f, 13.8f, 5f, 0.5f, CPlat);
+        Solid(plats, "Salon_Geri_4", 99f, 15.6f, 5f, 0.5f, CPlat);
 
         // ---- KACIS KIRISLERI — salonun tepesi (sagdan sola) ----
         // Bosluklar tek tek hesaplandi: hicbiri 3.5'i gecmiyor.
@@ -472,12 +484,22 @@ public static class AlevLevelBuilder
 
     static void BuildTriggers()
     {
-        Zone("Tetik_KopeginOlumu", 126f, 18.5f, 2f, 4f, EndingTriggerZone.What.DogDeath);
-        Zone("Tetik_BossSahnesi", 24f, 18.5f, 2f, 4f, EndingTriggerZone.What.BossScene);
+        // ⚠️ SIRADISILIK KORUMASI
+        // Oyuncu beklenmedik bir yoldan kacis rotasina ulasirsa final
+        // sahnesi yanlis sirada tetiklenmesin. Fiziksel engelleme (Salon
+        // tirmanisinin kisaltilmasi) yeterli olmali, ama bu ikinci kat
+        // guvenlik: bilmedigimiz bir kestirme bulunsa bile oyun kirilmaz.
+        var death = Zone("Tetik_KopeginOlumu", 126f, 18.5f, 2f, 4f,
+                         EndingTriggerZone.What.DogDeath);
+        death.requiredKeyCount = 3;   // 3 anahtar = cocuk odasina ulasildi
+
+        var boss = Zone("Tetik_BossSahnesi", 24f, 18.5f, 2f, 4f,
+                        EndingTriggerZone.What.BossScene);
+        boss.requires = death;        // once Karabas olmeli
     }
 
-    static void Zone(string name, float x, float y, float w, float h,
-                     EndingTriggerZone.What what)
+    static EndingTriggerZone Zone(string name, float x, float y, float w, float h,
+                                  EndingTriggerZone.What what)
     {
         var go = new GameObject(name);
         go.transform.SetParent(triggers, false);
@@ -488,6 +510,7 @@ public static class AlevLevelBuilder
         var z = go.AddComponent<EndingTriggerZone>();
         z.trigger = what;
         z.oneShot = true;
+        return z;
     }
 
     static readonly (SpawnMarker.Kind k, float x, float y, string note)[] MarkerSpots =
