@@ -29,6 +29,25 @@ public class DogCompanion : MonoBehaviour
     [Tooltip("Bos birakin — sahnedeki Tag='Player' objesini kendi bulur.")]
     public Transform player;
 
+    [Header("Zemin takibi")]
+    [Tooltip("Ground layer'ini secin. Kopek bunun uzerinde yurur.\n" +
+             "BOS BIRAKIRSANIZ kopek dikeyde hic hareket etmez (havada kalir).")]
+    public LayerMask groundLayer;
+    [Tooltip("Zemin aranirken kopegin ne kadar USTUNDEN isin atilir.\n" +
+             "Ayni zamanda cikabilecegi basamak yuksekligidir.")]
+    public float groundProbeUp = 1.5f;
+    [Tooltip("Asagi dogru ne kadar zemin aranir.")]
+    public float groundProbeDown = 8f;
+    [Tooltip("Dikey hizalanma hizi. Buyuk = daha ani oturur.")]
+    public float verticalSpeed = 14f;
+
+    [Header("Isinlanma — kat degisince kaybolmasin")]
+    [Tooltip("Oyuncu bu mesafeden uzaklasirsa kopek yanina isinir.\n" +
+             "Kat plani iki katli (y=0 ve y=9); kopek merdiveni tirmanamaz,\n" +
+             "bu olmadan asagida kalir ve final sahnesine hic gelemez.\n" +
+             "0 = kapali.")]
+    public float warpDistance = 14f;
+
     [Header("Yoldaki atesi sondurme (Following sirasinda)")]
     [Tooltip("Bu yaricapta buyumus bir FloorFire varsa ustune atlayip sondurur.")]
     public float fireDetectRange = 1.0f;
@@ -59,10 +78,16 @@ public class DogCompanion : MonoBehaviour
     SpriteRenderer sprite;
     Vector3 baseScale;
 
+    // Govdenin yariyuksekligi — zemine otururken merkezi bu kadar yukari koyariz,
+    // yoksa kopek zeminin icine gomulur.
+    float groundOffset = 0.35f;
+
     void Awake()
     {
         sprite = GetComponentInChildren<SpriteRenderer>();
         baseScale = transform.localScale;
+
+        if (sprite != null) groundOffset = sprite.bounds.extents.y;
 
         if (audioSource == null) audioSource = GetComponent<AudioSource>();
     }
@@ -76,6 +101,10 @@ public class DogCompanion : MonoBehaviour
         }
 
         whineTimer = whineInterval;
+
+        // Baslangicta da zemine otursun — sahneye goz karariyla yerlestirilmis
+        // olabilir, havada durmasin.
+        SnapToGround(true);
     }
 
     void Update()
@@ -108,6 +137,9 @@ public class DogCompanion : MonoBehaviour
     {
         if (player == null) return;
 
+        // Cok uzaklastiysa (genelde oyuncu ust kata cikti) yanina isin.
+        if (TryWarpToPlayer()) return;
+
         float dist = Mathf.Abs(player.position.x - transform.position.x);
 
         if (dist > followDistance)
@@ -119,7 +151,57 @@ public class DogCompanion : MonoBehaviour
             if (sprite != null) sprite.flipX = dir < 0f;
         }
 
+        // Yatay hareketten SONRA zemine otur — yoksa yokusta/basamakta
+        // bir kare havada veya zeminin icinde gorunur.
+        SnapToGround(false);
+
         CheckForFireToStomp();
+    }
+
+    /// <summary>
+    /// Kopegi altindaki zeminin ustune oturtur.
+    ///
+    /// Rigidbody kullanmiyoruz: fizikli bir escort AI duvarlara sikisir,
+    /// oyuncuyu iter ve jam'de saatlerce bug avina donusur. Isin atmak
+    /// tahmin edilebilir ve yokusu/basamagi bedavaya cozer.
+    /// </summary>
+    void SnapToGround(bool instant)
+    {
+        Vector2 origin = new Vector2(transform.position.x, transform.position.y + groundProbeUp);
+        RaycastHit2D hit = Physics2D.Raycast(origin, Vector2.down,
+                                             groundProbeUp + groundProbeDown, groundLayer);
+
+        // Zemin bulunamadi (bosluk ustunde ya da groundLayer secilmemis) — dokunma.
+        if (hit.collider == null) return;
+
+        float targetY = hit.point.y + groundOffset;
+        float y = instant
+            ? targetY
+            : Mathf.MoveTowards(transform.position.y, targetY, verticalSpeed * Time.deltaTime);
+
+        transform.position = new Vector3(transform.position.x, y, transform.position.z);
+    }
+
+    /// <summary>
+    /// Oyuncu cok uzaktaysa kopegi yanina tasir.
+    ///
+    /// Kat plani iki katli (y=0 ve y=9). Kopek merdiven tirmanamiyor; bu
+    /// olmadan alt katta kalir, oyuncu onu bir daha goremez ve final
+    /// sahnesinde ortada kopek olmaz. Escort AI'larda standart cozum.
+    /// </summary>
+    bool TryWarpToPlayer()
+    {
+        if (warpDistance <= 0f) return false;
+        if (Vector2.Distance(player.position, transform.position) < warpDistance) return false;
+
+        // Oyuncunun biraz gerisine birak, tam ustune degil.
+        float side = sprite != null && sprite.flipX ? 1f : -1f;
+        transform.position = new Vector3(player.position.x + side * followDistance,
+                                         player.position.y,
+                                         transform.position.z);
+
+        SnapToGround(true);
+        return true;
     }
 
     void CheckForFireToStomp()

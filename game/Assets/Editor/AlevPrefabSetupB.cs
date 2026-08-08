@@ -214,6 +214,10 @@ public static class AlevPrefabSetupB
         dog.followSpeed = 4f;
         dog.fireDetectRange = 1f;
         dog.audioSource = audio;
+        // Bunlar olmadan kopek dikeyde hic hareket etmez: platforma cikan
+        // oyuncunun altinda kalir, kat degisince de bir daha bulamaz.
+        dog.groundLayer = LayerMask.GetMask("Ground");
+        dog.warpDistance = 14f;
         // whineClip / happyBarkClip bilerek bos — ses dosyasi henuz yok,
         // kod null kontrolu yapiyor, sessiz calisir.
 
