@@ -4,80 +4,71 @@
 
 ---
 
-# BOLUM 0 — Unity projesi ve test sahnesi (saat 0-1)
+# BOLUM 0 — Baslarken
 
-## 0.1 Unity surumunu Kisi A ile netlestir ⚠️
+> ✅ **Bolum 0.1-0.5 ARTIK GEREKMIYOR.** Kisi A Unity projesini olusturup
+> push'ladi, script'ler `game/Assets/Scripts/` altina tasindi, tag ve
+> layer'lar repoya islendi. Asagisi sadece dogrulama icin.
 
-Bu makinede kurulu olan: **6000.5.7f1**
-PLAN.md'de yazan: **6000.0.x LTS**
+## 0.1 Once `git pull` yap
 
-**Kisi A'ya sor: sen hangi surumu kurdun?** Ikinizin BIREBIR ayni surumde
-olmasi sart. Farkli surumler `.unity` ve `.prefab` dosyalarini otomatik
-yukseltir, git'te cozulmez cakismalar cikarir.
+⚠️ **Unity KAPALIYKEN pull yap.** Unity acikken proje dosyalari degisirse
+editor kafayi yer.
 
-Ikiniz de 6000.5.7f1 kullanacaksaniz sorun yok, kod calisir. Sadece PLAN.md
-satir 106'daki bosluga gercek surumu yazin.
+Proje konumu artik: `Kacis-oyunu-\game\` (kucuk harf `game`, kokte
+`Scripts/` klasoru KALMADI — hepsi `game/Assets/Scripts/` altinda).
 
-## 0.2 Proje yoksa olustur
+## 0.2 Dogrulama (Unity'yi acinca, 1 dakika)
 
-Repoda henuz Unity projesi yok — sadece `Scripts/` klasoru var.
+| Kontrol | Yeri | Olmasi gereken |
+|---|---|---|
+| Unity surumu | Unity Hub, proje satiri | **6000.5.7f1** ✅ repoda kilitli |
+| Input Handling | `Project Settings → Player → Other Settings` | **Both** ✅ repoda ayarli |
+| Tag'ler | `Project Settings → Tags and Layers → Tags` | `Enemy`, `WaterSource`, `Dog` ✅ repoda islendi |
+| Layer'lar | ayni ekran, Layers | 8=`Ground`, 9=`Player`, 10=`Enemy` ✅ repoda islendi |
 
-**Kisi A projeyi olusturup push'ladiysa:** `git pull` yap, bu adimi atla.
+> `Player` tag'i listede GORUNMEZ — Unity'nin yerlesik tag'i, zaten var.
+> Inspector'daki Tag menusunde secebilirsiniz. Bu normal.
 
-**Sen olusturacaksan** (once A ile konus, ikiniz ayri ayri olusturursaniz
-cakisirsiniz):
+Bir tanesi eksikse Console'da hata alirsiniz; o zaman elle ekleyin ve
+commit'leyin.
 
-1. Unity Hub → **New project**
-2. Template: **2D (Built-In Render Pipeline)** — ⚠️ URP DEGIL
-3. Project name: `Game`
-4. Location: `C:\Users\Cyborg\Desktop\Kacis-oyunu-`
-   (yani proje `...\Kacis-oyunu-\Game\` icinde olusacak)
-5. **Create project**
+## 0.3 ⚠️ .meta DOSYALARI — EN KRITIK ADIM
 
-## 0.3 Proje ayarlari (bir kere)
+Repodaki `.cs` dosyalarinin cogunun `.meta` dosyasi **henuz yok**. Unity bir
+script'i ilk gorunce ona rastgele bir **GUID** uretip `.meta` dosyasina yazar.
+Prefab'lar ve sahneler script'lere **isimle degil, bu GUID ile** baglanir.
 
-`Edit → Project Settings → Editor`:
-- **Asset Serialization → Mode → Force Text**
-- **Version Control → Mode → Visible Meta Files**
+**Tehlike:** Ayni `.cs` dosyasi icin sen ve Kisi A ayri ayri Unity acarsaniz,
+Unity ikinize **FARKLI GUID** uretir. Sonra senin prefab'in onun makinesinde
+"Missing (Mono Script)" olur. Jam'de takim durduran klasik hata budur.
 
-`Edit → Project Settings → Player → Other Settings → Active Input Handling`:
-- **Both** sec (kod eski `Input.GetAxisRaw` kullaniyor). Unity yeniden
-  baslatmak isteyecek, kabul et.
+**Kural — istisnasiz:**
 
-## 0.4 Script'leri projeye tasi
+1. Unity'yi ac, Console'un derlemeyi bitirmesini bekle.
+2. **HEMEN** olusan `.meta` dosyalarini commit'le ve push'la:
 
-Windows Gezgini'nde:
-
+```bash
+git add game/Assets/Scripts
+git commit -m "meta dosyalarini uret"
+git push
 ```
-Kacis-oyunu-\Scripts\   →   Kacis-oyunu-\Game\Assets\Scripts\
-```
 
-Klasorun tamamini surukle. Unity acikken tasirsan kendi alginlar ve derler.
-Console'da hata olmamali. (`.md` dosyalari Unity'yi rahatsiz etmez.)
+3. Kisi A'ya "meta'lari push'ladim, pull yap" de. **O pull yapmadan
+   script'leri hicbir objeye baglamasin.**
 
-## 0.5 Tag ve Layer olustur
-
-`Edit → Project Settings → Tags and Layers`
-
-**Tags** (+ ile ekle) — dordu de lazim:
-`Player` · `Enemy` · `WaterSource` · `Dog`
-
-⚠️ **`Dog` tag'ini atlamayin.** `FlameProjectile` kodu `CompareTag("Dog")`
-cagiriyor; tag tanimli degilse Unity hata firlatir.
-(Not: `Scripts/KURULUM.md` satir 40'ta hala eski `Cat` yaziyor — Kisi A'ya
-duzeltmesini soyle, hayvan artik kopek.)
-
-**Layers** (bos satirlara yaz):
-`Ground` · `Player` · `Enemy`
-
-## 0.6 Kendi test sahneni olustur
+## 0.4 Kendi test sahneni olustur
 
 1. `Assets/Scenes/` klasorune sag tik → **Create → Scene**
 2. Adi: **`TestScene_B`** ⚠️ bu isim tam boyle olmali
+   (tam yol: `game/Assets/Scenes/TestScene_B.unity`)
 3. Cift tiklayip ac.
 
 > 🚫 **`MainScene.unity` dosyasini ASLA acma.** Kisi A'nin. Acmak bile
 > `.unity` dosyasinda degisiklik birakabilir.
+>
+> `SampleScene.unity` Unity'nin varsayilan sahnesi — Kisi A onu silecek veya
+> `MainScene`'e cevirecek, sen dokunma.
 
 ---
 
@@ -233,7 +224,7 @@ klasorundeki **prefabi** surukle.
 | Alev duvarin icinden geciyor | Flame'de **Rigidbody 2D / Kinematic** yok, ya da **Blocking Layers** bos |
 | Alev dogar dogmaz yok oluyor | FirePoint canavarin collider'inin icinde — X'i `-1.0` yap |
 | `F` basinca hicbir sey olmuyor | Canavarda **Box Collider 2D** yok |
-| Console'da "Tag: Dog is not defined" | Bolum 0.5'te `Dog` tag'ini eklememissin |
+| Console'da "Tag: Dog is not defined" | `Dog` tag'i eksik — Bolum 0.2 dogrulama tablosuna bak |
 | Canavar duvarin onunde gorunuyor | Sprite Renderer → **Order in Layer** `-1` degil |
 
 ## His ayari (5 dakika, deger)
@@ -337,7 +328,7 @@ oyuncu ilerleyebilmeli. Buyumus ates ezilemiyorsa oyun oynanamaz hale gelir.
 ## 6.1 Kopek objesi
 
 1. `Hierarchy → sag tik → 2D Object → Sprites → Square` · adi **`Karabas`**
-2. **Tag → Dog** ⚠️ Bolum 0.5'te olusturdugunuz tag
+2. **Tag → Dog** ⚠️ repoda tanimli, menude gorunmeli
 3. **Scale**: X = `0.9`, Y = `0.7`
 4. **Position**: baslangicta sikisacagi yere koyun, orn. X = `4`, Y = `-3.3`
 5. Sprite Renderer → **Color** → kahverengi/siyah (Karabas)
