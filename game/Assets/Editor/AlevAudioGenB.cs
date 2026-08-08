@@ -43,8 +43,9 @@ public static class AlevAudioGenB
     {
         if (!EditorUtility.DisplayDialog(
                 "Sesleri uret",
-                "Assets/Audio/Generated/ altina 3 WAV yazilacak:\n\n" +
-                "  DogWhine.wav\n  DogBark.wav\n  FireExtinguish.wav\n\n" +
+                "Assets/Audio/Generated/ altina 7 WAV yazilacak:\n\n" +
+                "  DogWhine · DogBark · FireExtinguish\n" +
+                "  FireCrackle · FlameWhoosh · DebrisCrash · GhostWhoosh\n\n" +
                 "Bunlar YER TUTUCU. Gercek sesler gelince ayni isimle\n" +
                 "uzerine yazabilirsiniz, kod degismez.\n\n" +
                 "Var olan dosyalarin uzerine yazilir.",
@@ -58,6 +59,10 @@ public static class AlevAudioGenB
         WriteWav(AudioFolder + "/DogWhine.wav", Normalize(MakeWhine(), 0.72f));
         WriteWav(AudioFolder + "/DogBark.wav", Normalize(MakeBark(), 0.88f));
         WriteWav(AudioFolder + "/FireExtinguish.wav", Normalize(MakeExtinguish(), 0.6f));
+        WriteWav(AudioFolder + "/FireCrackle.wav", Normalize(MakeCrackle(), 0.45f));
+        WriteWav(AudioFolder + "/FlameWhoosh.wav", Normalize(MakeWhoosh(), 0.65f));
+        WriteWav(AudioFolder + "/DebrisCrash.wav", Normalize(MakeCrash(), 0.95f));
+        WriteWav(AudioFolder + "/GhostWhoosh.wav", Normalize(MakeGhost(), 0.55f));
 
         AssetDatabase.Refresh();
 
@@ -301,6 +306,164 @@ public static class AlevAudioGenB
             float env = Mathf.Min(k / 0.015f, 1f) * Mathf.Exp(-k * 3.6f);
 
             s[i] = v * env;
+        }
+
+        return s;
+    }
+
+    /// <summary>
+    /// Ates citirtisi — dongu icin. Iki katman:
+    ///   gurultu  — alcak frekansli surekli ugultu (yanmanin "govdesi")
+    ///   citirti  — rastgele anlarda kisa, tiz patlamalar (tahta catlamasi)
+    /// Sadece ugultu "rüzgar", sadece citirti "statik" gibi duyuluyor.
+    /// Ikisi birlikte ates oluyor.
+    /// </summary>
+    static float[] MakeCrackle()
+    {
+        const float dur = 2.4f;
+        int n = (int)(SampleRate * dur);
+        var s = new float[n];
+
+        var pop = Biquad.BandPass(2600f, 3.5f, SampleRate);
+        float low = 0f;
+        float popEnv = 0f;
+
+        for (int i = 0; i < n; i++)
+        {
+            float noise = Random.value * 2f - 1f;
+
+            // Govde: agir alcak geciren -> bogus ugultu.
+            low += (noise - low) * 0.06f;
+
+            // Citirti: rastgele tetiklenip hizla sonen kisa patlamalar.
+            if (Random.value < 0.0022f) popEnv = 1f;
+            popEnv *= 0.9986f;
+            popEnv -= 0.0004f;
+            if (popEnv < 0f) popEnv = 0f;
+
+            float crack = pop.Process(noise) * popEnv * popEnv * 2.2f;
+
+            // Dongu dikisi duyulmasin diye iki ucta kisa fade.
+            float k = (float)i / n;
+            float loopFade = Mathf.Min(Mathf.Clamp01(k / 0.03f), Mathf.Clamp01((1f - k) / 0.03f));
+
+            s[i] = (low * 0.5f + crack) * loopFade;
+        }
+
+        return s;
+    }
+
+    /// <summary>
+    /// Alev firlatma — kisa "fuu". Asagi kayan bant geciren gurultu.
+    /// Sabit filtreli gurultu "ss" gibi duruyor; kayma ona hareket veriyor.
+    /// </summary>
+    static float[] MakeWhoosh()
+    {
+        const float dur = 0.35f;
+        int n = (int)(SampleRate * dur);
+        var s = new float[n];
+
+        float low = 0f;
+
+        for (int i = 0; i < n; i++)
+        {
+            float k = (float)i / n;
+
+            float noise = Random.value * 2f - 1f;
+
+            // Kesim once acilip sonra kapanir — "fuuu" konturu.
+            float cutoff = k < 0.25f
+                ? Mathf.Lerp(0.08f, 0.5f, k / 0.25f)
+                : Mathf.Lerp(0.5f, 0.06f, (k - 0.25f) / 0.75f);
+
+            low += (noise - low) * cutoff;
+
+            s[i] = low * Mathf.Min(k / 0.02f, 1f) * Mathf.Exp(-k * 2.8f);
+        }
+
+        return s;
+    }
+
+    /// <summary>
+    /// Dusen tahtanin carpmasi — Karabas'in olum ani.
+    ///
+    /// Uc katman, hepsi ayni anda:
+    ///   gumleme — cok alcak sinus, hizla dusen perde (kutlenin agirligi)
+    ///   catirti — orta bantli gurultu patlamasi (tahtanin kirilmasi)
+    ///   dagilma — sonda uzayan bogus gurultu (enkazin savrulmasi)
+    /// </summary>
+    static float[] MakeCrash()
+    {
+        const float dur = 1.0f;
+        int n = (int)(SampleRate * dur);
+        var s = new float[n];
+
+        var wood = Biquad.BandPass(900f, 2.2f, SampleRate);
+        float phase = 0f;
+        float low = 0f;
+
+        for (int i = 0; i < n; i++)
+        {
+            float t = (float)i / SampleRate;
+            float k = t / dur;
+
+            // 1) Gumleme: 95 Hz'den 40 Hz'e dusen sinus. Alcak = agir.
+            float f = Mathf.Lerp(95f, 40f, Mathf.Clamp01(k * 5f));
+            phase += f / SampleRate;
+            float thump = Mathf.Sin(phase * Mathf.PI * 2f) * Mathf.Exp(-k * 9f) * 0.9f;
+
+            float noise = Random.value * 2f - 1f;
+
+            // 2) Catirti: sadece ilk anlarda, tahtanin kirilmasi.
+            float crack = wood.Process(noise) * Mathf.Exp(-k * 22f) * 1.6f;
+
+            // 3) Dagilma: bogus, uzun kuyruk.
+            low += (noise - low) * 0.09f;
+            float rubble = low * Mathf.Exp(-k * 3.4f) * 0.5f;
+
+            s[i] = thump + crack + rubble;
+        }
+
+        return s;
+    }
+
+    /// <summary>
+    /// Karabas'in hayaleti gecerken — oyunun duygusal zirvesi.
+    ///
+    /// Bilerek "korku filmi" degil: yukari kayan yumusak gurultu +
+    /// ustunde titresen tiz bir ton. Sicak ve hafif, tehditkar degil.
+    /// PLAN.md: sahne sessiz ve yumusak olmali, urkutucu degil.
+    /// </summary>
+    static float[] MakeGhost()
+    {
+        const float dur = 2.2f;
+        int n = (int)(SampleRate * dur);
+        var s = new float[n];
+
+        var air = Biquad.BandPass(1100f, 1.4f, SampleRate);
+        float phase = 0f;
+
+        for (int i = 0; i < n; i++)
+        {
+            float t = (float)i / SampleRate;
+            float k = t / dur;
+
+            // Yumusak hava akimi, yukari dogru kayan.
+            float noise = Random.value * 2f - 1f;
+            float airy = air.Process(noise) * 0.55f;
+
+            // Ustunde titresen tiz ton — "parlama" hissi.
+            float f = Mathf.Lerp(880f, 1320f, k);
+            f *= 1f + Mathf.Sin(t * Mathf.PI * 2f * 4.5f) * 0.02f;
+            phase += f / SampleRate;
+
+            float shimmer = (Mathf.Sin(phase * Mathf.PI * 2f) * 0.6f
+                           + Mathf.Sin(phase * Mathf.PI * 4f) * 0.2f) * 0.35f;
+
+            // Iki ucta da yumusak girip cikmali — aniden baslarsa urkutur.
+            float env = Mathf.Min(Mathf.Clamp01(k / 0.3f), Mathf.Clamp01((1f - k) / 0.35f));
+
+            s[i] = (airy + shimmer) * env;
         }
 
         return s;
