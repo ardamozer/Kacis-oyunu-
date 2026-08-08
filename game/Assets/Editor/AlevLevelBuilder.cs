@@ -80,14 +80,23 @@ public static class AlevLevelBuilder
         Solid(geometry, "Zemin", new Vector2(50f, GroundY), new Vector2(HouseWidth, 1f),
               new Color(0.16f, 0.13f, 0.12f));
 
-        // Alt kat tavani — x 88-100 arasi YOK, tirmanis oradan geciyor
-        Solid(geometry, "AltKatTavan", new Vector2(44f, LowerCeilY), new Vector2(88f, 1f),
+        // ⚠️ IKI SAFT var, ikisi de gecis icin ZORUNLU:
+        //    x 14-24  → INIS safti  (ust kattan cikis holune)
+        //    x 88-100 → TIRMANIS safti (cocuk odasindan ust kata)
+        // Hem alt kat tavaninda hem ust kat zemininde bu araliklar BOS olmali,
+        // yoksa oyuncu katlar arasi gecemez.
+
+        Solid(geometry, "AltKatTavan_Sol", new Vector2(7f, LowerCeilY), new Vector2(14f, 1f),
+              new Color(0.13f, 0.11f, 0.10f));
+        Solid(geometry, "AltKatTavan_Sag", new Vector2(56f, LowerCeilY), new Vector2(64f, 1f),
               new Color(0.13f, 0.11f, 0.10f));
 
-        // Ust kat
-        Solid(geometry, "UstKatZemin", new Vector2(60f, UpperFloorY), new Vector2(84f, 1f),
+        // Ust kat zemini x 24-88 — iki tarafta da saft acik
+        Solid(geometry, "UstKatZemin", new Vector2(56f, UpperFloorY), new Vector2(64f, 1f),
               new Color(0.16f, 0.13f, 0.12f));
-        Solid(geometry, "UstKatTavan", new Vector2(60f, UpperCeilY), new Vector2(84f, 1f),
+
+        // Cati saftlarin uzerini de ortuyor
+        Solid(geometry, "UstKatTavan", new Vector2(58f, UpperCeilY), new Vector2(88f, 1f),
               new Color(0.13f, 0.11f, 0.10f));
 
         // Evin iki ucu — disari cikilmasin
@@ -130,18 +139,21 @@ public static class AlevLevelBuilder
         Solid(platforms, "Mutfak_Tezgah",     new Vector2(38f, 2f),   new Vector2(6f, 0.5f), c);
         Solid(platforms, "Koridor_Dolap",     new Vector2(56f, 1.5f), new Vector2(3f, 0.5f), c);
         Solid(platforms, "Banyo_KuvetKenari", new Vector2(73f, 1.5f), new Vector2(4f, 0.5f), c);
-        Solid(platforms, "Cocuk_Ranza",       new Vector2(90f, 2.5f), new Vector2(5f, 0.5f), c);
+        Solid(platforms, "Cocuk_Ranza",       new Vector2(90f, 1.8f), new Vector2(5f, 0.5f), c);
 
-        // Tirmanis — cocuk odasindan ust kata
-        Solid(platforms, "Tirmanis_1",        new Vector2(92f, 3f),   new Vector2(3f, 0.5f), c);
-        Solid(platforms, "Tirmanis_2",        new Vector2(97f, 5f),   new Vector2(3f, 0.5f), c);
-        Solid(platforms, "Tirmanis_3",        new Vector2(93f, 7f),   new Vector2(3f, 0.5f), c);
-        Solid(platforms, "Tirmanis_UstGiris", new Vector2(96f, 8.5f), new Vector2(4f, 0.5f), c);
+        // ⚠️ ZIPLAMA LIMITI: jumpForce 15 + gravityScale 4 → maksimum ~2.87 birim.
+        // Platformlar arasi yukselme farkini 1.8 birimde tutuyoruz ki rahat olsun.
+        // Eski degerlerde fark 3.25'ti, yani fiziken imkansizdi.
+        // Zikzak dizilim: ust uste degil, saga-sola alternatif.
+        Solid(platforms, "Tirmanis_1", new Vector2(95f, 3.6f), new Vector2(3f, 0.5f), c);
+        Solid(platforms, "Tirmanis_2", new Vector2(91f, 5.4f), new Vector2(3f, 0.5f), c);
+        Solid(platforms, "Tirmanis_3", new Vector2(95f, 7.2f), new Vector2(3f, 0.5f), c);
+        Solid(platforms, "Tirmanis_4", new Vector2(90f, 8.9f), new Vector2(3f, 0.5f), c);
 
-        // Inis — ust kattan cikis holune
-        Solid(platforms, "Inis_1",            new Vector2(22f, 7f),   new Vector2(3f, 0.5f), c);
-        Solid(platforms, "Inis_2",            new Vector2(18f, 4.5f), new Vector2(3f, 0.5f), c);
-        Solid(platforms, "Inis_3",            new Vector2(21f, 2f),   new Vector2(3f, 0.5f), c);
+        // Inis — ust kattan (sol kenar x=24) cikis holune. Saft x 14-24 arasi.
+        Solid(platforms, "Inis_1", new Vector2(21f, 6.5f), new Vector2(3f, 0.5f), c);
+        Solid(platforms, "Inis_2", new Vector2(17f, 4.3f), new Vector2(3f, 0.5f), c);
+        Solid(platforms, "Inis_3", new Vector2(20f, 2.1f), new Vector2(3f, 0.5f), c);
     }
 
     // ==================================================================
@@ -303,7 +315,7 @@ public static class AlevLevelBuilder
         (SpawnMarker.Kind.FloorFire, new Vector2(76f, 0.5f), "Banyo"),
 
         // Ust kat, Karabas'li bolum — 8 birim arayla, kopek sonduruyor
-        (SpawnMarker.Kind.FloorFire, new Vector2(88f, 9.5f), "Karabas'li bolum 1/6"),
+        (SpawnMarker.Kind.FloorFire, new Vector2(86f, 9.5f), "Karabas'li bolum 1/6"),
         (SpawnMarker.Kind.FloorFire, new Vector2(80f, 9.5f), "Karabas'li bolum 2/6"),
         (SpawnMarker.Kind.FloorFire, new Vector2(72f, 9.5f), "Karabas'li bolum 3/6"),
         (SpawnMarker.Kind.FloorFire, new Vector2(64f, 9.5f), "Karabas'li bolum 4/6"),
@@ -347,9 +359,12 @@ public static class AlevLevelBuilder
             return;
         }
 
+        // Bunlar SEVIYENIN sinirlari, kameranin degil. CameraFollow kendi
+        // gorus genisligini hesaplayip iceri cekiyor — boylece farkli ekran
+        // oranlarinda (itch.io 960x600 vs 16:9) dogru calisiyor.
         follow.useBounds = true;
-        follow.minBounds = new Vector2(10f, 2f);
-        follow.maxBounds = new Vector2(90f, 10f);
+        follow.minBounds = new Vector2(-1f, -6f);
+        follow.maxBounds = new Vector2(101f, 17f);
     }
 
     static void MovePlayerToStart()
