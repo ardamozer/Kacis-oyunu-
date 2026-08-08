@@ -76,8 +76,26 @@ Tavandan yanan kirişler düşer. **Suyla sönmez, ezilerek ölmez — sadece ka
   çeşitlilik katar.
 - Yanan ev temasına birebir oturuyor.
 
-Oyuncu yaklaşınca **ünlem uyarısı** çıkar, ~0.8 sn sonra düşer. Telegraflı tehlike
-adildir; telegrafsızı sinir bozar.
+#### Oyuncu nasıl anlayacak — 4 katmanlı uyarı
+
+Tavana ünlem koymak yetmez: oyuncu **yere** bakar, ve ünlem "nereye düşeceğini"
+söylemez. Oyuncunun üç şeyi bilmesi lazım — *bir şey düşüyor / NEREYE / NE ZAMAN* —
+ve tek işaret üçünü birden veremez.
+
+| Katman | Neyi anlatır | Nasıl yapılır |
+|---|---|---|
+| **1. Yer işareti** ⭐ | **NEREYE** | Düşeceği noktada zeminde turuncu bir leke/parantez. Script zemine raycast atıp kendi konumlandırıyor. **En önemli katman bu.** |
+| **2. Hızlanan yanıp sönme** | **NE ZAMAN** | Saniyede 3'ten 14'e çıkar. Oyuncu sayaç okumadan "birazdan" olduğunu anlar. |
+| **3. Kirişin titremesi + toz** | Tehdit yukarıda | Kiriş sona doğru artan şiddetle titrer, tavandan toz döker |
+| **4. Çatırtı sesi** | Erken uyarı | **Bakmıyorken bile duyulur.** Ses en güçlü uyarı kanalı. |
+
+Yer işareti **düşme sırasında da açık kalır** — çarpma anına kadar nereye ineceğini
+göstermeye devam eder.
+
+Uyarı süresi **1 saniye.** Kısaltırsanız haksız olur.
+
+**Renk dili:** yer işareti ateşle aynı turuncu olsun. Oyuncu bu oyunda turuncuyu
+"tehlike" diye öğreniyor, yeni bir renk öğretmeyin.
 
 Yere indikten sonra zararsız bir enkaz olur, birkaç saniye durup söner.
 
@@ -201,11 +219,42 @@ yerde tanışmalı. Dar yerde tanışırsa haksızlık hisseder.
 
 Eski tasarım "arkadan büyük ateş çıkar, köpek atlar" idi. **Düşen tahtayla daha iyi:**
 
-1. Oyuncu yürürken tepeden bir kiriş düşmeye başlar
-2. **UYARI ÜNLEMİ ÇIKMAZ** — `DropNow(false)` ile çağrılır
-3. Karabaş oyuncuyu iter (oyuncu ~2 birim yana kayar, kontrol alınmış durumda)
-4. Kiriş köpeğin üstüne düşer
-5. 3 saniye sessizlik, yerde tasma kalır
+### Görsel gramer: köpek oyuncunun YERİNE geçmeli
+
+Yanında ölürse **kaza**, yerine geçerse **fedakârlık.** Sahnenin başarısı buna bağlı.
+
+### Kare kare akış
+
+| sn | Ne olur |
+|---|---|
+| **0.0** | Tetikleyici. `CanControl = false`, oyuncu durur. Kiriş hazırlanır — **ünlem yok, yer işareti yok, çatırtı yok** |
+| **0.3** | **Karabaş bir kez havlar.** Keskin, tek. Tek uyarı bu, ve zaten geç |
+| **0.4** | **Köpek koşarak oyuncunun önüne geçer** ← sahnenin en önemli karesi |
+| **0.7** | `ForceMoveTo` ile oyuncu ~2 birim yana kayar; köpek onun durduğu noktaya geçer |
+| **0.9** | `debris.DropNow(false)` — kiriş köpeğin üstüne düşer |
+| **1.0** | `AudioListener.volume = 0` · ekran sarsılır · toz bulutu köpeği örter |
+| **1.0–4.0** | **3 saniye hiçbir şey olmaz.** Kamera sabit, ses yok |
+| **4.0** | Toz dağılır, yerde **tasma** kalır ve hafifçe parlar |
+| **4.5** | Ses geri gelir, `CanControl = true` |
+
+### Neden bu detaylar
+
+- **Çatırtı sesi KOYMAYIN.** Çevre uyarırsa oyuncu "duymuştum, kaçabilirdim" der.
+  **Köpek uyarırsa** mesaj değişir: *senin fark etmediğini o fark etti.* Ve bu,
+  Karabaş'ın oyundaki son sesi olur.
+- **Öne geçmesi görülmeli.** Köpek oyun boyunca hep arkanızda yürüdü; ilk kez
+  önünüze geçiyor. O hareket tek başına "bir şey yapıyor" diyor.
+- **Kontrol önce alınır.** Oyuncu kendi tuşuyla kaçarsa fedakârlık olmaz.
+- **Kamera kesmeyin, zoom yapmayın.** Sabit kamera + sessizlik hem bedava hem
+  daha güçlü. Bu sahnede yapılacak en pahalı hata "havalı" yapmaya çalışmaktır.
+- **Kan yok.** Toz örter, sprite kapanır, toz dağılınca tasma kalır.
+
+### Kişi A'nın sağladığı yardımcı
+
+```csharp
+controller.CanControl = false;
+yield return controller.ForceMoveTo(hedefX, 0.25f);   // kopek itiyor
+```
 
 ### Neden uyarı çıkmamalı — bu kritik
 
