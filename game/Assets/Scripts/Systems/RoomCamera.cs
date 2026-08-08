@@ -40,7 +40,7 @@ public class RoomCamera : MonoBehaviour
 
     float transitionTimer;
     Vector3 transitionFrom;
-    float velocityX;
+    float velocityX, velocityY;
 
     void Awake()
     {
@@ -65,8 +65,8 @@ public class RoomCamera : MonoBehaviour
         CurrentRoom = FindRoomFor(target != null ? target.position : Vector3.zero);
         if (CurrentRoom != null)
         {
-            transform.position = new Vector3(DesiredX(CurrentRoom), CurrentRoom.Center.y,
-                                             transform.position.z);
+            Vector2 p = DesiredPos(CurrentRoom);
+            transform.position = new Vector3(p.x, p.y, transform.position.z);
         }
     }
 
@@ -97,8 +97,9 @@ public class RoomCamera : MonoBehaviour
                 controller.CanControl = false;
         }
 
-        float goalX = DesiredX(CurrentRoom);
-        float goalY = CurrentRoom.Center.y;
+        Vector2 goal2 = DesiredPos(CurrentRoom);
+        float goalX = goal2.x;
+        float goalY = goal2.y;
 
         if (transitionTimer > 0f)
         {
@@ -117,31 +118,36 @@ public class RoomCamera : MonoBehaviour
         }
         else
         {
-            // ---- Oda icinde yatay takip ----
-            // Dikeyde HIC oynamiyoruz: oda yuksekligi = ekran yuksekligi,
-            // yani zeminin alti veya tavanin ustu asla gorunmez.
+            // ---- Oda icinde takip ----
+            // Kucuk odalarda (yukseklik = ekran yuksekligi) dikey hic oynamaz.
+            // Buyuk odalarda (Salon, Cocuk odasi — iki kat yuksek) kayar,
+            // ama gorus alani oda sinirini asmaz.
             float x = Mathf.SmoothDamp(transform.position.x, goalX, ref velocityX, followSmooth);
-            transform.position = new Vector3(x, goalY, transform.position.z);
+            float y = Mathf.SmoothDamp(transform.position.y, goalY, ref velocityY, followSmooth);
+            transform.position = new Vector3(x, y, transform.position.z);
         }
     }
 
     /// <summary>
-    /// Kameranin bu odadaki yatay konumu: oyuncuyu takip eder ama
-    /// gorus alani odanin disina tasmayacak sekilde kisitlanir.
+    /// Kameranin bu odadaki konumu: oyuncuyu takip eder ama gorus alani
+    /// odanin disina tasmayacak sekilde kisitlanir.
+    ///
+    /// Oda ekran kadarsa eksen kilitlenir (hic oynamaz), buyukse kayar.
+    /// Boylece kucuk odalar sabit cerceve, Salon gibi buyuk odalar
+    /// gezilebilir alan gibi hissettirir.
     /// </summary>
-    float DesiredX(Room room)
+    Vector2 DesiredPos(Room room)
     {
-        float halfW = (cam != null && cam.orthographic)
-            ? cam.orthographicSize * cam.aspect
-            : 10f;
+        float halfH = (cam != null && cam.orthographic) ? cam.orthographicSize : 7f;
+        float halfW = (cam != null && cam.orthographic) ? halfH * cam.aspect : 12f;
 
-        float min = room.MinX + halfW;
-        float max = room.MaxX - halfW;
+        float minX = room.MinX + halfW, maxX = room.MaxX - halfW;
+        float minY = room.MinY + halfH, maxY = room.MaxY - halfH;
 
-        // Oda ekrandan darsa ortala.
-        if (min > max) return room.Center.x;
+        float x = minX > maxX ? room.Center.x : Mathf.Clamp(target.position.x, minX, maxX);
+        float y = minY > maxY ? room.Center.y : Mathf.Clamp(target.position.y, minY, maxY);
 
-        return Mathf.Clamp(target.position.x, min, max);
+        return new Vector2(x, y);
     }
 
     Room FindRoomFor(Vector3 pos)
