@@ -36,7 +36,7 @@ public static class AlevRefreshB
         var floorFires = CapturePositions<FloorFire>();
         var dogs = CapturePositions<DogCompanion>();
 
-        bool hadEnding = Object.FindFirstObjectByType<EndingSequence>() != null;
+        bool hadEnding = Object.FindFirstObjectByType<EndingSequence>(FindObjectsInactive.Include) != null;
 
         // 2) Eskileri sil. Kopegin cocugu olan TrappedFire de gider,
         //    ayrica silmeye gerek yok.
@@ -89,7 +89,7 @@ public static class AlevRefreshB
     {
         var list = new List<Placed>();
 
-        foreach (T c in Object.FindObjectsByType<T>(FindObjectsSortMode.None))
+        foreach (T c in Object.FindObjectsByType<T>(FindObjectsInactive.Include, FindObjectsSortMode.None))
         {
             // Sadece KOK objeleri say. TrappedFire gibi cocuklar ebeveyniyle
             // birlikte gelir; ayrica kaydedersek ikinci kez kurulur.
@@ -112,7 +112,7 @@ public static class AlevRefreshB
 
     static void DestroyAll<T>() where T : Component
     {
-        foreach (T c in Object.FindObjectsByType<T>(FindObjectsSortMode.None))
+        foreach (T c in Object.FindObjectsByType<T>(FindObjectsInactive.Include, FindObjectsSortMode.None))
         {
             if (c == null) continue;
 

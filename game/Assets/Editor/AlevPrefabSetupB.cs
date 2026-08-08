@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -532,13 +533,39 @@ public static class AlevPrefabSetupB
         AssetDatabase.CreateFolder(parent, leaf);
     }
 
+    /// <summary>
+    /// Verilen isimli objeleri sahneden siler.
+    ///
+    /// ⚠️ GameObject.Find KULLANMIYORUZ — o DEVRE DISI objeleri bulmuyor.
+    /// Final objelerinin cogu (Boss, BigDeathFlame, Collar, DogGhost,
+    /// DeathDebris) kurulur kurulmaz SetActive(false) oluyor. Find ile
+    /// arayinca "yok" saniliyor ve her calistirmada bir yenisi ekleniyordu
+    /// — F5 ile arka arkaya calistirinca sahne kopyalarla doluyordu.
+    ///
+    /// Bu yuzden sahne kokunden elle tarayip inaktifleri de yakaliyoruz.
+    /// </summary>
     static void RemoveIfExists(params string[] names)
     {
-        foreach (string n in names)
+        var wanted = new HashSet<string>(names);
+        var doomed = new List<GameObject>();
+
+        foreach (GameObject root in EditorSceneManager.GetActiveScene().GetRootGameObjects())
+            CollectByName(root.transform, wanted, doomed);
+
+        foreach (GameObject go in doomed)
+            if (go != null) Object.DestroyImmediate(go);
+    }
+
+    static void CollectByName(Transform t, HashSet<string> names, List<GameObject> into)
+    {
+        if (names.Contains(t.gameObject.name))
         {
-            GameObject go;
-            while ((go = GameObject.Find(n)) != null) Object.DestroyImmediate(go);
+            into.Add(t.gameObject);
+            return;   // cocuklarina inme — ebeveynle birlikte gidecekler
         }
+
+        for (int i = 0; i < t.childCount; i++)
+            CollectByName(t.GetChild(i), names, into);
     }
 
     // ---- Sprite uretimi ----
