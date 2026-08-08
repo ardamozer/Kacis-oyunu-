@@ -61,6 +61,15 @@ public static class AlevLevelBuilder
         GameObject old = GameObject.Find("Level");
         if (old != null) Object.DestroyImmediate(old);
 
+        // "Test Sahnesini Kur"dan kalan objeler evin uzerine biniyordu — temizle.
+        // Player, HUD ve CameraRig'e DOKUNMUYORUZ, onlar lazim.
+        foreach (string n in new[] { "Ground", "Platform", "Musluk", "Akvaryum",
+                                     "TestTarget_Su", "TestTarget_Ezme" })
+        {
+            GameObject leftover;
+            while ((leftover = GameObject.Find(n)) != null) Object.DestroyImmediate(leftover);
+        }
+
         var root = new GameObject("Level").transform;
         Undo.RegisterCreatedObjectUndo(root.gameObject, "Evi kur");
 
