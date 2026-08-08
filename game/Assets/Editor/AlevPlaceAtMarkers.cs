@@ -25,6 +25,9 @@ public static class AlevPlaceAtMarkers
     const string EnemyPrefabFolder = "Assets/Prefabs/Enemies";
     const string DogPrefabFolder = "Assets/Prefabs/Dog";
 
+    [MenuItem("ALEV/Kisi B — Prefablari Isaretlere Yerlestir", true)]
+    static bool PlaceAllValidate() => !EditorApplication.isPlaying;
+
     [MenuItem("ALEV/Kisi B — Prefablari Isaretlere Yerlestir", false, 22)]
     public static void PlaceAll()
     {
