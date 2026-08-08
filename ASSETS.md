@@ -141,6 +141,20 @@ Toplam ~10 satır kod, çizilmiş animasyondan neredeyse ayırt edilemez.
 | Ses efektleri | https://sfxr.me — 5 dakikada üretilir |
 | Havlama sesi | https://freesound.org — **lisansı not alın** |
 
+### Şu an projede olan sesler (yer tutucu)
+
+`ALEV → Kisi B — Sesleri Uret` komutu `Assets/Audio/Generated/` altına üç
+WAV yazıyor: `DogWhine`, `DogBark`, `FireExtinguish`.
+
+**Bunlar kodla sentezlendi, indirilmedi — telif sorunu yok, itch.io
+kredilerinde anılmaları gerekmiyor.** Ama yer tutucular: havlama ve
+inilti sentezle ikna edici olmuyor, insan kulağı hayvan sesini çok iyi
+tanıyor.
+
+Gerçeklerini freesound.org'dan alıp **aynı isimlerle** üzerine yazın —
+hiçbir kod değişmesi gerekmiyor. O zaman **lisansı buraya not edin**,
+itch.io sayfasında kredilenmesi gerekecek.
+
 ---
 
 ## ⚠️ Unity import ayarları — atlanırsa pixel art bulanık görünür
