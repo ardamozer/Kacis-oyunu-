@@ -71,10 +71,16 @@ public static class AlevAtmosphereSetup
         if (vSprite != null) vignetteImage.sprite = vSprite;
 
         vignetteImage.color = new Color(0.08f, 0.03f, 0.01f, 0.45f); // Koyu kahve/siyah vinyet kenarlari
-        vignetteImage.raycastTarget = false;
-        vignetteGO.transform.SetSiblingIndex(1); // Overlay'in hemen ustunde
+        // 3. AmbientAtmosphere Bilesenini Ekle (ExecuteAlways ile CANLI GORUNUR)
+        AmbientAtmosphere aa = canvas.gameObject.GetComponent<AmbientAtmosphere>() ?? canvas.gameObject.AddComponent<AmbientAtmosphere>();
+        aa.overlayImage = overlayImage;
+        aa.vignetteImage = vignetteImage;
+        aa.overlayColor = new Color(1f, 0.45f, 0.08f, 0.25f);
+        aa.vignetteColor = new Color(0.08f, 0.03f, 0.01f, 0.60f);
+        aa.EnsureAtmosphere();
 
         EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
-        Debug.Log("<b>[ALEV]</b> Atmosfer Katmani ve Vinyet kuruldu! Tum sprite'lar yanan evin akkor renginde birlesitirildi.");
+        Selection.activeGameObject = canvas.gameObject;
+        Debug.Log("<b>[ALEV]</b> Atmosfer Katmani ve Vinyet kuruldu! Canvas secildi, Inspector'dan 'AmbientAtmosphere' bilesenindeki renkleri canli degistirebilirsiniz.");
     }
 }
