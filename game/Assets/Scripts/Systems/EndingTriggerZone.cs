@@ -29,6 +29,18 @@ public class EndingTriggerZone : MonoBehaviour
     [Tooltip("Bir kere tetiklendikten sonra devre disi kalsin. Acik birakin.")]
     public bool oneShot = true;
 
+    [Header("Onkosullar — SIRADISILIK KORUMASI")]
+    [Tooltip("Oyuncunun en az bu kadar anahtari olmali. Kacis yoluna erken " +
+             "ulasan oyuncu final sahnesini yanlis sirada tetiklemesin.")]
+    public int requiredKeyCount = 0;
+
+    [Tooltip("Bu bolge tetiklenmeden burasi calismaz. Ornek: boss sahnesi, " +
+             "kopegin olumunu bekler.")]
+    public EndingTriggerZone requires;
+
+    /// <summary>Bu bolge tetiklendi mi? Baska bolgeler onkosul olarak okur.</summary>
+    public bool HasFired => fired;
+
     bool fired;
 
     void Reset()
@@ -46,6 +58,27 @@ public class EndingTriggerZone : MonoBehaviour
     {
         if (fired && oneShot) return;
         if (!other.CompareTag("Player")) return;
+
+        // ---- Siradisilik korumasi ----
+        // Oyuncu beklenmedik bir yoldan buraya ulastiysa sahneyi tetiklemesin.
+        // Sessizce gecmek, oyunu yanlis sirada kirmaktan iyidir.
+        if (requires != null && !requires.HasFired)
+        {
+            Debug.Log($"[EndingTriggerZone] {name}: onkosul saglanmadi " +
+                      $"({requires.name} henuz tetiklenmedi), atlandi.");
+            return;
+        }
+
+        if (requiredKeyCount > 0)
+        {
+            var inv = other.GetComponentInParent<KeyInventory>();
+            if (inv == null || inv.Count < requiredKeyCount)
+            {
+                Debug.Log($"[EndingTriggerZone] {name}: yeterli anahtar yok " +
+                          $"({inv?.Count ?? 0}/{requiredKeyCount}), atlandi.");
+                return;
+            }
+        }
 
         if (ending == null)
         {
