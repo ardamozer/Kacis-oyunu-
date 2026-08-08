@@ -54,14 +54,32 @@ public class DogCompanion : MonoBehaviour
     public float stompHopHeight = 0.3f;
     public float stompHopDuration = 0.3f;
 
+    [Header("Ses — acilis havlamasi")]
+    [Tooltip("Oyun baslar baslamaz bir kez havlar: 'ileride bir kopek var'.\n" +
+             "PLAN.md: oyuncu kopegi GORMEDEN once onu aramaya baslamali.")]
+    public bool openingBark = true;
+    [Tooltip("Oyun basladiktan kac saniye sonra havlasin. Cok erken olursa\n" +
+             "oyuncu daha kontrolleri kavramadan kacirir.")]
+    public float openingBarkDelay = 1.5f;
+    [Tooltip("Acilis havlamasi mesafeden BAGIMSIZ bu seviyede calar —\n" +
+             "amaci duyulmak. Uzakta oldugu icin kisilirsa ise yaramaz.")]
+    [Range(0f, 1f)] public float openingBarkVolume = 0.5f;
+
     [Header("Ses — inleme (Stuck halindeyken)")]
     public AudioSource audioSource;
     public AudioClip whineClip;
     [Tooltip("Bu mesafeden yakinken ses tam seviyede calar.")]
-    public float minDistanceForMaxVolume = 2f;
-    [Tooltip("Bu mesafeden sonra hic duyulmaz.")]
-    public float maxHearDistance = 15f;
-    public float whineInterval = 3f;
+    public float minDistanceForMaxVolume = 4f;
+    [Tooltip("Bu mesafeden sonra hic duyulmaz.\n" +
+             "Oda genisligi ~20 birim; 32 = bir onceki odadan kisik duyulur.")]
+    public float maxHearDistance = 32f;
+    [Tooltip("Iki inleme arasindaki ortalama sure. Buyuk = daha seyrek,\n" +
+             "daha rahatsiz etmeyen. Kopek surekli inlerse kulak aliskanlik\n" +
+             "yapiyor ve etki kayboluyor.")]
+    public float whineInterval = 7f;
+    [Tooltip("Sureye eklenen rastgele sapma (+/-). Tam duzenli araliklarla\n" +
+             "inleyen sey canli degil metronom gibi duyuluyor.")]
+    public float whineIntervalJitter = 2.5f;
 
     [Header("Ses — mutlu havlama (Freed / Petted)")]
     public AudioClip happyBarkClip;
@@ -117,11 +135,36 @@ public class DogCompanion : MonoBehaviour
             if (found != null) player = found.transform;
         }
 
-        whineTimer = whineInterval;
+        whineTimer = NextWhineDelay();
 
         // Baslangicta da zemine otursun — sahneye goz karariyla yerlestirilmis
         // olabilir, havada durmasin.
         SnapToGround(true);
+
+        if (openingBark) StartCoroutine(OpeningBarkRoutine());
+    }
+
+    /// <summary>
+    /// Oyunun ilk saniyelerinde bir kez havlar.
+    ///
+    /// Mesafeye gore KISILMIYOR: amaci "ileride bir kopek var" demek.
+    /// Uzakta oldugu icin sessizlestirirsek oyuncu hic duymaz ve
+    /// PLAN.md'nin "kopegi gormeden once ara" akisi hic baslamaz.
+    /// </summary>
+    IEnumerator OpeningBarkRoutine()
+    {
+        yield return new WaitForSeconds(openingBarkDelay);
+
+        // Arada kurtarilmissa (test sirasinda olur) acilis havlamasi anlamsiz.
+        if (state != State.Stuck) yield break;
+
+        PlayVaried(happyBarkClip, openingBarkVolume);
+    }
+
+    /// <summary>Bir sonraki inlemeye kadar gecen sure — sabit degil, sapmali.</summary>
+    float NextWhineDelay()
+    {
+        return Mathf.Max(0.5f, whineInterval + Random.Range(-whineIntervalJitter, whineIntervalJitter));
     }
 
     void Update()
@@ -170,14 +213,20 @@ public class DogCompanion : MonoBehaviour
 
         whineTimer -= Time.deltaTime;
         if (whineTimer > 0f) return;
-        whineTimer = whineInterval;
+        whineTimer = NextWhineDelay();
 
         float dist = Vector3.Distance(player.position, transform.position);
         if (dist > maxHearDistance) return;
 
         // Yakinsa tam ses, uzaklastikca sifira dogru soner.
-        float t = Mathf.InverseLerp(maxHearDistance, minDistanceForMaxVolume, dist);
-        PlayVaried(whineClip, Mathf.Clamp01(t));
+        // maxHearDistance ~32 (bir onceki oda) oldugu icin komsu odada
+        // %20-30 seviyesinde, "var ama uzakta" hissi veriyor.
+        float t = Mathf.Clamp01(Mathf.InverseLerp(maxHearDistance, minDistanceForMaxVolume, dist));
+
+        // Neredeyse duyulmayacak kadar kisiksa hic calma — sesi bosa harcama.
+        if (t < 0.05f) return;
+
+        PlayVaried(whineClip, t);
     }
 
     /// <summary>
