@@ -13,8 +13,24 @@ public class WaterGun : MonoBehaviour
     [Tooltip("Saniyede harcanan su. 15 = 100 birimlik depo ~7 saniye dayanir.")]
     public float waterPerSecond = 15f;
 
-    [Tooltip("Saniyede verilen hasar. Dusmanlarin cani buna gore ayarlanir.")]
-    public float damagePerSecond = 20f;
+    // ================= DENGE OLCEGI — IKI KISI DE BUNA GORE AYARLASIN =================
+    //
+    //   damagePerSecond = 40  →  dusmanin cani, olmesi gereken SANIYE x 40 olur.
+    //
+    //   Dusman tipi            Can    Olme suresi
+    //   ---------------------  -----  -----------
+    //   Zayif duvar canavari     40      1.0 sn
+    //   Normal duvar canavari    60      1.5 sn
+    //   Guclu / kalabalik icin   80      2.0 sn
+    //   Karabas'i orten ates     50      1.25 sn   (kurtarma ani, uzun surmemeli)
+    //   Boss                      —      hic olmez (TakeWater can azaltmaz)
+    //
+    //   2 saniyeyi ASMAYIN. Jam oyununda tek dusmana 3 saniye su tutmak
+    //   agir hissettiriyor — oyuncu sikiliyor ve kacmayi tercih ediyor.
+    // ==================================================================================
+    [Tooltip("Saniyede verilen hasar. Dusman canlari buna gore ayarlanir — " +
+             "koddaki denge olcegi tablosuna bakin.")]
+    public float damagePerSecond = 40f;
 
     [Header("Menzil")]
     [Tooltip("Suyun ulastigi mesafe.")]
