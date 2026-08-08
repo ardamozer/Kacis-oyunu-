@@ -111,11 +111,7 @@ public static class AlevCurtainSetup
                 continue;
             }
 
-            // ---- Zemini bul ----
-            RaycastHit2D hit = Physics2D.Raycast(
-                new Vector2(x, room.MaxY), Vector2.down, room.size.y + 4f, groundMask);
-
-            float groundY = hit.collider != null ? hit.point.y : room.MinY;
+            float groundY = FindFloor(x, room, groundMask);
 
             // ⚠️ ZEMINDEN TAVANA. Ilk surumde 5 birimdi ve oyuncu ustunden
             // atliyordu: odalarda 2.5 birim yuksekliginde mobilyalar var,
@@ -177,6 +173,28 @@ public static class AlevCurtainSetup
                       ? "\n\nAtlanan odaya perde istiyorsaniz o segmente SONSUZ bir su " +
                         "kaynagi (musluk/kuvet) ekleyip komutu tekrar calistirin."
                       : ""));
+    }
+
+    /// <summary>
+    /// Odanin GERCEK zeminini bulur.
+    ///
+    /// ⚠️ Tek bir Raycast YETMIYOR: odalarin tavani da Ground layer'inda
+    /// (Tavan_Antre, Koridor_AlcakTavan, Tavan_CocukOdasi...). Yukaridan
+    /// asagi atilan isin once TAVANA carpiyor ve perde tavanin ustune
+    /// kuruluyordu — ekranda havada duran alevler bu yuzden cikti.
+    ///
+    /// Cozum: butun temaslari topla, EN ALTTAKINI zemin say.
+    /// </summary>
+    static float FindFloor(float x, Room room, int groundMask)
+    {
+        RaycastHit2D[] hits = Physics2D.RaycastAll(
+            new Vector2(x, room.MaxY + 1f), Vector2.down, room.size.y + 8f, groundMask);
+
+        float lowest = float.PositiveInfinity;
+        foreach (RaycastHit2D h in hits)
+            if (h.point.y < lowest) lowest = h.point.y;
+
+        return float.IsPositiveInfinity(lowest) ? room.MinY : lowest;
     }
 
     /// <summary>Verilen x'ten onceki son geri-donulmez nokta.</summary>

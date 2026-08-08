@@ -70,18 +70,24 @@ public static class AlevCheckpointSetup
             // oyuncu bir onceki odadayken tetikleyebiliyor.
             float x = room.MinX + 3f;
 
-            // Zemini bul: odanin tavanindan asagi isin at.
-            Vector2 from = new Vector2(x, room.MaxY);
-            RaycastHit2D hit = Physics2D.Raycast(from, Vector2.down, room.size.y + 4f, groundMask);
+            // ⚠️ Tek Raycast YETMIYOR: odalarin TAVANI da Ground layer'inda
+            // (Tavan_Antre, Koridor_AlcakTavan...). Yukaridan atilan isin
+            // once tavana carpiyor ve oyuncu catida doguyordu.
+            // Butun temaslari topla, EN ALTTAKINI zemin say.
+            RaycastHit2D[] hits = Physics2D.RaycastAll(
+                new Vector2(x, room.MaxY + 1f), Vector2.down, room.size.y + 8f, groundMask);
+
+            float lowest = float.PositiveInfinity;
+            foreach (RaycastHit2D h in hits)
+                if (h.point.y < lowest) lowest = h.point.y;
 
             float y;
-            if (hit.collider != null)
+            if (!float.IsPositiveInfinity(lowest))
             {
-                y = hit.point.y + 1f;      // oyuncu ~1.6 boyunda, merkezi bu kadar yukarida
+                y = lowest + 1f;      // oyuncu ~1.6 boyunda, merkezi bu kadar yukarida
             }
             else
             {
-                // Zemin bulunamadi — odanin alt kenarinin biraz ustune koy.
                 y = room.MinY + 1.5f;
                 floating++;
                 log.Append("\n  ⚠ ").Append(room.roomName)
