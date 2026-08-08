@@ -120,6 +120,30 @@ public class PlayerHealth : MonoBehaviour
 
     void ReloadScene()
     {
+        // Checkpoint alinmissa sahneyi YENIDEN YUKLEMIYORUZ — oyuncuyu
+        // son checkpoint'e tasiyoruz. Yeniden yukleseydik alinan anahtarlar
+        // ve sondurulmus atesler de sifirlanir, oyuncu kilitli kapinin
+        // onunde anahtarsiz kalabilirdi.
+        //
+        // (Kisi B ekledi. Checkpoint bileseni sahnede yoksa bu satir
+        //  false doner ve eski davranis aynen calisir.)
+        if (CheckpointManager.TryRespawn(this)) return;
+
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
+    /// <summary>
+    /// Checkpoint sistemi cagirir: oyuncuyu yeniden oynanabilir hale getirir.
+    /// Kisa bir dokunulmazlik veriyoruz, yoksa oyuncu doğduğu anda
+    /// ustundeki atesten tekrar olebilir.
+    /// </summary>
+    public void Revive()
+    {
+        dead = false;
+        currentHealth = maxHealth;
+        invulnerableUntil = Time.time + invulnerabilityTime;
+        DamageFlash = 0f;
+
+        if (controller != null) controller.CanControl = true;
     }
 }
