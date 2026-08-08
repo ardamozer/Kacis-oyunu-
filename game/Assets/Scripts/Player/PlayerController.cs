@@ -29,8 +29,15 @@ public class PlayerController : MonoBehaviour
     public float jumpBufferTime = 0.12f;
     [Tooltip("Duserken yercekimi carpani. Zipla yayvan degil, tokat gibi hissedilsin.")]
     public float fallMultiplier = 3f;
-    [Tooltip("Tusu erken birakinca ziplayis kisalir. Degisken yukseklik bunu saglar.")]
-    public float lowJumpMultiplier = 5f;
+    [Tooltip("KAPALI = her ziplama ayni yukseklikte. Ogrenmesi kolay, " +
+             "hassas parkurlarda daha adil.\n" +
+             "ACIK = tusu erken birakinca alcak ziplarsiniz. Daha fazla " +
+             "kontrol verir ama alismasi gerekir.")]
+    public bool variableJumpHeight = true;
+
+    [Tooltip("Degisken yukseklik ne kadar sert olsun. Buyuk = tusu birakinca " +
+             "cok cabuk duser. 5 sertti, 2.5 daha affedici.")]
+    public float lowJumpMultiplier = 2.5f;
 
     [Header("Zemin Kontrolu")]
     [Tooltip("Karakterin ayaklarinin altina koydugunuz bos GameObject.")]
@@ -131,7 +138,7 @@ public class PlayerController : MonoBehaviour
             rb.linearVelocity += Vector2.up * Physics2D.gravity.y * (fallMultiplier - 1f) * Time.fixedDeltaTime;
         }
         // Yukari cikarken tus birakildiysa erken indir → degisken zipla yuksekligi.
-        else if (rb.linearVelocity.y > 0f && !Input.GetButton("Jump"))
+        else if (variableJumpHeight && rb.linearVelocity.y > 0f && !Input.GetButton("Jump"))
         {
             rb.linearVelocity += Vector2.up * Physics2D.gravity.y * (lowJumpMultiplier - 1f) * Time.fixedDeltaTime;
         }

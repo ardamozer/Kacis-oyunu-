@@ -515,6 +515,21 @@ public static class AlevLevelBuilder
         var boss = Zone("Tetik_BossSahnesi", 24f, 18.5f, 2f, 4f,
                         EndingTriggerZone.What.BossScene);
         boss.requires = death;        // once Karabas olmeli
+
+        // ---- CIKIS: oyunun kazanma noktasi ----
+        // Giris kapisinin oldugu yer. Boss cozulmeden calismaz.
+        var exit = new GameObject("Tetik_EvdenCikis");
+        exit.transform.SetParent(triggers, false);
+        exit.transform.position = new Vector3(1.5f, 1.5f, 0f);
+        var ecol = exit.AddComponent<BoxCollider2D>();
+        ecol.isTrigger = true;
+        ecol.size = new Vector2(3f, 4f);
+        exit.AddComponent<EscapeTrigger>();
+
+        // Final ekranini yoneten obje
+        var ge = new GameObject("GameEnding");
+        ge.transform.SetParent(triggers, false);
+        ge.AddComponent<GameEnding>();
     }
 
     static EndingTriggerZone Zone(string name, float x, float y, float w, float h,
