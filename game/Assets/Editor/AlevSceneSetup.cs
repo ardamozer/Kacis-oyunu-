@@ -165,6 +165,7 @@ public static class AlevSceneSetup
 
         player.AddComponent<PlayerHealth>();
         player.AddComponent<PetInteraction>();   // E tusu — Karabas'i sevme
+        player.AddComponent<KeyInventory>();     // toplanan anahtarlar
 
         return player;
     }
@@ -297,6 +298,17 @@ public static class AlevSceneSetup
             hearts[i] = h.GetComponent<Image>();
         }
         hud.hearts = hearts;
+
+        // ---- Anahtarlar ----
+        hud.inventory = player.GetComponent<KeyInventory>();
+        var keyIcons = new Image[3];
+        for (int i = 0; i < 3; i++)
+        {
+            RectTransform k = NewUIImage($"Key{i}", canvasGO.transform, square, Color.white);
+            Anchor(k, new Vector2(0f, 1f), new Vector2(46f + i * 46f, -160f), new Vector2(34f, 34f));
+            keyIcons[i] = k.GetComponent<Image>();
+        }
+        hud.keyIcons = keyIcons;
 
         // ---- Ekran kenari alev (vinyet) ----
         Sprite vignette = GetOrCreateVignetteSprite();
