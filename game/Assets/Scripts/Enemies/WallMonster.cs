@@ -38,6 +38,9 @@ public class WallMonster : MonoBehaviour, IWaterDamageable
     public float fireInterval = 2f;
     [Tooltip("Tam cikinca ilk alevi atmadan onceki bekleme. Oyuncuya tepki verme sansi tanir.")]
     public float firstShotDelay = 0.7f;
+    [Tooltip("ACIK: alevi oyuncunun bulundugu yone atar, iki yone de ates edebilir.\n" +
+             "KAPALI: her zaman 'facing' yonune atar (duvara gomulu, tek yone bakan canavar).")]
+    public bool aimAtPlayer = true;
 
     [Header("Can")]
     [Tooltip("WaterGun saniyede ~40 su verir. 40 can = ~1 saniye sikma. Daha uzun dayansin istersen buyut.")]
@@ -102,6 +105,10 @@ public class WallMonster : MonoBehaviour, IWaterDamageable
 
         bool playerNear = IsPlayerInRange();
 
+        // Sprite ates edecegi yone baksin — yoksa sola bakip saga ates eder.
+        if (sprite != null && aimAtPlayer && player != null)
+            sprite.flipX = ShootDirection() < 0;
+
         // Cikma / girme: tek satirda, durum makinesi olmadan.
         Vector3 target = playerNear ? shownPos : hiddenPos;
         transform.position = Vector3.MoveTowards(transform.position, target, emergeSpeed * Time.deltaTime);
@@ -131,15 +138,30 @@ public class WallMonster : MonoBehaviour, IWaterDamageable
         return (player.position - shownPos).sqrMagnitude <= detectRange * detectRange;
     }
 
+    /// <summary>Alevin gidecegi yon: +1 sag, -1 sol.</summary>
+    int ShootDirection()
+    {
+        if (!aimAtPlayer || player == null) return facing;
+        return player.position.x >= transform.position.x ? 1 : -1;
+    }
+
     void Shoot()
     {
         if (flamePrefab == null || firePoint == null) return;
 
-        GameObject flame = Instantiate(flamePrefab, firePoint.position, Quaternion.identity);
+        int dir = ShootDirection();
+
+        // FirePoint govdenin bir yaninda duruyor. Ters yone ates ederken onu
+        // aynalamazsak alev canavarin govdesinin ICINDEN cikiyor gibi gorunur.
+        // firePoint.position (dunya konumu) kullaniyoruz ki olcek de hesaba katilsin.
+        Vector3 offset = firePoint.position - transform.position;
+        if (offset.x != 0f && Mathf.Sign(offset.x) != dir) offset.x = -offset.x;
+
+        GameObject flame = Instantiate(flamePrefab, transform.position + offset, Quaternion.identity);
 
         // Alev kendi yonunu bilmiyor — biz veriyoruz.
         FlameProjectile projectile = flame.GetComponent<FlameProjectile>();
-        if (projectile != null) projectile.Launch(new Vector2(facing, 0f));
+        if (projectile != null) projectile.Launch(new Vector2(dir, 0f));
     }
 
     // ---- IWaterDamageable ----

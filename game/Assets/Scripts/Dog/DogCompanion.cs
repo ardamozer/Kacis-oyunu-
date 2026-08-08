@@ -189,6 +189,26 @@ public class DogCompanion : MonoBehaviour
         state = State.Following;
     }
 
+    /// <summary>
+    /// Belirtilen sure sonra takibi baslatir.
+    ///
+    /// ⚠️ Bekleme KOPEGIN uzerinde calisir, cagiranin uzerinde degil.
+    /// Sebep: sikismis ates sonunce kendini SetActive(false) yapiyor ve Unity
+    /// kapatilan bir objenin coroutine'lerini durduruyor. Beklemeyi orada
+    /// yaparsak StartFollowing hic calismiyor — kopek kurtulup yerinde
+    /// kaliyor. (Yasanmis bug, boyle bulundu.)
+    /// </summary>
+    public void StartFollowingAfter(float delay)
+    {
+        StartCoroutine(StartFollowingAfterRoutine(delay));
+    }
+
+    IEnumerator StartFollowingAfterRoutine(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        StartFollowing();
+    }
+
     void OnDrawGizmosSelected()
     {
         Gizmos.color = new Color(1f, 0.6f, 0.9f, 0.6f);

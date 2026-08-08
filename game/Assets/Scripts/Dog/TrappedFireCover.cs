@@ -102,17 +102,19 @@ public class TrappedFireCover : MonoBehaviour, IWaterDamageable
             yield return null;
         }
 
-        gameObject.SetActive(false);
-
         // Karabas serbest kaldi. Kisi A'nin kamera odaklanma efekti (PLAN.md
         // madde 6, "ilk kez ates sondurdugunde kamera bir an ona odaklansin")
-        // bu OnRescued cagrisini disaridan da dinleyebilir — burada sadece
-        // kopegin kendi durum gecisini garanti ediyoruz.
+        // bu OnRescued cagrisini disaridan da dinleyebilir.
+        //
+        // ⚠️ Gecikmeli takibi KOPEGE yaptiriyoruz. Burada "yield return
+        // WaitForSeconds" yazarsak, hemen asagidaki SetActive(false) bu
+        // coroutine'i oldurur ve kopek asla yurumez.
         if (dog != null)
         {
             dog.OnRescued();
-            yield return new WaitForSeconds(delayBeforeFollow);
-            dog.StartFollowing();
+            dog.StartFollowingAfter(delayBeforeFollow);
         }
+
+        gameObject.SetActive(false);
     }
 }

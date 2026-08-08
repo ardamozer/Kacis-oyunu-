@@ -7,10 +7,19 @@ using UnityEngine;
 /// Iki faz:
 ///   FAZ 1 (KUCUK) — bar doluyor. Zararsiz. Ustune ziplayip ezersen soner.
 ///   FAZ 2 (BUYUK) — bar doldu. Buyur, kizarir, DOKUNUNCA HASAR VERIR.
+///                   Varsayilan olarak ARTIK EZILEMEZ, sadece su sondurur.
 ///
-/// ⚠️ KILITLENME KURALI (PLAN.md kural 3): yer atesleri HER IKI FAZDA DA
-/// ziplayarak sondurulebilir. Su bitse bile oyuncu ilerleyebilmeli.
-/// Faz 2'de "artik ezilemez" YAPMAYIN — oyunu kilitler.
+/// ⚠️ SEVIYE TASARIMI SARTI — bunu okumadan seviye kurmayin.
+/// PLAN.md kural 3 "yer atesleri susuz oldurulebilir kalmali" diyordu; bu
+/// artik SADECE kucuk fazda gecerli. Buyumus ates su gerektiriyor, yani
+/// kilitlenme riski seviye tasarimina kaydi:
+///
+///   • Her odada oyuncunun ULASABILECEGI sonsuz su kaynagi (musluk/kuvet) olsun.
+///   • Buyumus bir ates TEK gecis yolunu kapatmasin — ya alternatif yol,
+///     ya da atesin arkasinda degil onunde bir musluk olsun.
+///
+/// Playtest'te oyuncu susuz + onunde buyumus ates ile sikisirsa,
+/// `grownCanBeStomped` alanini acin — tek tikta eski davranisa doner.
 ///
 /// FireMonster'a donusme ozelligi KESILDI (PLAN.md kesilecekler #3).
 /// Dolunca canavar dogmuyor, sadece buyuyup hasar veriyor.
@@ -33,6 +42,10 @@ public class FloorFire : MonoBehaviour, IStompable, IWaterDamageable
     [Tooltip("Ustunde durursan kac saniyede bir hasar alirsin.")]
     public float damageInterval = 1f;
     public Color grownColor = new Color(1f, 0.35f, 0.1f);
+    [Tooltip("Buyumus ates de ezilerek sondurulebilsin mi?\n" +
+             "KAPALI (varsayilan) = buyudukten sonra SADECE su sondurur.\n" +
+             "Playtest'te oyuncu susuz kalip sikisirsa bunu acin.")]
+    public bool grownCanBeStomped = false;
 
     [Header("Su")]
     [Tooltip("WaterGun saniyede ~40 verir. 25 can = ~0.6 saniye.")]
@@ -97,12 +110,16 @@ public class FloorFire : MonoBehaviour, IStompable, IWaterDamageable
 
     // ---- IStompable ----
 
+    /// <summary>Ezme su an bu atesi sondurur mu?</summary>
+    public bool CanBeStomped => !IsGrown || grownCanBeStomped;
+
     /// <summary>
     /// Kisi A'nin PlayerController'i, ustune dustugumuzu algilayinca cagirir.
-    /// HER IKI FAZDA DA soner — susuz ilerleme yolu budur.
+    /// Kucuk fazda soner; buyumus faz varsayilan olarak sonmez (sadece su).
     /// </summary>
     public void OnStomped()
     {
+        if (!CanBeStomped) return;
         Extinguish();
     }
 
@@ -166,10 +183,17 @@ public class FloorFire : MonoBehaviour, IStompable, IWaterDamageable
         // (Karabas zaten atesi sondurmek icin ustune atliyor.)
 
         // Ustunden ezerek geldiyse hasar verme — o ezme, PlayerController
-        // OnStomped'i zaten cagiracak ve ates sonecek.
-        foreach (ContactPoint2D contact in collision.contacts)
+        // OnStomped'i zaten cagirdi ve ates sondu.
+        //
+        // AMA ates ezilemez haldeyse bu muafiyet gecersiz: dev alevin ustune
+        // atlayan oyuncu yanmali, yoksa sondurulemeyen atesin ustunde bedava
+        // ziplayan bir platform gibi durur.
+        if (CanBeStomped)
         {
-            if (contact.normal.y >= 0.5f) return;
+            foreach (ContactPoint2D contact in collision.contacts)
+            {
+                if (contact.normal.y >= 0.5f) return;
+            }
         }
 
         if (Time.time < nextDamageTime) return;
