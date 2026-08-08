@@ -117,6 +117,7 @@ public static class AlevLevelBuilder
         ArkaKapi();
         BuildTriggers();
         BuildMarkers();
+        BuildFlameWallDirect();
         SetupCamera();
         MovePlayerToStart();
 
@@ -340,7 +341,7 @@ public static class AlevLevelBuilder
         Prop("Koridor_RafDirek", 177.5f, 3.2f, 0.3f, 1.6f, CProp2, -1);
 
         Fire("Koridor_Alev1", 156f, 1.3f, 2.1f, 3.3f);
-        Fire("Koridor_Alev2", 185f, 1.3f, 2.1f, 3.3f);
+        Fire("Koridor_Alev2", 182.5f, 1.3f, 2.1f, 3.3f);
 
         Key(KeyColor.Mor, 177.5f, 5.6f);
         Lock(KeyColor.Mor, 188f);
@@ -558,6 +559,36 @@ public static class AlevLevelBuilder
         z.trigger = what;
         z.oneShot = true;
         return z;
+    }
+
+    public static void BuildFlameWallDirect()
+    {
+        if (GameObject.Find("AlevDuvari") != null || Object.FindFirstObjectByType<FlameWallGate>() != null)
+            return;
+
+        var root = new GameObject("AlevDuvari");
+        if (triggers != null) root.transform.SetParent(triggers, false);
+        root.transform.position = new Vector3(188f, 3.6f, 0f);
+
+        var blocker = root.AddComponent<BoxCollider2D>();
+        blocker.size = new Vector2(2.6f, 5f);
+
+        Sprite flame = flameSprite ?? GetOrCreateFlameSprite();
+
+        for (int i = 0; i < 3; i++)
+        {
+            var f = new GameObject($"Alev_{i + 1}");
+            f.transform.SetParent(root.transform, false);
+            f.transform.localPosition = new Vector3((i - 1) * 0.85f, i == 1 ? 0.4f : 0f, 0f);
+            f.transform.localScale = new Vector3(i == 1 ? 2.2f : 1.6f, i == 1 ? 5.4f : 4.2f, 1f);
+
+            var sr = f.AddComponent<SpriteRenderer>();
+            sr.sprite = flame;
+            sr.sortingOrder = 3;
+            f.AddComponent<AmbientFire>();
+        }
+
+        root.AddComponent<FlameWallGate>();
     }
 
     static readonly (SpawnMarker.Kind k, float x, float y, string note)[] MarkerSpots =

@@ -6,7 +6,7 @@ Sahne: MainScene
 ----------------------------------------------------------------------
   BASILABILIR YUZEYLER (ust yuzey yuksekligine gore):
     ust=   1,6  x       7..11      gen=    4  Antre_Ayakkabilik
-    ust=   2,5  x    21,5..26,5    gen=    5  Antre_Konsol
+    ust=  2,15  x    21,5..26,5    gen=    5  Antre_Konsol
     ust=    12  x       0..34      gen=   34  Tavan_Antre
     ust=    20  x    33,6..34,4    gen=  0,8  Duvar_34
   ZIPLAMA KONTROLU:
@@ -24,9 +24,10 @@ Sahne: MainScene
 ### Salon   x 34..102   yukseklik 20
 ----------------------------------------------------------------------
   BASILABILIR YUZEYLER (ust yuzey yuksekligine gore):
-    ust=  2,14  x    83,8..92,2    gen=  8,4  Salon_Piyano
+    ust=   1,4  x    79,5..82,5    gen=    3  Salon_PiyanoTabure
     ust=   2,2  x      46..54      gen=    8  Salon_Koltuk
-    ust=  2,65  x      43..49      gen=    6  Salon_T1
+    ust=   2,5  x    83,5..92,5    gen=    9  Salon_Piyano
+    ust=  2,15  x      43..49      gen=    6  Salon_T1
     ust=  4,45  x    51,5..56,5    gen=    5  Salon_T2
     ust=  6,25  x    59,5..64,5    gen=    5  Salon_T3
     ust=  8,05  x      52..56      gen=    4  Salon_T4
@@ -52,8 +53,8 @@ Sahne: MainScene
 ### Mutfak   x 102..152   yukseklik 11
 ----------------------------------------------------------------------
   BASILABILIR YUZEYLER (ust yuzey yuksekligine gore):
-    ust=   2,7  x     110..122     gen=   12  Mutfak_Tezgah
-    ust=   2,3  x   128,5..135,5   gen=    7  Mutfak_Masa
+    ust=   1,8  x     109..123     gen=   14  Mutfak_Tezgah
+    ust=  2,25  x     128..136     gen=    8  Mutfak_Masa
     ust=  4,05  x   137,5..142,5   gen=    5  Mutfak_Dolap1
     ust=  5,85  x     131..135     gen=    4  Mutfak_Dolap2
     ust=    11  x   151,6..152,4   gen=  0,8  Duvar_152
@@ -77,8 +78,10 @@ Sahne: MainScene
 ### Koridor   x 152..188   yukseklik 11
 ----------------------------------------------------------------------
   BASILABILIR YUZEYLER (ust yuzey yuksekligine gore):
-    ust=   1,9  x   163,8..168,3   gen=  4,5  Koridor_DevrikDolap
-    ust=  3,65  x   174,3..177,8   gen=  3,5  Koridor_Raf
+    ust=   1,8  x   163,8..168,3   gen=  4,5  Koridor_DevrikDolap
+    ust=  1,75  x     169..172     gen=    3  Koridor_Basamak1
+    ust=  3,15  x   172,5..175,5   gen=    3  Koridor_Basamak2
+    ust=  4,45  x   175,8..179,3   gen=  3,5  Koridor_Raf
     ust=    11  x   151,6..152,4   gen=  0,8  Duvar_152
     ust=    11  x     152..188     gen=   36  Koridor_AlcakTavan
     ust=    15  x   187,6..188,4   gen=  0,8  Duvar_188
@@ -91,20 +94,21 @@ Sahne: MainScene
     (   158,    1)  WALLMONSTER WallMonster
     (   170,    4)  isaret     [WallMonster] Koridor 2/3
     (   170,    4)  WALLMONSTER WallMonster
-    (   176,    5)  ANAHTAR    Anahtar_Mor
+    ( 177,5,  5,6)  ANAHTAR    Anahtar_Mor
     (   184,    1)  isaret     [WallMonster] Koridor 3/3
     (   184,    1)  WALLMONSTER WallMonster
     (   188,  1,7)  KILIT      KilitliKapi_Mor
     (   188,  3,6)  ALEVDUVARI AlevDuvari
     (   188,    2)  isaret     [FlameWall] GERI DONUS KAPANIR. Karabas kurtulunca burada alev duvari yukselir, oyuncu ileri gitmek zorunda kalir. GORUNUR sekilde olsun.
-    dekoratif ates sayisi: 4
+    dekoratif ates sayisi: 7
 
 ### CocukOdasi   x 188..226   yukseklik 15
 ----------------------------------------------------------------------
   BASILABILIR YUZEYLER (ust yuzey yuksekligine gore):
+    ust=   1,4  x   201,3..203,7   gen=  2,4  Cocuk_Tabure
     ust=   1,8  x   206,3..209,8   gen=  3,5  Cocuk_Sandik
-    ust=   2,9  x     193..201     gen=    8  Cocuk_Ranza
-    ust=  3,65  x     214..218     gen=    4  Cocuk_Raf
+    ust=   2,5  x     193..201     gen=    8  Cocuk_Ranza
+    ust=  3,45  x     211..215     gen=    4  Cocuk_Raf
     ust=    15  x   187,6..188,4   gen=  0,8  Duvar_188
     ust=    15  x   225,6..226,4   gen=  0,8  Duvar_226
     ust=    16  x     188..226     gen=   38  Tavan_CocukOdasi
@@ -114,10 +118,10 @@ Sahne: MainScene
     (   188,  1,7)  KILIT      KilitliKapi_Mor
     (   188,  3,6)  ALEVDUVARI AlevDuvari
     (   188,    2)  isaret     [FlameWall] GERI DONUS KAPANIR. Karabas kurtulunca burada alev duvari yukselir, oyuncu ileri gitmek zorunda kalir. GORUNUR sekilde olsun.
-    (   196,    1)  isaret     [CoveringFire] Karabas'i orten ates (can 50). Sondurulunce kurtulur.
     (   196,    1)  isaret     [Dog] KARABAS
-    (   196,  1,3)  TRAPPEDFİRECOVER TrappedFire
+    (   196,    1)  isaret     [CoveringFire] Karabas'i orten ates (can 50). Sondurulunce kurtulur.
     (   196,    1)  DOGCOMPANİON Karabas
+    (   196,  1,3)  TRAPPEDFİRECOVER TrappedFire
     (   212,  0,5)  isaret     [FloorFire] Cocuk odasi
     (   212,  0,5)  FLOORFİRE  FloorFire
     dekoratif ates sayisi: 4
@@ -128,8 +132,8 @@ Sahne: MainScene
     ust=   1,9  x   235,5..240,5   gen=    5  Arka_Kasa1
     ust=   2,1  x   259,5..264,5   gen=    5  Arka_Kasa3
     ust=   2,1  x     286..290     gen=    4  Arka_Kasa4
-    ust=  3,45  x     248..252     gen=    4  Arka_Kasa2
-    ust=  3,85  x     273..279     gen=    6  Arka_Kiris
+    ust=  3,45  x     243..247     gen=    4  Arka_Kasa2
+    ust=  3,85  x     267..273     gen=    6  Arka_Kiris
     ust=    13  x   293,6..294,4   gen=  0,8  Duvar_294
     ust=    15  x   225,6..226,4   gen=  0,8  Duvar_226
   ZIPLAMA KONTROLU:
@@ -163,7 +167,7 @@ Sahne: MainScene
   BASILABILIR YUZEYLER (ust yuzey yuksekligine gore):
     ust=   2,1  x   299,5..304,5   gen=    5  ArkaKapi_Kasa1
     ust=   2,1  x   318,5..323,5   gen=    5  ArkaKapi_Kasa3
-    ust=  3,65  x     310..314     gen=    4  ArkaKapi_Kasa2
+    ust=  3,65  x     306..310     gen=    4  ArkaKapi_Kasa2
     ust=    13  x   293,6..294,4   gen=  0,8  Duvar_294
   ZIPLAMA KONTROLU:
     ✔ hepsi ulasilabilir

@@ -35,10 +35,10 @@ public class CameraFollow : MonoBehaviour
 
     [Tooltip("SEVIYENIN sol-alt kosesi (kameranin degil). Kod, kameranin " +
              "gorus genisligini kendi hesaplayip iceri cekiyor.")]
-    public Vector2 minBounds = new Vector2(-1f, -6f);
+    public Vector2 minBounds = new Vector2(-5f, -6f);
 
-    [Tooltip("SEVIYENIN sag-ust kosesi.")]
-    public Vector2 maxBounds = new Vector2(101f, 17f);
+    [Tooltip("SEVIYENIN sag-ust kosesi (MainScene toplam x: 336, y: 22).")]
+    public Vector2 maxBounds = new Vector2(340f, 22f);
 
     Vector3 velocity;
     Camera cam;
