@@ -56,6 +56,8 @@ Hepsi **pixel art**, hepsi **ticari kullanıma açık**, hepsi indirilip `Assets
 
 **https://penzilla.itch.io/house-interior**
 
+> 📖 **Detaylı Ev Asset ve Mobilya Rehberi:** Reponuzdaki [`EV_ASSETLERI.md`](file:///d:/Kacis%20oyunu/EV_ASSETLERI.md) dosyasından oda oda tüm mobilya eşleştirmelerine ve Unity katman ayarlarına ulaşabilirsiniz.
+
 - **Yandan görünüm** ev içi tileset (bu nadir — çoğu ev tileset'i üstten bakış)
 - 8x8 px temel tile, 16x16+ mobilya
 - **97 ev tile'ı + 44 mobilya**, oda / kat / merdiven / asansör yapılabilir

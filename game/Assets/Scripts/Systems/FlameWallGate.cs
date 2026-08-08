@@ -33,6 +33,17 @@ public class FlameWallGate : MonoBehaviour
     bool triggered;
     float t;
 
+    Collider2D blockerCollider;
+    Renderer[] childRenderers;
+    MonoBehaviour[] childScripts;
+
+    void Awake()
+    {
+        blockerCollider = GetComponent<Collider2D>();
+        childRenderers = GetComponentsInChildren<Renderer>(true);
+        childScripts = GetComponentsInChildren<MonoBehaviour>(true);
+    }
+
     void Start()
     {
         if (dog == null)
@@ -45,24 +56,62 @@ public class FlameWallGate : MonoBehaviour
 
         // Alev duvari zeminin ALTINDA bekler, tetiklenince yukselir.
         shownPos = transform.position;
-        hiddenPos = shownPos + Vector3.down * riseHeight;
+        hiddenPos = shownPos + Vector3.down * (riseHeight + 3f);
         transform.position = hiddenPos;
+
+        // Gizliyken collider ve gorseller KAPALI olmali.
+        // Aksi halde gizli collider kapidan gecisi engeller,
+        // gorseller de zeminin altindan sarkar.
+        SetGateActive(false);
+    }
+
+    void SetGateActive(bool active)
+    {
+        if (blockerCollider != null) blockerCollider.enabled = active;
+
+        if (childRenderers != null)
+        {
+            foreach (var r in childRenderers)
+                if (r != null) r.enabled = active;
+        }
+
+        if (childScripts != null)
+        {
+            foreach (var s in childScripts)
+                if (s != null && s != this) s.enabled = active;
+        }
     }
 
     void Update()
     {
         if (!triggered)
         {
-            if (dog == null) return;
+            if (dog == null)
+            {
+                foreach (var mb in FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
+                    if (mb.GetType().Name == "DogCompanion") { dog = mb.transform; break; }
+                if (dog != null) dogStart = dog.position;
+                return;
+            }
+
+            // Kopegin bilesenini bul. Kopek henuz KURTARILMADIP (Stuck durumundayken)
+            // alev duvari ASLA yukselmez! Oyuncu Mor Kapi'dan girip kopegi kurtarmadan
+            // once odada serbestce gezebilmeli ve geriye donebilmeli.
+            var dogComp = dog.GetComponent<DogCompanion>();
+            if (dogComp != null && !dogComp.IsRescued) return;
+
+            // Kopek kurtarildiktan sonra yuvasindan uzaklasinca alev duvari yukselir.
+            if (dogStart == Vector3.zero) dogStart = dog.position;
             if (Vector3.Distance(dog.position, dogStart) < dogMovedDistance) return;
 
             triggered = true;
+            SetGateActive(true);
 
             if (CameraShake.Instance != null)
                 CameraShake.Instance.Shake(shakeDuration, shakeMagnitude);
             if (collapseSound != null) collapseSound.Play();
 
-            Debug.Log("[FlameWallGate] Geri donus kapandi.");
+            Debug.Log("[FlameWallGate] Karabas kurtarildi, geri donus kapandi.");
             return;
         }
 

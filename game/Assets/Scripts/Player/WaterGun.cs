@@ -69,10 +69,11 @@ public class WaterGun : MonoBehaviour
 
     void Update()
     {
-        bool wantsToSpray = player.CanControl && Input.GetButton("Fire1");
+        bool canControl = player == null || player.CanControl;
+        bool wantsToSpray = canControl && Input.GetButton("Fire1");
 
         // Su varsa harca. Yoksa TrySpend false doner ve sikma durur.
-        IsSpraying = wantsToSpray && tank.TrySpend(waterPerSecond * Time.deltaTime);
+        IsSpraying = wantsToSpray && (tank == null || tank.TrySpend(waterPerSecond * Time.deltaTime));
 
         UpdateEffects();
 
@@ -83,7 +84,8 @@ public class WaterGun : MonoBehaviour
     Vector2 GetAimDirection()
     {
         if (Input.GetAxisRaw("Vertical") > 0.1f) return Vector2.up;
-        return new Vector2(player.FacingDirection, 0f);
+        int facing = player != null ? player.FacingDirection : 1;
+        return new Vector2(facing, 0f);
     }
 
     void DamageTargetsInBeam()

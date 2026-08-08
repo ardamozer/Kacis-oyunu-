@@ -118,6 +118,13 @@ public class DogCompanion : MonoBehaviour
     public float petSquashDuration = 0.4f;
 
     State state = State.Stuck;
+
+    /// <summary>Kopek kurtarildi mi? (Freed veya Following durumunda).</summary>
+    public bool IsRescued => state != State.Stuck;
+
+    /// <summary>Kopek oyuncuyu takip ediyor mu?</summary>
+    public bool IsFollowing => state == State.Following;
+
     float whineTimer;
     bool isStomping;
     float petSquashUntil;
