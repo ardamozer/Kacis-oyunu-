@@ -396,11 +396,11 @@ MonoBehaviour:
   stompHopHeight: 0.3
   stompHopDuration: 0.3
   audioSource: {fileID: 859303257762125793}
-  whineClip: {fileID: 8300000, guid: 2c1a797df1ca2534f9d32386d51052cf, type: 3}
+  whineClip: {fileID: 8300000, guid: 500bdd0b5e5b5174ead7ec1e42899bf3, type: 3}
   minDistanceForMaxVolume: 2
   maxHearDistance: 15
   whineInterval: 3
-  happyBarkClip: {fileID: 8300000, guid: bc1dfbc5fd2b39f42be83f0ac11702aa, type: 3}
+  happyBarkClip: {fileID: 8300000, guid: c5ccd1a7bee8ab348acf82bef868bda0, type: 3}
   pitchVariation: 0.08
   heartParticlePrefab: {fileID: 8543539251548474356, guid: b3f1720cc8d49554e88c20f7844fbe8f, type: 3}
   heartSpawnPoint: {fileID: 0}

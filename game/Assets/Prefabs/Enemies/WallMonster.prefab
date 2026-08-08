@@ -225,7 +225,7 @@ MonoBehaviour:
   maxHealth: 40
   hitFlashColor: {r: 1, g: 1, b: 1, a: 1}
   deathDuration: 0.35
-  shootClip: {fileID: 0}
+  shootClip: {fileID: 8300000, guid: 2c47f2ceeaa59f14cb624ca45a134307, type: 3}
   shootVolume: 0.5
   deathClip: {fileID: 8300000, guid: 9ab0bdfd364abab41a3b6b81018797bc, type: 3}
   deathVolume: 0.7
