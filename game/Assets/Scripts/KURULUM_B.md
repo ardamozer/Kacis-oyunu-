@@ -30,20 +30,21 @@ Proje konumu artik: `Kacis-oyunu-\game\` (kucuk harf `game`, kokte
 > `Player` tag'i listede GORUNMEZ — Unity'nin yerlesik tag'i, zaten var.
 > Inspector'daki Tag menusunde secebilirsiniz. Bu normal.
 
-### ⚠️ Layer'lari ozellikle bir kez goz kontrolu yapin
+### Layer slotlari hakkinda — 6/7/8 DOGRU, dokunmayin
 
-Layer'lar 6, 7, 8 slotlarina yazildi. Unity'de **0-7 arasi "Builtin Layer"**
-olarak ayrilmistir ve Tags&Layers ekraninda duzenlenemez gorunur — yani
-`Ground` (6) ve `Player` (7) o ekranda **gri/duzenlenemez** gorunebilir.
+Bu rehberin onceki surumunde "Unity 0-7 arasini kilitler, layer'lari 8/9/10'a
+tasiyin" yaziyordu. **Bu yanlisti, duzeltildi.**
 
-**5 saniyelik kontrol:** herhangi bir objeyi sec → Inspector'un sag ustundeki
-**Layer** acilir menusune bak. `Ground`, `Player`, `Enemy` uculu de listede
-cikiyorsa **sorun yok, devam et.**
+Unity'de kilitli olan slotlar sadece **0 (Default), 1 (TransparentFX),
+2 (Ignore Raycast), 4 (Water), 5 (UI)**. Buna karsilik **3, 6 ve 7 duzenlenebilir
+"User Layer" slotlaridir** — Tags & Layers ekraninda basliklari da oyle yazar.
 
-Cikmiyorsa (ozellikle `Ground` yoksa — `PlayerController.groundLayer`
-ayarlanamaz, ziplama calismaz): Tags&Layers ekranindan **User Layer 8/9/10**
-satirlarina `Ground`/`Player`/`Enemy` yazin, eskilerini bosaltin, sonra
-Kisi A'ya haber verip ikiniz de ayni sekilde yapin ve commit'leyin.
+Yani `6=Ground`, `7=Player`, `8=Enemy` gecerli bir kurulum. Kisi A test etti:
+`LayerMask.NameToLayer("Ground")` dogru degeri donuyor, oyuncu zemine basiyor,
+su sadece `Enemy` layer'ina isabet ediyor.
+
+⚠️ **Bunlari 8/9/10'a tasimaya CALISMAYIN.** Sahnedeki butun layer atamalari
+ve `LayerMask` alanlari elden gecmek zorunda kalir — kazanci sifir, riski yuksek.
 
 ## 0.3 ⚠️ .meta DOSYALARI — EN KRITIK ADIM
 
