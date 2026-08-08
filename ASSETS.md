@@ -141,19 +141,32 @@ Toplam ~10 satır kod, çizilmiş animasyondan neredeyse ayırt edilemez.
 | Ses efektleri | https://sfxr.me — 5 dakikada üretilir |
 | Havlama sesi | https://freesound.org — **lisansı not alın** |
 
-### Şu an projede olan sesler (yer tutucu)
+### Sesler — lisans kaydı
 
-`ALEV → Kisi B — Sesleri Uret` komutu `Assets/Audio/Generated/` altına üç
-WAV yazıyor: `DogWhine`, `DogBark`, `FireExtinguish`.
+#### ⚠️ İTCH.IO SAYFASINDA MUTLAKA GEÇMESİ GEREKEN
 
-**Bunlar kodla sentezlendi, indirilmedi — telif sorunu yok, itch.io
-kredilerinde anılmaları gerekmiyor.** Ama yer tutucular: havlama ve
-inilti sentezle ikna edici olmuyor, insan kulağı hayvan sesini çok iyi
-tanıyor.
+**Havlama** — `Assets/Audio/Generated/DogBark.wav`
+- Orijinal: *Big_dog_bark_01.aiff* — **Paulo_Gonçalves**
+- Kaynak: https://freesound.org/people/Paulo_Gon%C3%A7alves/sounds/182395/
+- Lisans: **Creative Commons Attribution 4.0 (CC BY 4.0)**
+- **Atıf ZORUNLU.** Bu hukuki bir gereklilik, nezaket değil. Sayfada
+  kredilenmezse lisans ihlali olur.
 
-Gerçeklerini freesound.org'dan alıp **aynı isimlerle** üzerine yazın —
-hiçbir kod değişmesi gerekmiyor. O zaman **lisansı buraya not edin**,
-itch.io sayfasında kredilenmesi gerekecek.
+#### Atıf zorunlu değil (yine de yazmak iyi olur)
+
+**İnleme** — `Assets/Audio/Generated/DogWhine.wav`
+- Orijinal: *Dog Whine 5.wav* — **esperri**
+- Kaynak: https://freesound.org/people/esperri/sounds/118970/
+- Lisans: **Creative Commons 0 (CC0)** — kamu malı, atıf gerekmiyor
+
+#### Kodla üretilenler (telif yok)
+
+`FireExtinguish`, `FireCrackle`, `FlameWhoosh`, `DebrisCrash`,
+`GhostWhoosh` — `ALEV → Kisi B — Sesleri Uret` komutuyla sentezlendi.
+İndirilmediler, kimseye ait değiller, kredilendirilmeleri gerekmiyor.
+
+Aynı komut `DogWhine` ve `DogBark`'ı da üretebiliyor ama **artık
+üzerlerine yazmayın** — gerçek kayıtlar onların yerini aldı.
 
 ---
 
