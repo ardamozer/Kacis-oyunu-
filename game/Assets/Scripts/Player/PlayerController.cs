@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 /// <summary>
@@ -142,6 +143,42 @@ public class PlayerController : MonoBehaviour
         // yuksekligi vermesini garanti eder.
         rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
         rb.linearVelocity += Vector2.up * jumpForce;
+    }
+
+    /// <summary>
+    /// Oyuncuyu kontrolu disinda bir noktaya yumusakca kaydirir.
+    /// Ara sahneler icin — ozellikle Karabas'in olum aninda kopegin
+    /// oyuncuyu itmesi.
+    ///
+    /// Kullanim (Kisi B, EndingSequence icinden):
+    ///     controller.CanControl = false;
+    ///     yield return controller.ForceMoveTo(hedefX, 0.25f);
+    ///
+    /// ⚠️ Once CanControl = false yapin, yoksa oyuncunun girdisi kaydirmayla
+    ///    yarisir ve sahne bozulur.
+    /// </summary>
+    public IEnumerator ForceMoveTo(float targetX, float duration)
+    {
+        rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+
+        float startX = transform.position.x;
+        float t = 0f;
+
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            float k = Mathf.Clamp01(t / duration);
+            // SmoothStep: itilme sert baslayip yumusak bitsin.
+            k = k * k * (3f - 2f * k);
+
+            Vector3 p = transform.position;
+            p.x = Mathf.Lerp(startX, targetX, k);
+            transform.position = p;
+
+            yield return null;
+        }
+
+        rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
     }
 
     /// <summary>

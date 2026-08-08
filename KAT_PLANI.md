@@ -219,11 +219,42 @@ yerde tanışmalı. Dar yerde tanışırsa haksızlık hisseder.
 
 Eski tasarım "arkadan büyük ateş çıkar, köpek atlar" idi. **Düşen tahtayla daha iyi:**
 
-1. Oyuncu yürürken tepeden bir kiriş düşmeye başlar
-2. **UYARI ÜNLEMİ ÇIKMAZ** — `DropNow(false)` ile çağrılır
-3. Karabaş oyuncuyu iter (oyuncu ~2 birim yana kayar, kontrol alınmış durumda)
-4. Kiriş köpeğin üstüne düşer
-5. 3 saniye sessizlik, yerde tasma kalır
+### Görsel gramer: köpek oyuncunun YERİNE geçmeli
+
+Yanında ölürse **kaza**, yerine geçerse **fedakârlık.** Sahnenin başarısı buna bağlı.
+
+### Kare kare akış
+
+| sn | Ne olur |
+|---|---|
+| **0.0** | Tetikleyici. `CanControl = false`, oyuncu durur. Kiriş hazırlanır — **ünlem yok, yer işareti yok, çatırtı yok** |
+| **0.3** | **Karabaş bir kez havlar.** Keskin, tek. Tek uyarı bu, ve zaten geç |
+| **0.4** | **Köpek koşarak oyuncunun önüne geçer** ← sahnenin en önemli karesi |
+| **0.7** | `ForceMoveTo` ile oyuncu ~2 birim yana kayar; köpek onun durduğu noktaya geçer |
+| **0.9** | `debris.DropNow(false)` — kiriş köpeğin üstüne düşer |
+| **1.0** | `AudioListener.volume = 0` · ekran sarsılır · toz bulutu köpeği örter |
+| **1.0–4.0** | **3 saniye hiçbir şey olmaz.** Kamera sabit, ses yok |
+| **4.0** | Toz dağılır, yerde **tasma** kalır ve hafifçe parlar |
+| **4.5** | Ses geri gelir, `CanControl = true` |
+
+### Neden bu detaylar
+
+- **Çatırtı sesi KOYMAYIN.** Çevre uyarırsa oyuncu "duymuştum, kaçabilirdim" der.
+  **Köpek uyarırsa** mesaj değişir: *senin fark etmediğini o fark etti.* Ve bu,
+  Karabaş'ın oyundaki son sesi olur.
+- **Öne geçmesi görülmeli.** Köpek oyun boyunca hep arkanızda yürüdü; ilk kez
+  önünüze geçiyor. O hareket tek başına "bir şey yapıyor" diyor.
+- **Kontrol önce alınır.** Oyuncu kendi tuşuyla kaçarsa fedakârlık olmaz.
+- **Kamera kesmeyin, zoom yapmayın.** Sabit kamera + sessizlik hem bedava hem
+  daha güçlü. Bu sahnede yapılacak en pahalı hata "havalı" yapmaya çalışmaktır.
+- **Kan yok.** Toz örter, sprite kapanır, toz dağılınca tasma kalır.
+
+### Kişi A'nın sağladığı yardımcı
+
+```csharp
+controller.CanControl = false;
+yield return controller.ForceMoveTo(hedefX, 0.25f);   // kopek itiyor
+```
 
 ### Neden uyarı çıkmamalı — bu kritik
 
