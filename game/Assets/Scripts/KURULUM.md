@@ -37,7 +37,10 @@ Bos satirlara ekleyin:
 - `Player`
 - `Enemy`
 
-Tags kismina da ekleyin: `Player`, `Enemy`, `WaterSource`, `Cat`
+Tags kismina ekleyin: `Enemy`, `WaterSource`, `Dog`
+
+⚠️ **`Player` tag'ini EKLEMEYIN** — Unity'de zaten yerlesik. Eklerseniz menude
+cift gorunur. Ustteki "Tags" listesi bos gorunse bile Player mevcuttur.
 
 ---
 
