@@ -22,6 +22,10 @@ public class FallingDebris : MonoBehaviour
     [Tooltip("Oyuncu yatayda bu kadar yaklasinca uyari baslar.")]
     public float triggerDistanceX = 3f;
 
+    [Tooltip("Oyuncu tahtanin bu kadar ALTINDA olmali. Bu kontrol olmadan " +
+             "alt katta yururken ust kattaki tahtalar tetikleniyor.")]
+    public float triggerHeight = 7f;
+
     [Tooltip("Kapaliysa sadece DropNow() ile duser — final sahnesi icin.")]
     public bool autoTrigger = true;
 
@@ -110,9 +114,13 @@ public class FallingDebris : MonoBehaviour
     {
         if (triggered || !autoTrigger || player == null) return;
 
-        // Sadece yatay mesafeye bakiyoruz — oyuncu asagidan geciyorsa
-        // hangi yukseklikte oldugu onemli degil.
-        if (Mathf.Abs(player.position.x - transform.position.x) <= triggerDistanceX)
+        float dx = Mathf.Abs(player.position.x - transform.position.x);
+        float dy = transform.position.y - player.position.y;   // pozitif = oyuncu altta
+
+        // Hem yatay yakinlik hem de oyuncunun ALTTA olmasi sart.
+        // Dikey kontrol olmadan, alt kattan gecerken ust kattaki tahtalar
+        // tetikleniyordu.
+        if (dx <= triggerDistanceX && dy > 0f && dy <= triggerHeight)
         {
             DropNow(true);
         }

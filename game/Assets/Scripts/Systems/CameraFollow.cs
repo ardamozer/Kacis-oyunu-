@@ -30,16 +30,54 @@ public class CameraFollow : MonoBehaviour
     public Vector2 deadZone = new Vector2(1.5f, 1.2f);
 
     [Header("Sinirlar")]
-    [Tooltip("Acikken kamera bu dikdortgenin disina cikmaz — evin disini " +
-             "gostermesini engeller. Seviyeyi kurduktan sonra ayarlayin.")]
+    [Tooltip("Acikken kamera SEVIYENIN disini gostermez.")]
     public bool useBounds = false;
-    public Vector2 minBounds = new Vector2(-20f, -10f);
-    public Vector2 maxBounds = new Vector2(20f, 10f);
+
+    [Tooltip("SEVIYENIN sol-alt kosesi (kameranin degil). Kod, kameranin " +
+             "gorus genisligini kendi hesaplayip iceri cekiyor.")]
+    public Vector2 minBounds = new Vector2(-1f, -6f);
+
+    [Tooltip("SEVIYENIN sag-ust kosesi.")]
+    public Vector2 maxBounds = new Vector2(101f, 17f);
 
     Vector3 velocity;
+    Camera cam;
+
+    void Awake()
+    {
+        cam = GetComponentInChildren<Camera>();
+    }
+
+    /// <summary>
+    /// Kameranin merkezinin gidebilecegi araligi hesaplar.
+    ///
+    /// ⚠️ Buradaki incelik: min/max SEVIYENIN sinirlari, kameranin degil.
+    /// Kamera merkezi seviye kenarina kadar giderse ekranin yarisi disariyi
+    /// gosterir. O yuzden kameranin yarim genisligi/yuksekligi kadar iceri
+    /// cekiyoruz. Bu ayni zamanda farkli ekran oranlarinda da dogru calisir —
+    /// elle yazilan sinirlar 16:9'da calisip itch.io'nun 960x600'unde bozulurdu.
+    /// </summary>
+    void GetClampRange(out Vector2 min, out Vector2 max)
+    {
+        float halfH = 6f, halfW = 10f;
+        if (cam != null && cam.orthographic)
+        {
+            halfH = cam.orthographicSize;
+            halfW = halfH * cam.aspect;
+        }
+
+        min = new Vector2(minBounds.x + halfW, minBounds.y + halfH);
+        max = new Vector2(maxBounds.x - halfW, maxBounds.y - halfH);
+
+        // Seviye ekrandan darsa ortala, yoksa min > max olur ve kamera titrer.
+        if (min.x > max.x) min.x = max.x = (minBounds.x + maxBounds.x) * 0.5f;
+        if (min.y > max.y) min.y = max.y = (minBounds.y + maxBounds.y) * 0.5f;
+    }
 
     void Start()
     {
+        if (cam == null) cam = GetComponentInChildren<Camera>();
+
         if (target == null)
         {
             GameObject player = GameObject.FindGameObjectWithTag("Player");
@@ -76,8 +114,9 @@ public class CameraFollow : MonoBehaviour
         // ---- Sinirlar ----
         if (useBounds)
         {
-            goal.x = Mathf.Clamp(goal.x, minBounds.x, maxBounds.x);
-            goal.y = Mathf.Clamp(goal.y, minBounds.y, maxBounds.y);
+            GetClampRange(out Vector2 cmin, out Vector2 cmax);
+            goal.x = Mathf.Clamp(goal.x, cmin.x, cmax.x);
+            goal.y = Mathf.Clamp(goal.y, cmin.y, cmax.y);
         }
 
         transform.position = Vector3.SmoothDamp(transform.position, goal, ref velocity, smoothTime);
