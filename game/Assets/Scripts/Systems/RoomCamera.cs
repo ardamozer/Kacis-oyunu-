@@ -31,6 +31,18 @@ public class RoomCamera : MonoBehaviour
     [Tooltip("Oda icindeki yatay takibin yumusakligi.")]
     public float followSmooth = 0.15f;
 
+    [Tooltip("Kameranin odanin ALTINDAN ne kadar tasabilecegi.\n\n" +
+             "⚠️ NEDEN GEREKLI: standart oda 11 birim, kameranin gorus\n" +
+             "yuksekligi de 11 (ortho 5.5). Kamera oda sinirlari icinde\n" +
+             "tutulunca Y'de tam ortaya (5.5) KILITLENIYOR. Oyuncu y~1'de\n" +
+             "durdugu icin ekranin en alt %9'unda kaliyor, ustteki 7 birim\n" +
+             "bombos tavan oluyor — oyun 'kaymis' gorunuyor.\n\n" +
+             "Bu deger kadar asagi tasmaya izin verince kamera oyuncuya\n" +
+             "yaklasiyor. Zemin slabi y=-1'e kadar dolu, yani 1-2 birim\n" +
+             "tasmak bosluk gostermiyor.\n\n" +
+             "0 = eski davranis (kamera odaya tam kilitli).")]
+    public float floorBias = 1.5f;
+
     /// <summary>Su an gosterilen oda.</summary>
     public Room CurrentRoom { get; private set; }
 
@@ -142,10 +154,20 @@ public class RoomCamera : MonoBehaviour
         float halfW = (cam != null && cam.orthographic) ? halfH * cam.aspect : 12f;
 
         float minX = room.MinX + halfW, maxX = room.MaxX - halfW;
-        float minY = room.MinY + halfH, maxY = room.MaxY - halfH;
+
+        // Alt siniri floorBias kadar gevsetiyoruz. Oda yuksekligi ekran
+        // yuksekligine ESITKEN (standart oda 11, ortho 5.5) minY == maxY
+        // oluyor ve kamera ortaya kilitleniyor; oyuncu ekranin dibinde,
+        // ustte 7 birim bos tavan kaliyordu.
+        float minY = room.MinY + halfH - Mathf.Max(0f, floorBias);
+        float maxY = room.MaxY - halfH;
 
         float x = minX > maxX ? room.Center.x : Mathf.Clamp(target.position.x, minX, maxX);
-        float y = minY > maxY ? room.Center.y : Mathf.Clamp(target.position.y, minY, maxY);
+
+        // Oyuncuyu ekranin ortasina almaya calisiyoruz, sonra odaya sigdiriyoruz.
+        float y = minY > maxY
+            ? room.Center.y - Mathf.Max(0f, floorBias)
+            : Mathf.Clamp(target.position.y, minY, maxY);
 
         return new Vector2(x, y);
     }
