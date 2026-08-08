@@ -31,6 +31,8 @@ public class FloorFire : MonoBehaviour, IStompable, IWaterDamageable
     [Header("Dolma")]
     [Tooltip("Barin dolma suresi. Kucuk = daha baskici.")]
     public float fillTime = 4f;
+    [Tooltip("Oyuna direkt dolmus/buyumus sekilde baslar. Oyuncuya su kullanimini ogretmek icin.")]
+    public bool startGrown = false;
     [Tooltip("Barin gorseli — cocuk obje. Bos birakilabilir.")]
     public Transform fillBar;
 
@@ -81,6 +83,11 @@ public class FloorFire : MonoBehaviour, IStompable, IWaterDamageable
         if (sprite != null) originalColor = sprite.color;
 
         bodyCollider = GetComponent<Collider2D>();
+    }
+
+    void Start()
+    {
+        if (startGrown) Grow();
     }
 
     void Update()

@@ -14,6 +14,7 @@ public class SpawnMarker : MonoBehaviour
     {
         WallMonster,   // duvar canavari — suyla olur
         FloorFire,     // yer atesi — kucukken ezilir, buyuyunce sadece su
+        FloorFireGrown,// yer atesi — oyuna buyumus baslar
         Dog,           // Karabas
         CoveringFire,  // Karabas'i orten ates
         Boss,          // cikistaki dev alev
@@ -32,6 +33,7 @@ public class SpawnMarker : MonoBehaviour
     {
         Kind.WallMonster   => new Color(0.9f, 0.25f, 0.2f),
         Kind.FloorFire     => new Color(1f, 0.55f, 0.1f),
+        Kind.FloorFireGrown=> new Color(1f, 0.35f, 0.1f),
         Kind.Dog           => new Color(0.4f, 0.85f, 0.4f),
         Kind.CoveringFire  => new Color(1f, 0.35f, 0.1f),
         Kind.Boss          => new Color(0.7f, 0.1f, 0.1f),

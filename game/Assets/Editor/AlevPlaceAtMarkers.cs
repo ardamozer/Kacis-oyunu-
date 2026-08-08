@@ -57,6 +57,7 @@ public static class AlevPlaceAtMarkers
         {
             if (m.kind == SpawnMarker.Kind.WallMonster ||
                 m.kind == SpawnMarker.Kind.FloorFire ||
+                m.kind == SpawnMarker.Kind.FloorFireGrown ||
                 m.kind == SpawnMarker.Kind.Dog)
             {
                 placeable++;
@@ -106,6 +107,15 @@ public static class AlevPlaceAtMarkers
                     Place(floorFire, pos, holder);
                     ff++;
                     break;
+
+                case SpawnMarker.Kind.FloorFireGrown:
+                {
+                    GameObject go = Place(floorFire, pos, holder);
+                    var ffComponent = go.GetComponent<FloorFire>();
+                    if (ffComponent != null) ffComponent.startGrown = true;
+                    ff++;
+                    break;
+                }
 
                 case SpawnMarker.Kind.Dog:
                     Place(karabas, pos, holder);

@@ -617,7 +617,7 @@ public static class AlevLevelBuilder
         (SpawnMarker.Kind.WallMonster, 248f, 3.45f, "Arka koridor - Karabas'i durdurur, oyuncu sondurmeli"),
         (SpawnMarker.Kind.WallMonster, 312f, 3.65f, "Arka kapi - YALNIZ, boss oncesi son engel"),
 
-        (SpawnMarker.Kind.FloorFire,   124f, 0.5f, "Mutfak"),
+        (SpawnMarker.Kind.FloorFireGrown, 124f, 0.5f, "Mutfak - BUYUMUS baslar, 'buyuk ates = su' dersi"),
         (SpawnMarker.Kind.FloorFire,   142f, 0.5f, "Mutfak"),
         (SpawnMarker.Kind.FloorFire,   212f, 0.5f, "Cocuk odasi"),
 
@@ -631,7 +631,7 @@ public static class AlevLevelBuilder
         (SpawnMarker.Kind.FloorFire,   286f, 0.5f, "YALNIZ"),
         (SpawnMarker.Kind.FloorFire,   296f, 0.5f, "YALNIZ"),
         (SpawnMarker.Kind.FloorFire,   304f, 0.5f, "YALNIZ"),
-        (SpawnMarker.Kind.FloorFire,   314f, 0.5f, "YALNIZ - son"),
+        (SpawnMarker.Kind.FloorFireGrown, 314f, 0.5f, "YALNIZ - son, BUYUMUS baslar"),
 
         (SpawnMarker.Kind.Dog,         196f, 1f, "KARABAS - sikismis halde baslar"),
         (SpawnMarker.Kind.CoveringFire,196f, 1f, "Karabas'i orten ates (can 50). Sondurulunce kurtulur."),
