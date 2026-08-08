@@ -49,6 +49,9 @@ public class EndingSequence : MonoBehaviour
     [Tooltip("Kopegin oyuncunun yerine atilma suresi. Itmeyle ayni anda calisir.\n" +
              "Itmeden KISA olsun — once kopek carpsin, sonra oyuncu savrulsun.")]
     public float dogLungeDuration = 0.25f;
+    [Tooltip("Tahta carpinca kameranin sarsilmasi. 0 = kapali.")]
+    public float impactShakeDuration = 0.4f;
+    public float impactShakeMagnitude = 0.55f;
 
     [Header("Boss")]
     [Tooltip("BossCore tasiyan dev alev objesi. Sahnede devre disi baslamali.")]
@@ -67,6 +70,8 @@ public class EndingSequence : MonoBehaviour
     public Transform ghostEnd;
     public float ghostCrossDuration = 2.5f;
     public Color collarGlowColor = new Color(1f, 1f, 0.6f);
+    [Tooltip("Boss'un sonme suresi. Aniden yok olmasi 'bug' gibi duruyor.")]
+    public float bossFadeDuration = 1.2f;
 
     bool dogDeathTriggered;
     bool bossActive;
@@ -176,6 +181,11 @@ public class EndingSequence : MonoBehaviour
             deathDebris.DropNow(false);
 
             yield return new WaitForSeconds(debrisImpactDelay);
+
+            // Carpma anini bedene hissettir. FallingDebris kendi sarsintisini
+            // zaten yapiyor; bu onun ustune binen, daha agir ve kisa bir vurus.
+            if (CameraShake.Instance != null)
+                CameraShake.Instance.Shake(impactShakeDuration, impactShakeMagnitude);
         }
         else if (bigFlameVisual != null)
         {
@@ -329,23 +339,91 @@ public class EndingSequence : MonoBehaviour
             ghostVisual.SetActive(true);
             ghostVisual.transform.position = ghostStart.position;
 
+            SpriteRenderer ghostSprite = ghostVisual.GetComponentInChildren<SpriteRenderer>();
+            float ghostAlpha = ghostSprite != null ? ghostSprite.color.a : 1f;
+
             float t = 0f;
             while (t < ghostCrossDuration)
             {
                 t += Time.deltaTime;
-                ghostVisual.transform.position = Vector3.Lerp(ghostStart.position, ghostEnd.position, t / ghostCrossDuration);
+                float k = Mathf.Clamp01(t / ghostCrossDuration);
+
+                ghostVisual.transform.position =
+                    Vector3.Lerp(ghostStart.position, ghostEnd.position, k);
+
+                // Hayalet aniden belirip aniden kaybolmasin: iki ucta da
+                // suzulerek girsin ciksin. Bir hayaletin "beliriyor" olmasi
+                // gerekiyor, "acilip kapaniyor" degil.
+                if (ghostSprite != null)
+                {
+                    float fade = Mathf.Min(Mathf.InverseLerp(0f, 0.25f, k),
+                                           Mathf.InverseLerp(1f, 0.75f, k));
+                    Color c = ghostSprite.color;
+                    c.a = ghostAlpha * fade;
+                    ghostSprite.color = c;
+                }
+
                 yield return null;
             }
 
             ghostVisual.SetActive(false);
+
+            // Sonraki acilista gorunur olsun.
+            if (ghostSprite != null)
+            {
+                Color c = ghostSprite.color;
+                c.a = ghostAlpha;
+                ghostSprite.color = c;
+            }
         }
 
-        if (bossObject != null) bossObject.SetActive(false);
+        // Boss sonuyor: yok olmadan once kucululup soluyor, aniden
+        // kaybolmasi "bug" gibi duruyordu.
+        if (bossObject != null) yield return FadeOutBoss();
         bossActive = false;
 
         if (exitDoor != null) exitDoor.SetActive(false); // kapi acilir
 
         SetPlayerControl(true);
+    }
+
+    /// <summary>
+    /// Boss'un sonusu. Karabas'in hayaleti gecti, dev alev artik yenildi —
+    /// bu anin bir agirligi olmali, obje aniden kaybolmamali.
+    /// </summary>
+    IEnumerator FadeOutBoss()
+    {
+        SpriteRenderer bossSprite = bossObject.GetComponentInChildren<SpriteRenderer>();
+        Vector3 startScale = bossObject.transform.localScale;
+        Color startColor = bossSprite != null ? bossSprite.color : Color.white;
+
+        float t = 0f;
+        while (t < bossFadeDuration)
+        {
+            t += Time.deltaTime;
+            float k = Mathf.Clamp01(t / bossFadeDuration);
+
+            // Yatayda kapanip dikeyde cokuyor — sonen bir alev gibi.
+            bossObject.transform.localScale = new Vector3(
+                Mathf.Lerp(startScale.x, startScale.x * 0.15f, k),
+                Mathf.Lerp(startScale.y, startScale.y * 0.05f, k),
+                startScale.z);
+
+            if (bossSprite != null)
+            {
+                Color c = startColor;
+                c.a = Mathf.Lerp(startColor.a, 0f, k);
+                bossSprite.color = c;
+            }
+
+            yield return null;
+        }
+
+        bossObject.SetActive(false);
+
+        // Tekrar test edilebilsin diye eski haline getir.
+        bossObject.transform.localScale = startScale;
+        if (bossSprite != null) bossSprite.color = startColor;
     }
 
     IEnumerator CollarGlowRoutine()

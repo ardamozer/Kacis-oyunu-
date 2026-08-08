@@ -67,13 +67,25 @@ public class DogCompanion : MonoBehaviour
     public AudioClip happyBarkClip;
 
     [Header("Sevme (OnPetted)")]
-    [Tooltip("Opsiyonel. Bos birakilirsa sadece ses calar, particle olmaz.")]
+    [Tooltip("Opsiyonel. Bos birakilirsa sadece ses calar, kalp cikmaz.")]
     public GameObject heartParticlePrefab;
     public Transform heartSpawnPoint;
+    [Tooltip("Sevilince kac kalp ciksin.")]
+    public int heartCount = 3;
+
+    [Header("Canlilik")]
+    [Tooltip("Nefes alip verme: olcek ne kadar oynasin. 0 = kapali.\n" +
+             "Duran bir kare 'canli' okunmuyor; bu tek satirlik hile cok is goruyor.")]
+    public float breathAmount = 0.04f;
+    public float breathSpeed = 3f;
+    [Tooltip("Sevilince yapilan ezil-uza tepkisi. 0 = kapali.")]
+    public float petSquashAmount = 0.22f;
+    public float petSquashDuration = 0.4f;
 
     State state = State.Stuck;
     float whineTimer;
     bool isStomping;
+    float petSquashUntil;
 
     SpriteRenderer sprite;
     Vector3 baseScale;
@@ -111,6 +123,38 @@ public class DogCompanion : MonoBehaviour
     {
         if (state == State.Stuck) UpdateWhine();
         if (state == State.Following && !isStomping) FollowUpdate();
+
+        ApplyBodyAnimation();
+    }
+
+    /// <summary>
+    /// Nefes alip verme + sevilince ezil-uza tepkisi.
+    ///
+    /// Sadece localScale'e dokunuyor. Konuma dokunmuyoruz cunku SnapToGround
+    /// ve StompRoutine konumu yonetiyor — ikisi ayni seyi oynatirsa kopek titrer.
+    /// </summary>
+    void ApplyBodyAnimation()
+    {
+        float sx = 1f;
+        float sy = 1f;
+
+        if (breathAmount > 0f)
+        {
+            float b = Mathf.Sin(Time.time * breathSpeed) * breathAmount;
+            sx -= b * 0.5f;   // hacim korunsun: genisleyince alcalir
+            sy += b;
+        }
+
+        if (petSquashDuration > 0f && Time.time < petSquashUntil)
+        {
+            // 0 -> 1 arasi ilerleme; sonuna dogru soner.
+            float k = 1f - (petSquashUntil - Time.time) / petSquashDuration;
+            float punch = Mathf.Sin(k * Mathf.PI * 2f) * petSquashAmount * (1f - k);
+            sx += punch;
+            sy -= punch;
+        }
+
+        transform.localScale = new Vector3(baseScale.x * sx, baseScale.y * sy, baseScale.z);
     }
 
     // ---- Stuck: uzaktan duyulan inleme ----
@@ -248,10 +292,28 @@ public class DogCompanion : MonoBehaviour
         if (audioSource != null && happyBarkClip != null)
             audioSource.PlayOneShot(happyBarkClip);
 
+        // Govde tepkisi — ses dosyasi olmasa bile bir sey oldugu belli olsun.
+        petSquashUntil = Time.time + petSquashDuration;
+
         if (heartParticlePrefab != null)
         {
-            Vector3 pos = heartSpawnPoint != null ? heartSpawnPoint.position : transform.position + Vector3.up;
-            Instantiate(heartParticlePrefab, pos, Quaternion.identity);
+            Vector3 pos = heartSpawnPoint != null
+                ? heartSpawnPoint.position
+                : transform.position + Vector3.up * 0.7f;
+
+            for (int i = 0; i < Mathf.Max(1, heartCount); i++)
+            {
+                GameObject heart = Instantiate(heartParticlePrefab, pos, Quaternion.identity);
+
+                // Hepsi ayni anda cikarsa tek bir kalp gibi durur; kademeli
+                // cikmalari icin omurlerini biraz kaydiriyoruz.
+                HeartPop pop = heart.GetComponent<HeartPop>();
+                if (pop != null)
+                {
+                    pop.riseSpeed *= Random.Range(0.85f, 1.25f);
+                    pop.lifetime *= Random.Range(0.85f, 1.2f);
+                }
+            }
         }
     }
 

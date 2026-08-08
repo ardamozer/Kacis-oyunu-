@@ -25,6 +25,7 @@ public static class AlevPrefabSetupB
     const string ArtFolder = "Assets/Art/Generated";
     const string SquarePath = ArtFolder + "/WhiteSquare.png";
     const string CirclePath = ArtFolder + "/WhiteCircle.png";
+    const string HeartPath = ArtFolder + "/WhiteHeart.png";
 
     const string PrefabRoot = "Assets/Prefabs";
     const string EnemyPrefabFolder = PrefabRoot + "/Enemies";
@@ -60,13 +61,15 @@ public static class AlevPrefabSetupB
         EnsureFolder(EnemyPrefabFolder);
         EnsureFolder(DogPrefabFolder);
 
-        Sprite square = GetOrCreateSprite(SquarePath, false);
-        Sprite circle = GetOrCreateSprite(CirclePath, true);
+        Sprite square = GetOrCreateSprite(SquarePath, Shape.Square);
+        Sprite circle = GetOrCreateSprite(CirclePath, Shape.Circle);
+        Sprite heart = GetOrCreateSprite(HeartPath, Shape.Heart);
 
         GameObject flamePrefab = BuildFlame(circle);
+        GameObject heartPrefab = BuildHeart(heart);
         BuildWallMonster(square, flamePrefab);
         BuildFloorFire(square);
-        BuildKarabas(square);
+        BuildKarabas(square, heartPrefab);
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
@@ -101,7 +104,29 @@ public static class AlevPrefabSetupB
         FlameProjectile fp = go.AddComponent<FlameProjectile>();
         fp.blockingLayers = LayerMask.GetMask("Ground");
 
+        // Duz bir daire "alev" gibi okunmuyor — titretiyoruz.
+        go.AddComponent<FireFlicker>();
+
         GameObject prefab = SavePrefab(go, EnemyPrefabFolder + "/Flame.prefab");
+        Object.DestroyImmediate(go);
+        return prefab;
+    }
+
+    // ---- Kalp (sevme tusu geri bildirimi) ----
+
+    static GameObject BuildHeart(Sprite heartSprite)
+    {
+        GameObject go = new GameObject("HeartPop");
+        go.transform.localScale = new Vector3(0.35f, 0.35f, 1f);
+
+        SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+        sr.sprite = heartSprite;
+        sr.color = new Color(1f, 0.45f, 0.6f);
+        sr.sortingOrder = 10;                          // her seyin onunde gorunsun
+
+        go.AddComponent<HeartPop>();
+
+        GameObject prefab = SavePrefab(go, DogPrefabFolder + "/HeartPop.prefab");
         Object.DestroyImmediate(go);
         return prefab;
     }
@@ -189,13 +214,17 @@ public static class AlevPrefabSetupB
         ff.maxHealth = 25f;
         ff.fillBar = fillBar.transform;                // BarFill degil, FillBar capasi
 
+        // Titreme buyume ve sonme animasyonlarini ezmez — taban olcek
+        // disaridan degisince kendini yeniden hizalar.
+        go.AddComponent<FireFlicker>();
+
         SavePrefab(go, EnemyPrefabFolder + "/FloorFire.prefab");
         Object.DestroyImmediate(go);
     }
 
     // ---- Karabas (+ sikismis ates) ----
 
-    static void BuildKarabas(Sprite square)
+    static void BuildKarabas(Sprite square, GameObject heartPrefab)
     {
         GameObject go = new GameObject("Karabas");
         go.tag = "Dog";
@@ -218,6 +247,11 @@ public static class AlevPrefabSetupB
         // oyuncunun altinda kalir, kat degisince de bir daha bulamaz.
         dog.groundLayer = LayerMask.GetMask("Ground");
         dog.warpDistance = 14f;
+        // PLAN.md: sevme tusunun mekanik islevi yok ama "en cok konusulacak
+        // detay" olmasi bekleniyor. Karsiliginda hicbir sey gorunmezse
+        // o detay yok demektir.
+        dog.heartParticlePrefab = heartPrefab;
+        dog.heartCount = 3;
         // whineClip / happyBarkClip bilerek bos — ses dosyasi henuz yok,
         // kod null kontrolu yapiyor, sessiz calisir.
 
@@ -237,6 +271,7 @@ public static class AlevPrefabSetupB
         fireSr.sortingOrder = 0;
 
         fire.AddComponent<BoxCollider2D>();
+        fire.AddComponent<FireFlicker>();
 
         TrappedFireCover cover = fire.AddComponent<TrappedFireCover>();
         cover.maxHealth = 18f;
@@ -270,8 +305,8 @@ public static class AlevPrefabSetupB
 
         if (!CheckLayersAndTags()) return;
 
-        Sprite square = GetOrCreateSprite(SquarePath, false);
-        Sprite circle = GetOrCreateSprite(CirclePath, true);
+        Sprite square = GetOrCreateSprite(SquarePath, Shape.Square);
+        Sprite circle = GetOrCreateSprite(CirclePath, Shape.Circle);
 
         RemoveIfExists("EndingSequence", "Boss", "BigDeathFlame", "Collar", "DeathDebris",
                        "DogGhost", "GhostStart", "GhostEnd", "DogDeathPoint");
@@ -325,6 +360,11 @@ public static class AlevPrefabSetupB
         boss.tag = "Enemy";
         boss.AddComponent<BoxCollider2D>().isTrigger = true;
         boss.AddComponent<BossCore>();
+
+        // Dev alev de yasasin. Buyuk kutle daha agir titrer.
+        FireFlicker bossFlicker = boss.AddComponent<FireFlicker>();
+        bossFlicker.scaleSpeed = 4f;
+        bossFlicker.scaleAmount = 0.035f;
 
         GameObject bossFirePoint = new GameObject("BossFirePoint");
         bossFirePoint.transform.SetParent(boss.transform, false);
@@ -452,7 +492,9 @@ public static class AlevPrefabSetupB
 
     // ---- Sprite uretimi ----
 
-    static Sprite GetOrCreateSprite(string path, bool circle)
+    enum Shape { Square, Circle, Heart }
+
+    static Sprite GetOrCreateSprite(string path, Shape shape)
     {
         Sprite existing = AssetDatabase.LoadAssetAtPath<Sprite>(path);
         if (existing != null) return existing;
@@ -467,13 +509,36 @@ public static class AlevPrefabSetupB
         {
             for (int x = 0; x < SpriteSize; x++)
             {
-                bool on = true;
-                if (circle)
+                bool on;
+
+                switch (shape)
                 {
-                    float dx = x + 0.5f - r;
-                    float dy = y + 0.5f - r;
-                    on = dx * dx + dy * dy <= r * r;
+                    case Shape.Circle:
+                    {
+                        float dx = x + 0.5f - r;
+                        float dy = y + 0.5f - r;
+                        on = dx * dx + dy * dy <= r * r;
+                        break;
+                    }
+
+                    case Shape.Heart:
+                    {
+                        // Klasik kalp esitsizligi: (x²+y²-1)³ - x²y³ <= 0
+                        // -1..1 araligina tasiyip y'yi ceviriyoruz (doku
+                        // asagidan yukari taranir, kalbin sivri ucu altta olmali).
+                        float hx = (x + 0.5f - r) / r * 1.35f;
+                        float hy = -(y + 0.5f - r) / r * 1.35f;
+
+                        float a = hx * hx + hy * hy - 1f;
+                        on = a * a * a - hx * hx * hy * hy * hy <= 0f;
+                        break;
+                    }
+
+                    default:
+                        on = true;
+                        break;
                 }
+
                 pixels[y * SpriteSize + x] = on ? Color.white : Color.clear;
             }
         }
