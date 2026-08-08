@@ -48,6 +48,18 @@ public class DogCompanion : MonoBehaviour
              "0 = kapali.")]
     public float warpDistance = 14f;
 
+    [Header("Koruma ani — onunde canavar varsa durur")]
+    [Tooltip("Karabas onunde CANLI bir duvar canavari varsa durur ve havlar.\n" +
+             "Oyuncu canavari sondurunce devam eder.\n\n" +
+             "PLAN.md madde 7: 'bir kez oyuncu kopegi korusun'. Escort\n" +
+             "bolumunun tek mekanik ani bu — yoksa oyuncu sadece yuruyup\n" +
+             "kopegin atesleri sondurmesini izliyor.")]
+    public bool stopAtMonsters = true;
+    [Tooltip("Onunde bu mesafede canavar varsa durur.")]
+    public float monsterBlockRange = 4.5f;
+    [Tooltip("Beklerken kac saniyede bir havlasin — 'buraya gecemiyorum'.")]
+    public float blockedBarkInterval = 1.8f;
+
     [Header("Yoldaki atesi sondurme (Following sirasinda)")]
     [Tooltip("Bu yaricapta buyumus bir FloorFire varsa ustune atlayip sondurur.")]
     public float fireDetectRange = 1.0f;
@@ -109,6 +121,7 @@ public class DogCompanion : MonoBehaviour
     float whineTimer;
     bool isStomping;
     float petSquashUntil;
+    float blockedBarkTimer;
 
     SpriteRenderer sprite;
     Vector3 baseScale;
@@ -251,7 +264,20 @@ public class DogCompanion : MonoBehaviour
         if (player == null) return;
 
         // Cok uzaklastiysa (genelde oyuncu ust kata cikti) yanina isin.
+        //
+        // ⚠️ Bu kontrol koruma anindan ONCE geliyor ve bilerek: oyuncu
+        // canavari sondurmeden ilerlemeye devam ederse kopek sonsuza kadar
+        // beklemesin, isinlanip yetissin. Aksi halde oyuncu farkinda olmadan
+        // kopegi geride birakip finale kopeksiz varirdi.
         if (TryWarpToPlayer()) return;
+
+        // Onunde canlı bir canavar varsa gecmiyor — oyuncunun sondurmesi lazim.
+        if (stopAtMonsters && IsBlockedByMonster())
+        {
+            UpdateBlockedBark();
+            SnapToGround(false);
+            return;
+        }
 
         float dist = Mathf.Abs(player.position.x - transform.position.x);
 
@@ -269,6 +295,43 @@ public class DogCompanion : MonoBehaviour
         SnapToGround(false);
 
         CheckForFireToStomp();
+    }
+
+    /// <summary>
+    /// Kopegin ILERISINDE canli bir duvar canavari var mi?
+    ///
+    /// Canavar oldugunde GameObject yok ediliyor, yani bileseni bulabiliyorsak
+    /// hala hayattadir. Ayri bir "olu mu" bayragi okumaya gerek yok.
+    /// </summary>
+    bool IsBlockedByMonster()
+    {
+        if (player == null) return false;
+
+        float dir = player.position.x > transform.position.x ? 1f : -1f;
+        float half = monsterBlockRange * 0.5f;
+
+        // Sadece ILERIYE bak: arkada kalan canavar kopegi durdurmamalı.
+        Vector2 center = (Vector2)transform.position + Vector2.right * dir * half;
+
+        foreach (Collider2D c in Physics2D.OverlapCircleAll(center, half))
+        {
+            if (c.GetComponentInParent<WallMonster>() != null) return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>Beklerken araliklarla havlar — "buraya gecemiyorum".</summary>
+    void UpdateBlockedBark()
+    {
+        if (sprite != null && player != null)
+            sprite.flipX = player.position.x < transform.position.x;
+
+        blockedBarkTimer -= Time.deltaTime;
+        if (blockedBarkTimer > 0f) return;
+
+        blockedBarkTimer = blockedBarkInterval;
+        PlayVaried(happyBarkClip, 0.75f);
     }
 
     /// <summary>
