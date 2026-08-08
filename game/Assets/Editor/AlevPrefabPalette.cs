@@ -19,13 +19,14 @@ public static class AlevPrefabPalette
 {
     const string Folder = "Assets/Prefabs/Level";
 
-    static Sprite square, glow;
+    static Sprite square, glow, flame;
 
     [MenuItem("ALEV/Yapi Taslarini Uret", false, 3)]
     public static void Build()
     {
         square = AlevSceneSetup.GetOrCreateSquareSprite();
         glow = LoadOrNull("Assets/Art/Generated/Glow.png");
+        flame = AlevLevelBuilder.GetOrCreateFlameSprite();
 
         EnsureFolder();
 
@@ -133,22 +134,27 @@ public static class AlevPrefabPalette
 
     static void FirePrefab(string name, float w, float h, float glowScale)
     {
-        var go = New(name, w, h, new Color(1f, 0.55f, 0.12f, 0.95f), 5);
+        // Alev dili sekli, dokudaki renklerle. Kare sprite ates gibi gorunmuyor.
+        var go = new GameObject(name);
+        go.transform.localScale = new Vector3(w, h, 1f);
+        var sr = go.AddComponent<SpriteRenderer>();
+        sr.sprite = flame;
+        sr.color = Color.white;
+        sr.sortingOrder = -3;            // oyuncunun ARKASINDA
 
         SpriteRenderer gsr = null;
         if (glow != null)
         {
             var g = new GameObject("Isik");
             g.transform.SetParent(go.transform, false);
-            g.transform.localScale = new Vector3(9f * glowScale / w, 9f * glowScale / h, 1f);
+            g.transform.localScale = new Vector3(5.5f * glowScale / w, 5.5f * glowScale / h, 1f);
             gsr = g.AddComponent<SpriteRenderer>();
             gsr.sprite = glow;
-            gsr.color = new Color(1f, 0.5f, 0.15f, 0.35f);
-            gsr.sortingOrder = 4;
+            gsr.color = new Color(1f, 0.45f, 0.12f, 0.18f);
+            gsr.sortingOrder = -4;
         }
 
-        var af = go.AddComponent<AmbientFire>();
-        af.glow = gsr;
+        go.AddComponent<AmbientFire>().glow = gsr;
         Save(go);
     }
 

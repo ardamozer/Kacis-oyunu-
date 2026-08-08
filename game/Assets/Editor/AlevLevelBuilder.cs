@@ -28,7 +28,7 @@ public static class AlevLevelBuilder
 {
     const float DoorH = 3.4f;
 
-    static Sprite square, glow;
+    static Sprite square, glow, flameSprite;
     static Transform rooms, geo, plats, props, water, debris, triggers, markers, fires, keys;
 
     static readonly Color CWall  = new Color(0.11f, 0.09f, 0.09f);
@@ -39,15 +39,23 @@ public static class AlevLevelBuilder
     static readonly Color CBack  = new Color(0.135f, 0.105f, 0.10f);
 
     // ---- ODALAR: hepsi yan yana, y=0 zemininde. Yukseklikler serbest. ----
+    //
+    // ⚠️ YUKSEKLIKLER KUCULTULDU. Eskiden odalar 16-26 birim yuksekti ama
+    // butun icerik en alttaki 4 birimde toplaniyordu — odalarin ust ucte
+    // ikisi bombos siyah bosluktu. Artik yukseklik oynanan alana yakin.
+    //
+    // Standart oda 11 = kameranin gorus yuksekligi (ortho 5.5 x 2), yani
+    // tam oturuyor, dikey kayma yok. Salon ve Cocuk odasi bilerek daha
+    // yuksek — oralarda kamera kayiyor ve buyukluk hissediliyor.
     static readonly (string name, float x0, float x1, float h)[] RoomDefs =
     {
-        ("Antre",         0f,   34f, 16f),
-        ("Salon",        34f,  102f, 26f),   // dev oda, dikey tirmanis
-        ("Mutfak",      102f,  152f, 16f),   // su bol, nefes odasi
-        ("Koridor",     152f,  188f, 16f),   // oynanabilir yukseklik 6.5
-        ("CocukOdasi",  188f,  226f, 22f),   // KARABAS
-        ("ArkaKoridor", 226f,  294f, 16f),   // kacis + OLUM
-        ("ArkaKapi",    294f,  336f, 20f),   // BOSS + cikis
+        ("Antre",         0f,   34f, 11f),
+        ("Salon",        34f,  102f, 20f),   // dev oda, dikey tirmanis
+        ("Mutfak",      102f,  152f, 11f),   // su bol, nefes odasi
+        ("Koridor",     152f,  188f, 11f),   // oynanabilir yukseklik 6.5
+        ("CocukOdasi",  188f,  226f, 15f),   // KARABAS
+        ("ArkaKoridor", 226f,  294f, 11f),   // kacis + OLUM
+        ("ArkaKapi",    294f,  336f, 13f),   // BOSS + cikis
     };
 
     const float LevelW = 336f;
@@ -64,6 +72,7 @@ public static class AlevLevelBuilder
 
         square = AlevSceneSetup.GetOrCreateSquareSprite();
         glow = GetOrCreateGlowSprite();
+        flameSprite = GetOrCreateFlameSprite();
 
         GameObject old = GameObject.Find("Level");
         if (old != null) Object.DestroyImmediate(old);
@@ -130,8 +139,8 @@ public static class AlevLevelBuilder
     static void BuildShell()
     {
         Solid(geo, "Zemin", LevelW * 0.5f, -0.5f, LevelW, 1f, CFloor);
-        Solid(geo, "SolDuvar", -0.5f, 13f, 1f, 28f, CWall);
-        Solid(geo, "SagDuvar", LevelW + 0.5f, 13f, 1f, 28f, CWall);
+        Solid(geo, "SolDuvar", -0.5f, 10f, 1f, 22f, CWall);
+        Solid(geo, "SagDuvar", LevelW + 0.5f, 10f, 1f, 22f, CWall);
 
         foreach (var (name, x0, x1, h) in RoomDefs)
         {
@@ -141,7 +150,26 @@ public static class AlevLevelBuilder
         }
 
         // Koridor'un ALCAK TAVANI — oynanabilir yukseklik 6.5, bogucu
-        Solid(geo, "Koridor_AlcakTavan", 170f, 11.25f, 36f, 9.5f, CWall);
+        Solid(geo, "Koridor_AlcakTavan", 170f, 8.75f, 36f, 4.5f, CWall);
+
+        // ---- TAVAN DETAYLARI ----
+        // Odalarin ustu bombos siyah bosluktu. Kirisler, borular ve
+        // tavana yakin alevler o boslugu dolduruyor: bakis her yerde bir
+        // seye takiliyor, oda "kutu" olmaktan cikip "mekan" oluyor.
+        foreach (var (name, x0, x1, h) in RoomDefs)
+        {
+            float w = x1 - x0;
+            float cx = (x0 + x1) * 0.5f;
+
+            // Tavan kirisleri
+            Prop($"TavanKiris_{name}_1", cx - w * 0.25f, h - 0.9f, w * 0.42f, 0.7f,
+                 new Color(0.20f, 0.15f, 0.12f), -4);
+            Prop($"TavanKiris_{name}_2", cx + w * 0.25f, h - 0.9f, w * 0.42f, 0.7f,
+                 new Color(0.20f, 0.15f, 0.12f), -4);
+
+            // Duvar dibinde koyu golge — zemin ile duvar arasinda gecis
+            Prop($"Golge_{name}", cx, 0.6f, w, 1.2f, new Color(0.10f, 0.08f, 0.08f), -14);
+        }
 
         // Odalar arasi duvarlar + kapi bosluklari
         for (int i = 1; i < RoomDefs.Length; i++)
@@ -167,8 +195,8 @@ public static class AlevLevelBuilder
         Solid(plats, "Antre_Ayakkabilik", 9f, 0.8f, 4f, 1.6f, CPlat);
         Solid(plats, "Antre_Konsol", 24f, 2.2f, 5f, 0.6f, CPlat);
 
-        Fire("Antre_Alev1", 30f, 1f, 1.8f, 2.6f);
-        Fire("Antre_Alev2", 2f, 7f, 1.3f, 1.9f);
+        Fire("Antre_Alev1", 30f, 1.4f, 2.4f, 3.8f);
+        Fire("Antre_Alev2", 2f, 6.5f, 1.9f, 3f);
 
         Tap("Antre_Kalorifer", 31f, 1.2f, WaterSource.SourceType.Infinite, 25f,
             new Color(0.25f, 0.60f, 0.95f), 1f, 2.2f);
@@ -182,17 +210,19 @@ public static class AlevLevelBuilder
     {
         Prop("Salon_Somine", 40f, 3.4f, 8f, 6.8f, new Color(0.20f, 0.15f, 0.14f));
         Prop("Salon_Kitaplik", 68f, 6f, 4f, 12f, CProp);
-        Prop("Salon_Avize", 68f, 23f, 6f, 3f, new Color(0.35f, 0.28f, 0.14f));
-        Prop("Salon_Perde", 96f, 17f, 3.5f, 16f, new Color(0.24f, 0.13f, 0.13f));
+        Prop("Salon_Avize", 68f, 17.4f, 6f, 2.6f, new Color(0.35f, 0.28f, 0.14f));
+        Prop("Salon_AvizeZincir", 68f, 19.2f, 0.3f, 2f, new Color(0.28f, 0.24f, 0.16f));
+        Prop("Salon_Perde", 96f, 12f, 3.5f, 12f, new Color(0.24f, 0.13f, 0.13f));
         Prop("Salon_Hali", 62f, 0.15f, 22f, 0.3f, new Color(0.26f, 0.14f, 0.12f), 1);
 
         Solid(plats, "Salon_Koltuk", 50f, 1.3f, 8f, 1.8f, CPlat);
         Solid(plats, "Salon_Piyano", 88f, 1.8f, 9f, 2.8f, CPlat);
 
-        Fire("Salon_SomineAtes", 40f, 2.2f, 5f, 5f, 1.5f);
-        Fire("Salon_Alev1", 78f, 1f, 2f, 2.8f);
-        Fire("Salon_Alev2", 36f, 16f, 1.5f, 2.1f);
-        Fire("Salon_Alev3", 99f, 12f, 1.7f, 2.3f);
+        // Somine: tek dev kare yerine uc ayri alev. Cok daha ikna edici.
+        FireCluster("Salon_Somine", 40f, 2.6f, 1.9f);
+        Fire("Salon_Alev1", 78f, 1.5f, 2.7f, 4.2f);
+        Fire("Salon_Alev2", 36f, 15f, 2.1f, 3.3f);
+        Fire("Salon_Alev3", 99f, 11f, 2.3f, 3.5f);
 
         // Dikey tirmanis — odanin tepesine kadar. MAVI anahtar en ustte:
         // buyuk odanin buyuk odulu. Yukselmeler 1.8, bosluklar 3-4.
@@ -227,8 +257,8 @@ public static class AlevLevelBuilder
         Solid(plats, "Mutfak_Dolap1", 140f, 3.8f, 5f, 0.5f, CPlat);
         Solid(plats, "Mutfak_Dolap2", 133f, 5.6f, 4f, 0.5f, CPlat);
 
-        Fire("Mutfak_Alev1", 148f, 1f, 1.8f, 2.4f);
-        Fire("Mutfak_Alev2", 112f, 10f, 1.5f, 2.1f);
+        Fire("Mutfak_Alev1", 148f, 1.4f, 2.4f, 3.7f);
+        Fire("Mutfak_Alev2", 112f, 7.8f, 2.1f, 3.2f);
 
         Tap("Mutfak_Musluk", 120f, 3.4f, WaterSource.SourceType.Infinite, 30f,
             new Color(0.25f, 0.60f, 0.95f), 1.2f, 1.8f);
@@ -252,8 +282,8 @@ public static class AlevLevelBuilder
         Solid(plats, "Koridor_DevrikDolap", 166f, 1.6f, 4.5f, 0.6f, CPlat);
         Solid(plats, "Koridor_Raf", 176f, 3.4f, 3.5f, 0.5f, CPlat);
 
-        Fire("Koridor_Alev1", 156f, 1f, 1.5f, 2.1f);
-        Fire("Koridor_Alev2", 185f, 1f, 1.5f, 2.1f);
+        Fire("Koridor_Alev1", 156f, 1.3f, 2.1f, 3.3f);
+        Fire("Koridor_Alev2", 185f, 1.3f, 2.1f, 3.3f);
         // Su YOK, yer atesi de YOK — kitlik hissi var ama kilitlenme riski yok.
 
         Key(KeyColor.Mor, 176f, 5.0f);
@@ -266,7 +296,7 @@ public static class AlevLevelBuilder
 
     static void CocukOdasi()
     {
-        Prop("Cocuk_DuvarKagidi", 207f, 11f, 36f, 20f, new Color(0.20f, 0.15f, 0.16f), -15);
+        Prop("Cocuk_DuvarKagidi", 207f, 7f, 36f, 13f, new Color(0.20f, 0.15f, 0.16f), -15);
         Prop("Cocuk_Yatak", 197f, 1f, 8f, 2f, CProp);
         Prop("Cocuk_Cizim", 203f, 9f, 2.4f, 2.8f, new Color(0.30f, 0.26f, 0.20f));
         Prop("Cocuk_BoyCizgisi", 191f, 5f, 0.5f, 10f, new Color(0.28f, 0.24f, 0.20f));
@@ -275,8 +305,8 @@ public static class AlevLevelBuilder
         Solid(plats, "Cocuk_Sandik", 208f, 0.9f, 3.5f, 1.8f, CPlat);
         Solid(plats, "Cocuk_Raf", 216f, 3.4f, 4f, 0.5f, CPlat);
 
-        Fire("Cocuk_Alev1", 223f, 1f, 1.5f, 2.1f);
-        Fire("Cocuk_Alev2", 190f, 15f, 1.7f, 2.3f);
+        Fire("Cocuk_Alev1", 223f, 1.3f, 2.2f, 3.4f);
+        Fire("Cocuk_Alev2", 190f, 11f, 2.3f, 3.5f);
     }
 
     // ==================================================================
@@ -285,8 +315,8 @@ public static class AlevLevelBuilder
 
     static void ArkaKoridor()
     {
-        Prop("Arka_Tugla", 260f, 8f, 62f, 14f, new Color(0.16f, 0.13f, 0.12f), -12);
-        Prop("Arka_Boru", 244f, 12f, 30f, 0.8f, new Color(0.24f, 0.20f, 0.18f), -3);
+        Prop("Arka_Tugla", 260f, 5.5f, 62f, 10f, new Color(0.16f, 0.13f, 0.12f), -12);
+        Prop("Arka_Boru", 244f, 8.6f, 30f, 0.8f, new Color(0.24f, 0.20f, 0.18f), -3);
 
         Solid(plats, "Arka_Kasa1", 238f, 1.6f, 5f, 0.6f, CPlat);
         Solid(plats, "Arka_Kasa2", 250f, 3.2f, 4f, 0.5f, CPlat);
@@ -294,9 +324,9 @@ public static class AlevLevelBuilder
         Solid(plats, "Arka_Kiris", 276f, 3.6f, 6f, 0.5f, CPlat);
         Solid(plats, "Arka_Kasa4", 288f, 1.8f, 4f, 0.6f, CPlat);
 
-        Fire("Arka_Alev1", 232f, 1f, 1.6f, 2.2f);
-        Fire("Arka_Alev2", 256f, 13f, 1.5f, 2f);
-        Fire("Arka_Alev3", 284f, 1f, 1.7f, 2.3f);
+        Fire("Arka_Alev1", 232f, 1.4f, 2.3f, 3.5f);
+        Fire("Arka_Alev2", 256f, 7.8f, 2.1f, 3.2f);
+        Fire("Arka_Alev3", 284f, 1.4f, 2.4f, 3.6f);
 
         // Olumden ONCE dolsun
         Tap("Arka_Musluk", 240f, 0.8f, WaterSource.SourceType.Infinite, 30f,
@@ -304,7 +334,7 @@ public static class AlevLevelBuilder
 
         // OLUM ANI — odanin ~%55'i. Sonrasinda 74 birim yalnizsiniz.
         var death = Sprite2(debris, "Tahta_OLUM (EndingSequence -> Death Debris)",
-                            264f, 14f, 4f, 0.5f, new Color(0.5f, 0.3f, 0.16f));
+                            264f, 9.4f, 4f, 0.5f, new Color(0.5f, 0.3f, 0.16f));
         death.AddComponent<BoxCollider2D>().isTrigger = true;
         var dfd = death.AddComponent<FallingDebris>();
         dfd.groundLayer = LayerMask.GetMask("Ground");
@@ -312,8 +342,8 @@ public static class AlevLevelBuilder
         dfd.groundMarker = null;
         dfd.lifetimeAfterLanding = 0f;
 
-        Beam(3, 246f, 14.4f, "Arka koridor");
-        Beam(4, 282f, 14.4f, "Arka koridor - yalniz bolum");
+        Beam(3, 246f, 9.4f, "Arka koridor");
+        Beam(4, 282f, 9.4f, "Arka koridor - yalniz bolum");
     }
 
     // ==================================================================
@@ -322,22 +352,22 @@ public static class AlevLevelBuilder
 
     static void ArkaKapi()
     {
-        Prop("ArkaKapi_Tugla", 315f, 10f, 40f, 18f, new Color(0.16f, 0.13f, 0.12f), -12);
+        Prop("ArkaKapi_Tugla", 315f, 6.5f, 40f, 12f, new Color(0.16f, 0.13f, 0.12f), -12);
         Prop("ArkaKapi_Kapi", 333f, 2.2f, 3f, 4.4f, new Color(0.34f, 0.24f, 0.14f), -1);
 
         Solid(plats, "ArkaKapi_Kasa1", 302f, 1.8f, 5f, 0.6f, CPlat);
         Solid(plats, "ArkaKapi_Kasa2", 312f, 3.4f, 4f, 0.5f, CPlat);
         Solid(plats, "ArkaKapi_Kasa3", 321f, 1.8f, 5f, 0.6f, CPlat);
 
-        Fire("ArkaKapi_Alev1", 298f, 1f, 1.8f, 2.5f);
-        Fire("ArkaKapi_Alev2", 318f, 14f, 1.6f, 2.2f);
+        Fire("ArkaKapi_Alev1", 298f, 1.5f, 2.5f, 3.9f);
+        Fire("ArkaKapi_Alev2", 318f, 9.2f, 2.2f, 3.4f);
 
         // Yalniz bolumun sigortasi: sonsuz ama YAVAS. Beklemek zorundasiniz,
         // o sirada atesler buyuyor. Kilitlenme yok, baski var.
         Tap("ArkaKapi_PatlakBoru", 306f, 1.2f, WaterSource.SourceType.Infinite, 15f,
             new Color(0.22f, 0.52f, 0.85f), 0.8f, 2f);
 
-        Beam(5, 310f, 18.4f, "Arka kapi - yalniz bolum");
+        Beam(5, 310f, 11.4f, "Arka kapi - yalniz bolum");
     }
 
     // ==================================================================
@@ -495,7 +525,10 @@ public static class AlevLevelBuilder
         if (cam == null) { Debug.LogWarning("[ALEV] Main Camera yok."); return; }
 
         cam.orthographic = true;
-        cam.orthographicSize = 7f;
+        // ⚠️ 7 -> 5.5. Eskiden oyuncu ekran yuksekliginin sadece %11'iydi,
+        // her sey uzaktan bakilan minik noktalar gibi duruyordu. 5.5'te
+        // oyuncu %15 — platformcularda normal aralik bu.
+        cam.orthographicSize = 5.5f;
         cam.backgroundColor = new Color(0.05f, 0.035f, 0.04f);
 
         Transform rig = cam.transform.parent;
@@ -552,20 +585,49 @@ public static class AlevLevelBuilder
     static void Prop(string name, float x, float y, float w, float h, Color c, int order = -2)
         => Sprite2(props, name, x, y, w, h, c, order);
 
+    /// <summary>
+    /// Dekoratif alev.
+    ///
+    /// ⚠️ ONEMLI DERSLER (ilk hali cok kotu duruyordu):
+    ///   1. Kare sprite ASLA ates gibi gorunmez. Ates bir SILUET meselesi.
+    ///      Artik proseduel uretilen alev dili sekli kullaniliyor.
+    ///   2. Buyuk ates = turuncu blok. Kucuk ve INCE alevler ikna edicidir.
+    ///      Buyuk ates isteniyorsa tek buyuk yerine BIRKAC KUCUK kullanin.
+    ///   3. sortingOrder POZITIF olmamali — dekoratif ates oyuncunun onune
+    ///      gecerse ekrani kirletir. Artik arkada (-3), isik daha da arkada.
+    /// </summary>
     static void Fire(string name, float x, float y, float w, float h, float glowScale = 1f)
     {
-        var go = Sprite2(fires, name, x, y, w, h, new Color(1f, 0.55f, 0.12f, 0.95f), 5);
+        var go = new GameObject(name);
+        go.transform.SetParent(fires, false);
+        go.transform.position = new Vector3(x, y, 0f);
+        go.transform.localScale = new Vector3(w, h, 1f);
+
+        var sr = go.AddComponent<SpriteRenderer>();
+        sr.sprite = flameSprite;              // alev dili sekli, renkleri icinde
+        sr.color = Color.white;               // tint YOK, dokudaki renkler gecerli
+        sr.sortingOrder = -3;                 // oyuncunun ARKASINDA
 
         var g = new GameObject("Isik");
         g.transform.SetParent(go.transform, false);
-        g.transform.localScale = new Vector3(9f * glowScale / Mathf.Max(w, 0.01f),
-                                             9f * glowScale / Mathf.Max(h, 0.01f), 1f);
+        // Isik halkasi daha kucuk ve daha soluk — eskiden dev turuncu
+        // lekeler olusturuyordu.
+        g.transform.localScale = new Vector3(5.5f * glowScale / Mathf.Max(w, 0.01f),
+                                             5.5f * glowScale / Mathf.Max(h, 0.01f), 1f);
         var gsr = g.AddComponent<SpriteRenderer>();
         gsr.sprite = glow;
-        gsr.color = new Color(1f, 0.5f, 0.15f, 0.35f);
-        gsr.sortingOrder = 4;
+        gsr.color = new Color(1f, 0.45f, 0.12f, 0.18f);
+        gsr.sortingOrder = -4;
 
         go.AddComponent<AmbientFire>().glow = gsr;
+    }
+
+    /// <summary>Buyuk ates: tek dev kare yerine farkli boyda birkac alev.</summary>
+    static void FireCluster(string name, float x, float y, float scale = 1f)
+    {
+        Fire($"{name}_a", x - 1.1f * scale, y, 1.0f * scale, 1.9f * scale, 0.7f);
+        Fire($"{name}_b", x, y + 0.25f * scale, 1.4f * scale, 2.7f * scale, 1.1f);
+        Fire($"{name}_c", x + 1.1f * scale, y, 1.0f * scale, 2.0f * scale, 0.7f);
     }
 
     static void Tap(string name, float x, float y, WaterSource.SourceType type,
@@ -582,6 +644,79 @@ public static class AlevLevelBuilder
         src.type = type;
         if (type == WaterSource.SourceType.Infinite) src.refillPerSecond = rate;
         else { src.instantAmount = rate; src.destroyAfterUse = true; }
+    }
+
+    /// <summary>
+    /// Alev dili sekli uretir — kare sprite ates gibi gorunmuyordu.
+    ///
+    /// Profil: dipte dar, %30 yukseklikte en genis, tepede sivri.
+    /// Renk dokunun ICINE bakiliyor: cekirdek sari-beyaz, ortasi turuncu,
+    /// kenari koyu kirmizi. Boylece tint gerekmiyor ve ates "sicak"
+    /// gorunuyor — tek renk turuncu bir sekil hep yassi durur.
+    /// </summary>
+    public static Sprite GetOrCreateFlameSprite()
+    {
+        const string path = "Assets/Art/Generated/Flame.png";
+        var existing = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+        if (existing != null) return existing;
+
+        if (!AssetDatabase.IsValidFolder("Assets/Art")) AssetDatabase.CreateFolder("Assets", "Art");
+        if (!AssetDatabase.IsValidFolder("Assets/Art/Generated"))
+            AssetDatabase.CreateFolder("Assets/Art", "Generated");
+
+        const int W = 64, H = 96;
+        var tex = new Texture2D(W, H);
+        var px = new Color[W * H];
+
+        var core = new Color(1.00f, 0.95f, 0.62f);   // sari-beyaz cekirdek
+        var mid  = new Color(1.00f, 0.55f, 0.10f);   // turuncu
+        var edge = new Color(0.85f, 0.20f, 0.04f);   // koyu kirmizi kenar
+
+        for (int yi = 0; yi < H; yi++)
+        {
+            float y = yi / (float)(H - 1);           // 0 = dip, 1 = tepe
+
+            // Alev profili: dipte dar, %30'da en genis, tepede sivri
+            float bulge = Mathf.Sin(Mathf.Clamp01(y / 0.3f) * Mathf.PI * 0.5f);
+            float halfW = 0.5f * (1f - y) * (0.55f + 0.45f * bulge);
+
+            for (int xi = 0; xi < W; xi++)
+            {
+                float x = xi / (float)(W - 1) - 0.5f;   // -0.5 .. 0.5
+                float ax = Mathf.Abs(x);
+
+                if (halfW <= 0.001f || ax > halfW) { px[yi * W + xi] = Color.clear; continue; }
+
+                float d = ax / halfW;                   // 0 = eksen, 1 = kenar
+
+                // Renk: cekirdekten kenara. Tepeye dogru cekirdek soner.
+                float coreStrength = Mathf.Clamp01(1f - y * 1.3f);
+                Color c = d < 0.45f
+                    ? Color.Lerp(core, mid, d / 0.45f)
+                    : Color.Lerp(mid, edge, (d - 0.45f) / 0.55f);
+                c = Color.Lerp(mid, c, 0.35f + 0.65f * coreStrength);
+
+                // Kenarlarda ve tepede yumusak sonme
+                float a = Mathf.Clamp01((1f - d) * 3f) * Mathf.Clamp01((1f - y) * 2.2f + 0.15f);
+                c.a = a;
+
+                px[yi * W + xi] = c;
+            }
+        }
+
+        tex.SetPixels(px);
+        tex.Apply();
+        File.WriteAllBytes(path, tex.EncodeToPNG());
+        Object.DestroyImmediate(tex);
+
+        AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
+        var fimp = (TextureImporter)AssetImporter.GetAtPath(path);
+        fimp.textureType = TextureImporterType.Sprite;
+        fimp.alphaIsTransparency = true;
+        fimp.textureCompression = TextureImporterCompression.Uncompressed;
+        fimp.SaveAndReimport();
+
+        return AssetDatabase.LoadAssetAtPath<Sprite>(path);
     }
 
     static Sprite GetOrCreateGlowSprite()
