@@ -261,4 +261,41 @@ public class EndingSequence : MonoBehaviour
         current = (int)prop.GetValue(healthComponent);
         return true;
     }
+
+    // ============================================================
+    //  Yardimci
+    //  NOT (Kisi A ekledi): Bu metod cagriliyordu ama yazilmamisti,
+    //  proje derlenmiyordu ve ikimiz de Play'e basamiyorduk. Eksigi
+    //  tamamladim. Farkli calismasini istersen serbestce degistir.
+    // ============================================================
+
+    /// <summary>
+    /// Bir Transform'un olcegini verilen surede 'from'dan 'to'ya yumusak gecisle tasir.
+    /// Alevin yukselmesi ve sonmesi icin kullaniliyor.
+    /// </summary>
+    IEnumerator ScaleRoutine(Transform target, Vector3 from, Vector3 to, float duration)
+    {
+        if (target == null) yield break;
+
+        if (duration <= 0f)
+        {
+            target.localScale = to;
+            yield break;
+        }
+
+        float elapsed = 0f;
+        target.localScale = from;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            // SmoothStep: basta ve sonda yavas, ortada hizli. Lineerden cok daha iyi durur.
+            t = t * t * (3f - 2f * t);
+            target.localScale = Vector3.Lerp(from, to, t);
+            yield return null;
+        }
+
+        target.localScale = to;
+    }
 }
