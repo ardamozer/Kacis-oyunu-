@@ -40,12 +40,15 @@ public class EndingSequence : MonoBehaviour
              "Tahtanin yere varma suresine gore ayarlayin.")]
     public float debrisImpactDelay = 0.55f;
 
-    [Header("Olum — oyuncuyu itme")]
+    [Header("Olum — Karabas'in hamlesi")]
     [Tooltip("Karabas oyuncuyu kac birim yana iter. 0 = itme yok.\n" +
              "Anlami: kopek seni kurtariyor. Mekanigi: dusen tahtanin " +
              "altindan cikiyorsun, tahta sana hasar vermiyor.")]
     public float pushDistance = 2f;
     public float pushDuration = 0.35f;
+    [Tooltip("Kopegin oyuncunun yerine atilma suresi. Itmeyle ayni anda calisir.\n" +
+             "Itmeden KISA olsun — once kopek carpsin, sonra oyuncu savrulsun.")]
+    public float dogLungeDuration = 0.25f;
 
     [Header("Boss")]
     [Tooltip("BossCore tasiyan dev alev objesi. Sahnede devre disi baslamali.")]
@@ -73,6 +76,9 @@ public class EndingSequence : MonoBehaviour
     // Alevin sahnede ayarladiginiz gercek boyutu. Sabit Vector3.one KULLANMIYORUZ:
     // Inspector'da alevi buyutup kucultmekte ozgur olmalisiniz, kod onu ezmesin.
     Vector3 bigFlameBaseScale = Vector3.one;
+
+    // Kopegin oldugu yer — tasma buraya birakilir.
+    Vector3 dogLastPosition;
 
     void Start()
     {
@@ -131,13 +137,37 @@ public class EndingSequence : MonoBehaviour
         float previousVolume = AudioListener.volume;
         AudioListener.volume = 0f; // PLAN.md: "3 saniye, tum sesler kesilir"
 
-        // Karabas oyuncuyu iter. Iki isi birden yapar:
-        //   anlam  — kopek seni kurtariyor, olum senin hatan degil (PLAN.md sarti)
-        //   mekanik— dusen tahtanin altindan cikarsin, FallingDebris sana vurmaz
-        yield return PushPlayerAside();
+        // ⚠️ SAHNENIN TAMAMI BU NOKTA UZERINE KURULU.
+        // Tahta, oyuncunun TAM DURDUGU yere duser. Karabas oraya kosar,
+        // oyuncu savrulur. Anlatilan cumle: "sana gelecek darbeyi o aldi."
+        // Sabit bir olum noktasi kullanirsak bu cumle kurulmaz — oyuncu
+        // sadece "kendiliginden kaydim, kopek uzakta oldu" gorur.
+        Vector3 impactPoint = player != null ? player.position : transform.position;
+
+        // Itme yonunu SIMDI hesapla: kopek birazdan hareket edecek, sonra
+        // hesaplarsak yon yanlis cikar.
+        float pushDir = 1f;
+        if (dog != null && player != null)
+            pushDir = player.position.x >= dog.transform.position.x ? 1f : -1f;
+
+        // Kopek ve oyuncu AYNI ANDA hareket etmeli. Sirayla yaparsak
+        // "itti" degil, "once kopek yurudu, sonra oyuncu kaydi" gorunur.
+        Coroutine lunge = null;
+        if (dog != null)
+        {
+            dog.enabled = false;   // kendi takip mantigi hamleyle yarismasin
+            lunge = StartCoroutine(DogLungeRoutine(impactPoint));
+        }
+
+        yield return PushPlayerAside(pushDir);
+        if (lunge != null) yield return lunge;
 
         if (deathDebris != null)
         {
+            // Tahtayi carpma noktasinin USTUNE tasi — kopek artik orada.
+            Vector3 d = deathDebris.transform.position;
+            deathDebris.transform.position = new Vector3(impactPoint.x, d.y, d.z);
+
             // ⚠️ DropNow(false): UYARI YOK.
             // Oyun boyunca "unlem gorursen kac" ogretiliyor. Olum aninda unlem
             // cikarsa oyuncu "kacabilirdim, benim hatam" der; duygu suclulukdan
@@ -171,10 +201,14 @@ public class EndingSequence : MonoBehaviour
             bigFlameVisual.transform.localScale = bigFlameBaseScale;
         }
 
-        // "Yerde sadece tasma kalir."
+        // "Yerde sadece tasma kalir." — kopegin oldugu yerde, sabit bir
+        // noktada degil. Tasma nerede kaldiysa oyuncu oraya bakar.
         if (collarPickup != null)
         {
-            if (dogDeathPoint != null) collarPickup.transform.position = dogDeathPoint.position;
+            Vector3 collarPos = dogLastPosition;
+            if (dog == null && dogDeathPoint != null) collarPos = dogDeathPoint.position;
+
+            collarPickup.transform.position = collarPos;
             collarPickup.SetActive(true);
         }
 
@@ -188,14 +222,41 @@ public class EndingSequence : MonoBehaviour
     /// Olcek animasyonu degil duz pozisyon lerp'i — "itildim" hissi
     /// dogrudan konum degisiminden geliyor.
     /// </summary>
-    IEnumerator PushPlayerAside()
+    /// <summary>
+    /// Karabas oyuncunun durdugu yere atilir. Tahta oraya dusecek.
+    ///
+    /// DogCompanion'i kapatiyoruz cunku kendi takip mantigi ayni transform'u
+    /// oynatiyor ve hamleyle yarisip kopegi titretiyor.
+    /// </summary>
+    IEnumerator DogLungeRoutine(Vector3 impactPoint)
+    {
+        if (dog == null) yield break;
+
+        Transform t = dog.transform;
+        Vector3 from = t.position;
+        // Sadece X: kopek zemininde kalsin, oyuncu havadaysa ucmasin.
+        Vector3 to = new Vector3(impactPoint.x, from.y, from.z);
+
+        SpriteRenderer sr = dog.GetComponentInChildren<SpriteRenderer>();
+        if (sr != null) sr.flipX = to.x < from.x;
+
+        float e = 0f;
+        while (e < dogLungeDuration)
+        {
+            e += Time.deltaTime;
+            float k = Mathf.Clamp01(e / dogLungeDuration);
+            k = k * k * (3f - 2f * k);          // SmoothStep — atilis hissi
+            t.position = Vector3.Lerp(from, to, k);
+            yield return null;
+        }
+
+        t.position = to;
+        dogLastPosition = to;                   // tasma buraya dusecek
+    }
+
+    IEnumerator PushPlayerAside(float dir)
     {
         if (player == null || pushDistance <= 0f || pushDuration <= 0f) yield break;
-
-        // Kopek neredeyse onun TERSINE it.
-        float dir = 1f;
-        if (dog != null)
-            dir = player.position.x >= dog.transform.position.x ? 1f : -1f;
 
         float targetX = player.position.x + dir * pushDistance;
 
