@@ -462,11 +462,102 @@ kopegi izole test etmek icin kullanislidir, biri digerini bozmaz
 
 ---
 
+# BOLUM 8 — Final (EndingSequence)
+
+⚠️ **PLAN.md kirmizi cizgisi:** final sahnesi (kopegin olumu + boss) saat
+19.5'ta kaba haliyle bitmis olmali. Asagidaki kurulum minimum — hicbir yeni
+asset gerektirmiyor (kutu/daire sprite'lar + renk).
+
+## 8.1 Yonetici obje
+
+1. `Hierarchy → sag tik → Create Empty` · adi **`EndingSequence`**
+2. **Add Component → Ending Sequence**
+3. **Add Component → Test Ending Trigger** (benim test script'im)
+
+## 8.2 Kopegin olumu icin gorseller
+
+1. `Hierarchy → sag tik → 2D Object → Sprites → Circle` · adi **`BigDeathFlame`**
+   - **Scale**: X = `2.5`, Y = `2.5` · Renk → koyu turuncu/kirmizi
+   - Baslangicta **devre disi birakin** (Inspector'da checkbox'i kapatin)
+2. `Hierarchy → sag tik → 2D Object → Sprites → Square` · adi **`Collar`**
+   - **Scale**: X = `0.3`, Y = `0.2` · Renk → kahverengi/bej (tasma gibi)
+   - Baslangicta **devre disi birakin**
+3. `Hierarchy → sag tik → Create Empty` · adi **`DogDeathPoint`**
+   - Karabas'in olecegi yere koyun (oyuncunun GORMEDIGI, arkasindaki nokta)
+
+## 8.3 Boss gorseli
+
+1. `Assets/Prefabs/Enemies/WallMonster` prefabini sahneye surukleyin, adi
+   **`Boss`** yapin (kopyasi, orijinal prefabi bozmaz)
+2. `Boss` uzerindeki **Wall Monster** bilesenini SILIN (boss'un kendi ates
+   mantigi `EndingSequence` tarafindan yonetiliyor, WallMonster'a gerek yok)
+3. **Scale**: mevcut degerin 4 kati (orn. WallMonster X=1,Y=1.4 ise → X=4,Y=5.6)
+4. Sprite Renderer → **Color** → koyu kirmizi
+5. **Add Component → Boss Core**
+6. Baslangicta **devre disi birakin**
+7. `Boss`'a sag tik → **Create Empty** · adi **`BossFirePoint`** — atesin
+   cikacagi nokta
+
+## 8.4 Hayalet gorseli
+
+1. `Hierarchy → sag tik → 2D Object → Sprites → Square` · adi **`DogGhost`**
+   - Karabas ile ayni Scale
+   - Renk → acik mavi/beyaz, **Alpha ~%50**
+   - Baslangicta **devre disi birakin**
+2. `Hierarchy → sag tik → Create Empty` · adi **`GhostStart`** (ekranin bir
+   kenari) ve **`GhostEnd`** (diger kenari) — hayalet bu ikisi arasinda gecer
+
+## 8.5 Inspector alanlarini bagla
+
+`EndingSequence` objesini sec, **Ending Sequence** bileseninde:
+
+| Alan | Deger |
+|---|---|
+| **Player** | bos birak |
+| **Dog** | Hierarchy'den `Karabas`'i surukle |
+| **Dog Death Point** | `DogDeathPoint` |
+| **Big Flame Visual** | `BigDeathFlame` |
+| **Collar Pickup** | `Collar` |
+| **Silence Duration** | `3` |
+| **Boss Object** | `Boss` |
+| **Boss Fire Point** | `Boss/BossFirePoint` |
+| **Flame Prefab** | `Assets/Prefabs/Enemies/Flame` (WallMonster ile ayni) |
+| **Bass Fire Interval** | `2.5` |
+| **Exit Door** | bos birakilabilir (Kisi A entegre ederken baglar) |
+| **Ghost Visual** | `DogGhost` |
+| **Ghost Start** | `GhostStart` |
+| **Ghost End** | `GhostEnd` |
+| **Ghost Cross Duration** | `2.5` |
+
+## 8.6 Test listesi
+
+**Play**'e bas:
+
+| # | Test | Beklenen |
+|---|---|---|
+| 1 | `1` tusuna bas | Kontrol kilitleniyor, ses kesiliyor, `BigDeathFlame` buyuyor, Karabas kayboluyor |
+| 2 | 3 sn bekle | Alev kuculup kayboluyor, `Collar` yerde beliriyor, ses/kontrol geri geliyor |
+| 3 | `2` tusuna bas | `Boss` beliriyor, ~1.25 sn sonra alev atmaya basliyor (her 2.5 sn'de bir) |
+| 4 | Boss'a su sik | Beyaza calip flash yapiyor, AMA yok olmuyor / kuculmuyor |
+| 5 | Bossun alevinden hasar al (`TestPlayerDummy` cani 1'e dusene kadar) | Kontrol kilitleniyor, `Collar` parliyor, `DogGhost` ekrani geciyor, `Boss` kayboluyor |
+| 6 | Sahne bitince | Kontrol geri geliyor, `Exit Door` bagliysa gizleniyor |
+
+## 8.7 Calismiyorsa
+
+| Belirti | Sebep |
+|---|---|
+| `1`/`2` hicbir sey yapmiyor | `Test Ending Trigger`'da **Ending** alani bos, veya ayni objede **Ending Sequence** yok |
+| Boss can 1'de otomatik tetiklenmiyor | Player'da **Test Player Dummy** yok, veya cani hic 1'e inmedi (Console'dan `[TEST] Hasar aldim` loglarini takip edin) |
+| Boss'a su sikince yok oluyor | `Boss` uzerinde hala eski **Wall Monster** bileseni duruyor, silinmemis |
+| Alev/hayalet gorseli hic gorunmuyor | Ilgili obje Inspector'da referans alanina surukLENMEMIS |
+
+---
+
 # Commit
 
 ```bash
 git pull
 git add .
-git commit -m "sikisma ve kurtarma ani: TrappedFireCover"
+git commit -m "final sahnesi: EndingSequence, BossCore"
 git push
 ```

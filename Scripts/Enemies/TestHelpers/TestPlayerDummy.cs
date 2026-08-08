@@ -23,6 +23,12 @@ public class TestPlayerDummy : MonoBehaviour
 
     float invulnerableUntil;
 
+    /// <summary>
+    /// Imza Kisi A'nin PlayerHealth.CurrentHealth ile ayni — EndingSequence
+    /// boss sahnesinde "can 1'e dustu mu" kontrolunu bunun uzerinden test eder.
+    /// </summary>
+    public int CurrentHealth => health;
+
     /// <summary>Imza Kisi A'nin PlayerHealth.TakeDamage(int) ile ayni olmali.</summary>
     public void TakeDamage(int amount)
     {
