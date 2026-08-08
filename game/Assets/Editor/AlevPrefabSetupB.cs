@@ -374,24 +374,33 @@ public static class AlevPrefabSetupB
             return;
         }
 
+        // ---- Sahnenin gercek koordinatlarini bul ----
+        // ⚠️ Sabit koordinat KULLANMIYORUZ. Ilk surumde y=-1/-2.5/-3 gibi
+        // degerler yaziliydi; onlar duz test sahnesine gore secilmisti
+        // (zemin y=-4). Gercek evin zemini y=0 oldugu icin final objeleri
+        // zeminin ALTINA gomuluyor ve odalarla ust uste biniyordu.
+        Vector3 anchor = FindEndingAnchor();
+        Vector3 bossPos = FindBossAnchor(anchor);
+
         // ---- Olum sahnesi gorselleri ----
         GameObject deathPoint = new GameObject("DogDeathPoint");
-        deathPoint.transform.position = new Vector3(4f, -3f, 0f);
+        deathPoint.transform.position = anchor;
 
         GameObject bigFlame = MakeSprite("BigDeathFlame", circle,
             new Color(1f, 0.35f, 0.05f), new Vector3(2.5f, 2.5f, 1f),
-            new Vector3(4f, -2.5f, 0f), 5);
+            anchor + Vector3.up * 0.6f, 5);
         bigFlame.SetActive(false);
 
         GameObject collar = MakeSprite("Collar", square,
             new Color(0.55f, 0.35f, 0.15f), new Vector3(0.3f, 0.2f, 1f),
-            new Vector3(4f, -3.3f, 0f), 4);
+            anchor + Vector3.up * 0.1f, 4);
         collar.SetActive(false);
 
         // Kopegin uzerine dusecek yanan tahta (Kisi A'nin FallingDebris'i).
+        // Tavandan dusecegi icin capanin epey ustunde baslar.
         GameObject debris = MakeSprite("DeathDebris", square,
             new Color(0.5f, 0.25f, 0.1f), new Vector3(2.2f, 0.35f, 1f),
-            new Vector3(4f, 2.5f, 0f), 5);
+            anchor + Vector3.up * 5f, 5);
         debris.AddComponent<BoxCollider2D>().isTrigger = true;
 
         FallingDebris fd = debris.AddComponent<FallingDebris>();
@@ -405,7 +414,7 @@ public static class AlevPrefabSetupB
         // PLAN.md: duvar canavarinin sprite'i 4 kat buyutulmus + koyu kirmizi.
         GameObject boss = MakeSprite("Boss", square,
             new Color(0.45f, 0.05f, 0.05f), new Vector3(4f, 5.6f, 1f),
-            new Vector3(14f, -1f, 0f), 1);
+            bossPos + Vector3.up * 2.4f, 1);   // govde merkezi, ayagi zeminde
         boss.layer = LayerMask.NameToLayer("Enemy");   // yoksa WaterGun bossu goremez
         boss.tag = "Enemy";
         boss.AddComponent<BoxCollider2D>().isTrigger = true;
@@ -423,16 +432,21 @@ public static class AlevPrefabSetupB
         boss.SetActive(false);
 
         // ---- Hayalet ----
+        // Boss'un arkasindan gelip onun uzerinden gecer. Konumlar bossa gore
+        // hesaplaniyor, yoksa hayalet evin baska bir odasindan geciyor.
+        Vector3 ghostFrom = bossPos + Vector3.right * 9f + Vector3.up * 0.8f;
+        Vector3 ghostTo = bossPos + Vector3.left * 4f + Vector3.up * 0.8f;
+
         GameObject ghost = MakeSprite("DogGhost", square,
             new Color(0.6f, 0.85f, 1f, 0.5f), new Vector3(0.9f, 0.7f, 1f),
-            new Vector3(20f, -3f, 0f), 6);
+            ghostFrom, 6);
         ghost.SetActive(false);
 
         GameObject ghostStart = new GameObject("GhostStart");
-        ghostStart.transform.position = new Vector3(20f, -3f, 0f);
+        ghostStart.transform.position = ghostFrom;
 
         GameObject ghostEnd = new GameObject("GhostEnd");
-        ghostEnd.transform.position = new Vector3(8f, -3f, 0f);
+        ghostEnd.transform.position = ghostTo;
 
         // ---- Yonetici ----
         GameObject manager = new GameObject("EndingSequence");
@@ -480,6 +494,50 @@ public static class AlevPrefabSetupB
     // ==================================================================
     //  Yardimcilar
     // ==================================================================
+
+    /// <summary>
+    /// Olum sahnesinin gececegi yeri bulur.
+    ///
+    /// Oncelik sirasi:
+    ///   1. Sahnedeki Karabas — olum onun bulundugu yerde gecer
+    ///   2. Dog isaretinin konumu
+    ///   3. Oyuncunun konumu
+    ///   4. Son care: dunya merkezi
+    ///
+    /// Sabit koordinat yazmak duz test sahnesinde calisiyordu ama gercek
+    /// evde her seyi zeminin altina gomuyordu.
+    /// </summary>
+    static Vector3 FindEndingAnchor()
+    {
+        DogCompanion dog = Object.FindFirstObjectByType<DogCompanion>(FindObjectsInactive.Include);
+        if (dog != null) return dog.transform.position;
+
+        foreach (SpawnMarker m in Object.FindObjectsByType<SpawnMarker>(
+                     FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (m.kind == SpawnMarker.Kind.Dog) return m.transform.position;
+        }
+
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null) return player.transform.position;
+
+        return Vector3.zero;
+    }
+
+    /// <summary>
+    /// Boss'un duracagi yer. Seviyede Boss isareti varsa oradan, yoksa
+    /// olum capasinin biraz ilerisinden.
+    /// </summary>
+    static Vector3 FindBossAnchor(Vector3 fallbackNear)
+    {
+        foreach (SpawnMarker m in Object.FindObjectsByType<SpawnMarker>(
+                     FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (m.kind == SpawnMarker.Kind.Boss) return m.transform.position;
+        }
+
+        return fallbackNear + Vector3.right * 10f;
+    }
 
     /// <summary>
     /// Layer/tag eksikse kod sessizce yanlis calisir (layer 0 = Default).
