@@ -67,7 +67,21 @@ aynı gözle bakmaz.
 `WaterGun`'da yukarı nişan var ama seviyede gerektiren yer yoksa boşa gider.
 **Bazı canavarlar y=5'te** (tavana yakın) — oyuncu yukarı bakıp sıkmak zorunda.
 
-### 7. Geri dönüşü olmayan an görünür olsun
+### 7. Düşen tahtalar — üçüncü tehdit tipi
+
+Tavandan yanan kirişler düşer. **Suyla sönmez, ezilerek ölmez — sadece kaçılır.**
+
+- Şu an bütün tehditler yatay. Bu **dikey** tehdit ekliyor, oyuncuyu yukarı baktırıyor.
+- Her tehdidin bir çözümü olduğu oyun tekdüze olur. "Bunu çözemezsin, sadece kaç"
+  çeşitlilik katar.
+- Yanan ev temasına birebir oturuyor.
+
+Oyuncu yaklaşınca **ünlem uyarısı** çıkar, ~0.8 sn sonra düşer. Telegraflı tehlike
+adildir; telegrafsızı sinir bozar.
+
+Yere indikten sonra zararsız bir enkaz olur, birkaç saniye durup söner.
+
+### 8. Geri dönüşü olmayan an görünür olsun
 
 Karabaş kurtulduğu an: kamera sarsılır, çökme sesi gelir, girişteki alev duvarı
 **oyuncunun göreceği şekilde** yükselir. "Artık geri dönemezsin" söylenmez, gösterilir.
@@ -151,6 +165,29 @@ yarı mesafe, sıfır yardım. Kaybın büyüklüğü buradan hissediliyor.
 
 ---
 
+# Düşen tahtalar (`FallingDebris`)
+
+Tavana yerleştirin, `Ground Layer` alanına **Ground**'u seçin.
+Her birine bir ünlem gorseli (`Warning Indicator`) bağlayın.
+
+| # | Position | Not |
+|---|---|---|
+| 1 | (30, 6.5) | Salon — **ilk karşılaşma, öğretici.** Yanında bol boşluk olsun |
+| 2 | (48, 6.5) | Mutfak çıkışı |
+| 3 | (58, 6.5) | Koridor — dar yer, gerilim yüksek |
+| 4 | (72, 6.5) | Banyo |
+| 5 | (76, 14.5) | Üst kat, Karabaş'lı bölüm |
+| 6 | (60, 14.5) | Üst kat |
+| 7 | (38, 14.5) | Üst kat, **ölümden hemen sonra** — yalnızlık vurgusu |
+| 8 | (30, 14.5) | Üst kat, yalnız bölüm |
+
+⚠️ **1 numara Salon'da olsun.** Oyuncu bu mekanikle ilk kez geniş ve güvenli bir
+yerde tanışmalı. Dar yerde tanışırsa haksızlık hisseder.
+
+⚠️ **Nefes koridoruna (78–86) tahta koymayın.** Orası kasıtlı olarak boş.
+
+---
+
 # Tetikleyiciler
 
 | Ne | Nerede | Bileşen / Not |
@@ -160,8 +197,33 @@ yarı mesafe, sıfır yardım. Kaybın büyüklüğü buradan hissediliyor.
 | **Giriş alev duvarı** | Antre **(1, 1)** | Karabaş kurtulunca aktif olur · kamera sarsıntısı + çökme sesi |
 | Karabaş silueti | Antre **(13, 3)** | Sadece görsel. Kurtarılınca gizlenir. |
 
-Köpeğin ölümü **oyuncunun arkasında** olmalı — sağdan sola geçerken tetikleniyor,
-yani ateş geride kalıyor, oyuncu görmüyor.
+## Karabaş'ın ölümü — düşen tahtayla
+
+Eski tasarım "arkadan büyük ateş çıkar, köpek atlar" idi. **Düşen tahtayla daha iyi:**
+
+1. Oyuncu yürürken tepeden bir kiriş düşmeye başlar
+2. **UYARI ÜNLEMİ ÇIKMAZ** — `DropNow(false)` ile çağrılır
+3. Karabaş oyuncuyu iter (oyuncu ~2 birim yana kayar, kontrol alınmış durumda)
+4. Kiriş köpeğin üstüne düşer
+5. 3 saniye sessizlik, yerde tasma kalır
+
+### Neden uyarı çıkmamalı — bu kritik
+
+Oyun boyunca oyuncuya **"ünlem gördüysen kaç"** öğretiliyor. Ölüm anında ünlem
+çıkarsa oyuncu *"kaçabilirdim, benim hatam"* der ve duygu suçluluğa değil **öfkeye**
+döner. Köpek oyuncunun hatasıyla ölmemeli.
+
+Ünlem çıkmazsa mesaj net: **bunu kimse göremezdi.** Bütün oyun boyunca uyarı vardı,
+bir kez olmadı, bedelini köpek ödedi. Kalıbın kırılması anlamın kendisi oluyor.
+
+Ayrıca oyuncu tahtanın ne yaptığını **zaten biliyor** — onlarca kez kaçtı. Köpeğe
+ne olduğunu açıklamaya gerek kalmıyor.
+
+> **Kişi B'ye:** `EndingSequence.DogDeathRoutine` şu an `bigFlameVisual`'ı büyütüyor.
+> Bunun yerine bir `FallingDebris`'e `DropNow(false)` çağırıp oyuncuyu ~2 birim
+> yana kaydırmak gerekiyor. `ScaleRoutine` yerine basit bir pozisyon lerp'i.
+
+Ölüm **oyuncunun arkasında/üstünde** olmalı — sağdan sola geçerken tetikleniyor.
 
 ---
 
@@ -179,10 +241,26 @@ Planı değiştirseniz bile bunlara uyun:
 
 1. **Her bölgeden erişilebilir en az bir Infinite su kaynağı.** Akvaryum ve bidon
    tek kullanımlık, sayılmaz.
-   *Tek istisna: Koridor (52–62). Kasıtlı susuz — ama canavarlar kaçarak geçilebiliyor,
-   ve hemen ardında küvet var. Kilitlenme yok.*
+   *Tek istisna: Koridor (52–62). Kasıtlı susuz — ama orada **yer ateşi yok**,
+   sadece duvar canavarı var ve onlar kaçarak geçilebiliyor. Kilitlenme yok.*
 2. **Kaçış yolunda da su olacak.** En sık atlanan madde bu.
-3. **Yer ateşleri her zaman zıplayarak öldürülebilir** — su bitse bile ilerlenir.
+3. ⚠️ **BÜYÜMÜŞ YER ATEŞİ ARTIK SADECE SUYLA SÖNÜYOR** (Kişi B değiştirdi).
+   Küçükken hâlâ zıplayarak sönüyor. Bu, kilitlenme riskini tamamen seviye
+   tasarımına yükledi. Üç alt kural:
+
+   **3a. Her yer ateşinin yanından geçilebilmeli.** Yanında ~4 birim boş zemin
+   ya da üstünden zıplanacak bir platform olsun. Su hiç kalmasa bile fiziksel
+   çıkış yolu kalsın. *En önemli madde bu — "musluk önde olsun" tek başına yetmez,
+   oyuncu suyu erken harcarsa yine sıkışır.*
+
+   **3b. Musluk ateşin ÖNÜNDE olsun, arkasında değil.** Oyuncu ateşe varmadan
+   önce dolabilmeli.
+
+   **3c. Tek geçiş yolunu bir ateş kapatmasın.** Dar koridorlara yer ateşi koymayın.
+
+   > Playtest'te oyuncu susuz + önünde büyümüş ateşte sıkışırsa: `FloorFire`
+   > bileşenindeki **Grown Can Be Stomped** kutusunu açın, tek tıkta eski
+   > davranışa döner.
 4. **Karabaş en dipte**, ama **en baştan görünsün.**
 5. **Giriş kapısı kaçışta kapalı**, ve kapanışı oyuncu görsün.
 6. **Kaçış ayrı bir güzergâh** — aynı yoldan geri dönmek sıkıcı.
