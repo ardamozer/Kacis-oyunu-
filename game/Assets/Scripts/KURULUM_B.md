@@ -4,80 +4,88 @@
 
 ---
 
-# BOLUM 0 — Unity projesi ve test sahnesi (saat 0-1)
+# BOLUM 0 — Baslarken
 
-## 0.1 Unity surumunu Kisi A ile netlestir ⚠️
+> ✅ **Bolum 0.1-0.5 ARTIK GEREKMIYOR.** Kisi A Unity projesini olusturup
+> push'ladi, script'ler `game/Assets/Scripts/` altina tasindi, tag ve
+> layer'lar repoya islendi. Asagisi sadece dogrulama icin.
 
-Bu makinede kurulu olan: **6000.5.7f1**
-PLAN.md'de yazan: **6000.0.x LTS**
+## 0.1 Once `git pull` yap
 
-**Kisi A'ya sor: sen hangi surumu kurdun?** Ikinizin BIREBIR ayni surumde
-olmasi sart. Farkli surumler `.unity` ve `.prefab` dosyalarini otomatik
-yukseltir, git'te cozulmez cakismalar cikarir.
+⚠️ **Unity KAPALIYKEN pull yap.** Unity acikken proje dosyalari degisirse
+editor kafayi yer.
 
-Ikiniz de 6000.5.7f1 kullanacaksaniz sorun yok, kod calisir. Sadece PLAN.md
-satir 106'daki bosluga gercek surumu yazin.
+Proje konumu artik: `Kacis-oyunu-\game\` (kucuk harf `game`, kokte
+`Scripts/` klasoru KALMADI — hepsi `game/Assets/Scripts/` altinda).
 
-## 0.2 Proje yoksa olustur
+## 0.2 Dogrulama (Unity'yi acinca, 1 dakika)
 
-Repoda henuz Unity projesi yok — sadece `Scripts/` klasoru var.
+| Kontrol | Yeri | Olmasi gereken |
+|---|---|---|
+| Unity surumu | Unity Hub, proje satiri | **6000.5.7f1** ✅ repoda kilitli |
+| Input Handling | `Project Settings → Player → Other Settings` | **Both** ✅ repoda ayarli |
+| Tag'ler | `Project Settings → Tags and Layers → Tags` | `Enemy`, `WaterSource`, `Dog` ✅ repoda islendi |
+| Layer'lar | ayni ekran, Layers | 6=`Ground`, 7=`Player`, 8=`Enemy` ✅ repoda islendi |
 
-**Kisi A projeyi olusturup push'ladiysa:** `git pull` yap, bu adimi atla.
+> `Player` tag'i listede GORUNMEZ — Unity'nin yerlesik tag'i, zaten var.
+> Inspector'daki Tag menusunde secebilirsiniz. Bu normal.
 
-**Sen olusturacaksan** (once A ile konus, ikiniz ayri ayri olusturursaniz
-cakisirsiniz):
+### ⚠️ Layer'lari ozellikle bir kez goz kontrolu yapin
 
-1. Unity Hub → **New project**
-2. Template: **2D (Built-In Render Pipeline)** — ⚠️ URP DEGIL
-3. Project name: `Game`
-4. Location: `C:\Users\Cyborg\Desktop\Kacis-oyunu-`
-   (yani proje `...\Kacis-oyunu-\Game\` icinde olusacak)
-5. **Create project**
+Layer'lar 6, 7, 8 slotlarina yazildi. Unity'de **0-7 arasi "Builtin Layer"**
+olarak ayrilmistir ve Tags&Layers ekraninda duzenlenemez gorunur — yani
+`Ground` (6) ve `Player` (7) o ekranda **gri/duzenlenemez** gorunebilir.
 
-## 0.3 Proje ayarlari (bir kere)
+**5 saniyelik kontrol:** herhangi bir objeyi sec → Inspector'un sag ustundeki
+**Layer** acilir menusune bak. `Ground`, `Player`, `Enemy` uculu de listede
+cikiyorsa **sorun yok, devam et.**
 
-`Edit → Project Settings → Editor`:
-- **Asset Serialization → Mode → Force Text**
-- **Version Control → Mode → Visible Meta Files**
+Cikmiyorsa (ozellikle `Ground` yoksa — `PlayerController.groundLayer`
+ayarlanamaz, ziplama calismaz): Tags&Layers ekranindan **User Layer 8/9/10**
+satirlarina `Ground`/`Player`/`Enemy` yazin, eskilerini bosaltin, sonra
+Kisi A'ya haber verip ikiniz de ayni sekilde yapin ve commit'leyin.
 
-`Edit → Project Settings → Player → Other Settings → Active Input Handling`:
-- **Both** sec (kod eski `Input.GetAxisRaw` kullaniyor). Unity yeniden
-  baslatmak isteyecek, kabul et.
+## 0.3 ⚠️ .meta DOSYALARI — EN KRITIK ADIM
 
-## 0.4 Script'leri projeye tasi
+Unity bir script'i ilk gorunce ona rastgele bir **GUID** uretip `.meta`
+dosyasina yazar. Prefab'lar ve sahneler script'lere **isimle degil, bu GUID
+ile** baglanir.
 
-Windows Gezgini'nde:
+**Tehlike:** Ayni `.cs` dosyasi icin sen ve Kisi A ayri ayri Unity acarsaniz,
+Unity ikinize **FARKLI GUID** uretir. Sonra senin prefab'in onun makinesinde
+"Missing (Mono Script)" olur. Jam'de takim durduran klasik hata budur.
 
+**Durum:**
+- `Enemies/` → ✅ meta'lar Kisi A tarafindan uretilip push'landi, sorun yok.
+- `Dog/` ve `Ending/` → ❌ meta'lari **henuz yok**, Unity'yi acinca sende
+  olusacak.
+
+**Kural — istisnasiz:**
+
+1. Unity'yi ac, Console'un derlemeyi bitirmesini bekle.
+2. **HEMEN** olusan `.meta` dosyalarini commit'le ve push'la:
+
+```bash
+git add game/Assets/Scripts
+git commit -m "Dog ve Ending meta dosyalarini uret"
+git push
 ```
-Kacis-oyunu-\Scripts\   →   Kacis-oyunu-\Game\Assets\Scripts\
-```
 
-Klasorun tamamini surukle. Unity acikken tasirsan kendi alginlar ve derler.
-Console'da hata olmamali. (`.md` dosyalari Unity'yi rahatsiz etmez.)
+3. Kisi A'ya "meta'lari push'ladim, pull yap" de. **O pull yapmadan
+   `DogCompanion` / `EndingSequence`'i hicbir objeye baglamasin.**
 
-## 0.5 Tag ve Layer olustur
-
-`Edit → Project Settings → Tags and Layers`
-
-**Tags** (+ ile ekle) — dordu de lazim:
-`Player` · `Enemy` · `WaterSource` · `Dog`
-
-⚠️ **`Dog` tag'ini atlamayin.** `FlameProjectile` kodu `CompareTag("Dog")`
-cagiriyor; tag tanimli degilse Unity hata firlatir.
-(Not: `Scripts/KURULUM.md` satir 40'ta hala eski `Cat` yaziyor — Kisi A'ya
-duzeltmesini soyle, hayvan artik kopek.)
-
-**Layers** (bos satirlara yaz):
-`Ground` · `Player` · `Enemy`
-
-## 0.6 Kendi test sahneni olustur
+## 0.4 Kendi test sahneni olustur
 
 1. `Assets/Scenes/` klasorune sag tik → **Create → Scene**
 2. Adi: **`TestScene_B`** ⚠️ bu isim tam boyle olmali
+   (tam yol: `game/Assets/Scenes/TestScene_B.unity`)
 3. Cift tiklayip ac.
 
 > 🚫 **`MainScene.unity` dosyasini ASLA acma.** Kisi A'nin. Acmak bile
 > `.unity` dosyasinda degisiklik birakabilir.
+>
+> `SampleScene.unity` Unity'nin varsayilan sahnesi — Kisi A onu silecek veya
+> `MainScene`'e cevirecek, sen dokunma.
 
 ---
 
@@ -233,7 +241,7 @@ klasorundeki **prefabi** surukle.
 | Alev duvarin icinden geciyor | Flame'de **Rigidbody 2D / Kinematic** yok, ya da **Blocking Layers** bos |
 | Alev dogar dogmaz yok oluyor | FirePoint canavarin collider'inin icinde — X'i `-1.0` yap |
 | `F` basinca hicbir sey olmuyor | Canavarda **Box Collider 2D** yok |
-| Console'da "Tag: Dog is not defined" | Bolum 0.5'te `Dog` tag'ini eklememissin |
+| Console'da "Tag: Dog is not defined" | `Dog` tag'i eksik — Bolum 0.2 dogrulama tablosuna bak |
 | Canavar duvarin onunde gorunuyor | Sprite Renderer → **Order in Layer** `-1` degil |
 
 ## His ayari (5 dakika, deger)
@@ -330,11 +338,243 @@ oyuncu ilerleyebilmeli. Buyumus ates ezilemiyorsa oyun oynanamaz hale gelir.
 
 ---
 
+# BOLUM 6 — Karabas (DogCompanion)
+
+`FireMonster` PLAN.md revizesiyle kesildi (bkz. Bolum 5 notu). Sirada Karabas var.
+
+## 6.1 Kopek objesi
+
+1. `Hierarchy → sag tik → 2D Object → Sprites → Square` · adi **`Karabas`**
+2. **Tag → Dog** ⚠️ repoda tanimli, menude gorunmeli
+3. **Scale**: X = `0.9`, Y = `0.7`
+4. **Position**: baslangicta sikisacagi yere koyun, orn. X = `4`, Y = `-3.3`
+5. Sprite Renderer → **Color** → kahverengi/siyah (Karabas)
+6. **Add Component → Audio Source**
+   - **Play On Awake** ❌ (kod kendi PlayOneShot ile calistiriyor)
+7. **Add Component → Dog Companion**
+8. **Add Component → Test Dog Trigger** (benim test script'im)
+
+> Fiziksel carpisma/Rigidbody GEREKMEZ — kopek sadece X ekseninde MoveTowards
+> ile hareket ediyor, zeminin Y'sinde sabit kaliyor. Coklu kat varsa bu
+> basitlestirme yeterli olmayabilir, o zaman Kisi A ile konusun.
+
+## 6.2 Inspector alanlarini bagla
+
+`Karabas` objesini sec, **Dog Companion** bileseninde:
+
+| Alan | Deger |
+|---|---|
+| **Follow Distance** | `1.5` |
+| **Follow Speed** | `4` |
+| **Player** | bos birak (kod Tag ile bulur) |
+| **Fire Detect Range** | `1.0` |
+| **Audio Source** | bos birak (kod kendi bulur) |
+| **Whine Clip** | ses dosyaniz varsa surukleyin, yoksa bos birakin (sessiz calisir) |
+| **Happy Bark Clip** | ayni sekilde opsiyonel |
+| **Heart Particle Prefab** | opsiyonel — yoksa sadece ses/log calisir, hata vermez |
+
+⚠️ Ses klipleri (`whineClip`, `happyBarkClip`) henuz asset olarak yoksa **bos
+birakin** — kod `null` kontrolu yapiyor, hata firlatmaz, sessiz calisir.
+ASSETS.md'de ses kaynagi netlesince doldurun.
+
+`Test Dog Trigger` bileseninde:
+
+| Alan | Deger |
+|---|---|
+| **Interact Range** | `3` |
+
+## 6.3 Test listesi
+
+**Play**'e bas ve sunlari sirayla dogrula:
+
+| # | Test | Beklenen |
+|---|---|---|
+| 1 | Oyuncuyu kopege yaklastir, uzaklastir | (Whine Clip bagliysa) yakinken daha yuksek sesle inleme, uzakta hic yok |
+| 2 | Yakinken `E` | Console: `[TEST] OnPetted() cagrildi.` — kopek hareket etmiyor, sadece ses/kalp |
+| 3 | Yakinken `R` | Console: `[TEST] OnRescued() cagrildi.` — mutlu havlama sesi (varsa) |
+| 4 | Yakinken `T` | Console: `[TEST] StartFollowing() cagrildi.` — kopek artik oyuncuyu takip ediyor |
+| 5 | Takip sirasinda uzaklas | Kopek `Follow Distance` mesafesine kadar arkandan geliyor, sonra duruyor |
+| 6 | Takip sirasinda buyumus (kizarmis) bir `FloorFire`'in ustunden gec | Kopek kisa bir ziplama yapip atesi sonduruyor |
+| 7 | `E`, `R`, `T` — uzaktayken (Interact Range disi) | Hicbir seyi tetiklemiyor |
+
+## 6.4 Calismiyorsa
+
+| Belirti | Sebep |
+|---|---|
+| Inleme hic duyulmuyor | **Whine Clip** bos, veya **Audio Source** eksik |
+| `E`/`R`/`T` hicbir sey yapmiyor | Oyuncu **Interact Range** disinda, veya Player'da **Tag = Player** degil |
+| Kopek takip etmiyor | Once `T` ile **StartFollowing** cagirmadiniz (Stuck/Freed halinde yurumuyor, bu KASITLI) |
+| Kopek atesi sondurmuyor | Ates **buyumus (IsGrown)** olmali — kucukken kopek dokunmaz, kucuk ateste zaten zarar da yok |
+| Kopek zeminin altina/ustune batiyor | Baslangic Y konumu zeminle hizali degil, Position Y'yi elle ayarlayin |
+
+---
+
+# BOLUM 7 — Sikisma + kurtarma ani (TrappedFireCover)
+
+PLAN.md "Karabas'la bag kurma" madde 3: kurtarma ani PASIF olmamali, oyuncu
+suyu sikip gercekten sondurmeli. Bu bolum `Karabas` prefabinin CHILD'i olarak
+kurulur — Kisi A'ya bagli degildir, TestScene_B'de bastan sona test edilir.
+
+## 7.1 Kurulum
+
+1. `Karabas` objesine sag tik → **2D Object → Sprites → Square** · adi
+   **`TrappedFire`**
+2. **Layer → Enemy** ⚠️ **EN KRITIK ADIM, ATLAMAYIN.**
+   Kisi A'nin `WaterGun`'i sadece `hitLayers` maskesindeki objeleri tarar ve
+   o maske **`Enemy`**'ye ayarli. `TrappedFire` `Default` layer'inda kalirsa
+   **su ona hic degmez, Karabas ASLA kurtarilamaz** ve oyun oradan devam
+   etmez. (Tag `Dog` olan Karabas'in KENDISI degil, sadece bu ates cocugu
+   `Enemy` layer'inda olacak.)
+3. **Position**: Karabas'in TAM UZERINDE, orn. X = `0`, Y = `0.3`
+   (Karabas'i orten bir ates gibi gorunmeli)
+4. **Scale**: X = `0.7`, Y = `0.7`
+5. Sprite Renderer → **Color** → turuncu/kirmizi (WallMonster'daki gibi)
+6. **Add Component → Box Collider 2D** — **Is Trigger** ✅ gerekmez, ama
+   WaterGun/TestWaterSprayer `OverlapBox` ile IWaterDamageable arayacagi
+   icin trigger olmasi sorun yaratmaz, isaretleyebilirsiniz.
+7. **Add Component → Trapped Fire Cover**
+
+## 7.2 Inspector alanlarini bagla
+
+`TrappedFire` objesini sec, **Trapped Fire Cover** bileseninde:
+
+| Alan | Deger |
+|---|---|
+| **Dog** | bos birak (kod ebeveynde `DogCompanion`'i kendi bulur) |
+| **Max Health** | `18` |
+| **Delay Before Follow** | `1.2` |
+
+## 7.3 Karabas'i baslangicta gizle (opsiyonel ama onerilir)
+
+Sikismisken kopek govdesi tam gorunmesin diye `Karabas`'in Sprite Renderer'ini
+`TrappedFire`'in ARKASINA alin: `Karabas` → **Order in Layer** `-1`,
+`TrappedFire` → **Order in Layer** `0`.
+
+## 7.4 Test listesi
+
+**Play**'e bas, oyuncuyu `TrappedFire`'e yaklastir, su sik (`F`):
+
+| # | Test | Beklenen |
+|---|---|---|
+| 1 | Sikmaya basla | Ates beyaza calip flash yapiyor |
+| 2 | ~0.9 sn sikmeye devam et (18 can / ~20 su-sn) | Ates kuculerek kayboluyor |
+| 3 | Ates kaybolur kaybolmaz | Karabas artik gorunur (Order in Layer dogruysa) |
+| 4 | ~1.2 sn bekle | Kopek kendiliginden takibe basliyor (StartFollowing otomatik cagrildi) |
+| 5 | Ates sonmeden birak, tekrar sik | Can kaldigi yerden devam ediyor, sifirlanmiyor |
+
+`TestDogTrigger`'daki `R`/`T` tuslari hala calisir — atesi kurmadan once
+kopegi izole test etmek icin kullanislidir, biri digerini bozmaz
+(`DogCompanion.OnRescued` zaten Stuck disindaysa hicbir sey yapmiyor).
+
+## 7.5 Calismiyorsa
+
+| Belirti | Sebep |
+|---|---|
+| Su siksam da ates hic azalmiyor | `TrappedFire`'in **Layer**'i `Enemy` degil (en sik sebep), veya **Box Collider 2D** yok |
+| Ates sonuyor ama kopek takip etmiyor | **Dog** alani yanlis objeyi gosteriyor, veya `Karabas` ile `TrappedFire` ayni ebeveyn altinda degil |
+| Kopek hemen atesle beraber yuruyor | `Delay Before Follow` cok kucuk — kurtarma anina nefes payi birakin |
+
+---
+
+# BOLUM 8 — Final (EndingSequence)
+
+⚠️ **PLAN.md kirmizi cizgisi:** final sahnesi (kopegin olumu + boss) saat
+19.5'ta kaba haliyle bitmis olmali. Asagidaki kurulum minimum — hicbir yeni
+asset gerektirmiyor (kutu/daire sprite'lar + renk).
+
+## 8.1 Yonetici obje
+
+1. `Hierarchy → sag tik → Create Empty` · adi **`EndingSequence`**
+2. **Add Component → Ending Sequence**
+3. **Add Component → Test Ending Trigger** (benim test script'im)
+
+## 8.2 Kopegin olumu icin gorseller
+
+1. `Hierarchy → sag tik → 2D Object → Sprites → Circle` · adi **`BigDeathFlame`**
+   - **Scale**: X = `2.5`, Y = `2.5` · Renk → koyu turuncu/kirmizi
+   - Baslangicta **devre disi birakin** (Inspector'da checkbox'i kapatin)
+2. `Hierarchy → sag tik → 2D Object → Sprites → Square` · adi **`Collar`**
+   - **Scale**: X = `0.3`, Y = `0.2` · Renk → kahverengi/bej (tasma gibi)
+   - Baslangicta **devre disi birakin**
+3. `Hierarchy → sag tik → Create Empty` · adi **`DogDeathPoint`**
+   - Karabas'in olecegi yere koyun (oyuncunun GORMEDIGI, arkasindaki nokta)
+
+## 8.3 Boss gorseli
+
+1. `Assets/Prefabs/Enemies/WallMonster` prefabini sahneye surukleyin, adi
+   **`Boss`** yapin (kopyasi, orijinal prefabi bozmaz)
+2. `Boss` uzerindeki **Wall Monster** bilesenini SILIN (boss'un kendi ates
+   mantigi `EndingSequence` tarafindan yonetiliyor, WallMonster'a gerek yok)
+3. **Scale**: mevcut degerin 4 kati (orn. WallMonster X=1,Y=1.4 ise → X=4,Y=5.6)
+4. Sprite Renderer → **Color** → koyu kirmizi
+5. **Layer → Enemy** olduğunu dogrulayin (WallMonster'dan devralmis olmali).
+   Degilse `WaterGun` bossa su sikildigini fark etmez, oyuncu "olduremiyorum"
+   yerine "oyun bozuk" hisseder.
+6. **Add Component → Boss Core**
+7. Baslangicta **devre disi birakin**
+8. `Boss`'a sag tik → **Create Empty** · adi **`BossFirePoint`** — atesin
+   cikacagi nokta
+
+## 8.4 Hayalet gorseli
+
+1. `Hierarchy → sag tik → 2D Object → Sprites → Square` · adi **`DogGhost`**
+   - Karabas ile ayni Scale
+   - Renk → acik mavi/beyaz, **Alpha ~%50**
+   - Baslangicta **devre disi birakin**
+2. `Hierarchy → sag tik → Create Empty` · adi **`GhostStart`** (ekranin bir
+   kenari) ve **`GhostEnd`** (diger kenari) — hayalet bu ikisi arasinda gecer
+
+## 8.5 Inspector alanlarini bagla
+
+`EndingSequence` objesini sec, **Ending Sequence** bileseninde:
+
+| Alan | Deger |
+|---|---|
+| **Player** | bos birak |
+| **Dog** | Hierarchy'den `Karabas`'i surukle |
+| **Dog Death Point** | `DogDeathPoint` |
+| **Big Flame Visual** | `BigDeathFlame` |
+| **Collar Pickup** | `Collar` |
+| **Silence Duration** | `3` |
+| **Boss Object** | `Boss` |
+| **Boss Fire Point** | `Boss/BossFirePoint` |
+| **Flame Prefab** | `Assets/Prefabs/Enemies/Flame` (WallMonster ile ayni) |
+| **Bass Fire Interval** | `2.5` |
+| **Exit Door** | bos birakilabilir (Kisi A entegre ederken baglar) |
+| **Ghost Visual** | `DogGhost` |
+| **Ghost Start** | `GhostStart` |
+| **Ghost End** | `GhostEnd` |
+| **Ghost Cross Duration** | `2.5` |
+
+## 8.6 Test listesi
+
+**Play**'e bas:
+
+| # | Test | Beklenen |
+|---|---|---|
+| 1 | `1` tusuna bas | Kontrol kilitleniyor, ses kesiliyor, `BigDeathFlame` buyuyor, Karabas kayboluyor |
+| 2 | 3 sn bekle | Alev kuculup kayboluyor, `Collar` yerde beliriyor, ses/kontrol geri geliyor |
+| 3 | `2` tusuna bas | `Boss` beliriyor, ~1.25 sn sonra alev atmaya basliyor (her 2.5 sn'de bir) |
+| 4 | Boss'a su sik | Beyaza calip flash yapiyor, AMA yok olmuyor / kuculmuyor |
+| 5 | Bossun alevinden hasar al (`TestPlayerDummy` cani 1'e dusene kadar) | Kontrol kilitleniyor, `Collar` parliyor, `DogGhost` ekrani geciyor, `Boss` kayboluyor |
+| 6 | Sahne bitince | Kontrol geri geliyor, `Exit Door` bagliysa gizleniyor |
+
+## 8.7 Calismiyorsa
+
+| Belirti | Sebep |
+|---|---|
+| `1`/`2` hicbir sey yapmiyor | `Test Ending Trigger`'da **Ending** alani bos, veya ayni objede **Ending Sequence** yok |
+| Boss can 1'de otomatik tetiklenmiyor | Player'da **Test Player Dummy** yok, veya cani hic 1'e inmedi (Console'dan `[TEST] Hasar aldim` loglarini takip edin) |
+| Boss'a su sikince yok oluyor | `Boss` uzerinde hala eski **Wall Monster** bileseni duruyor, silinmemis |
+| Alev/hayalet gorseli hic gorunmuyor | Ilgili obje Inspector'da referans alanina surukLENMEMIS |
+
+---
+
 # Commit
 
 ```bash
 git pull
 git add .
-git commit -m "duvar canavari, alev mermisi ve yer atesi"
+git commit -m "final sahnesi: EndingSequence, BossCore"
 git push
 ```
