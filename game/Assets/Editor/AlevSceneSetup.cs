@@ -228,8 +228,24 @@ public static class AlevSceneSetup
         cam.orthographic = true;
         cam.orthographicSize = 6f;
         cam.backgroundColor = new Color(0.07f, 0.05f, 0.06f);
-        cam.transform.position = new Vector3(0f, 0f, -10f);
 
+        // Rig yapisi:
+        //   CameraRig    ← CameraFollow (takip eder)
+        //     └ Camera   ← CameraShake  (sarsar)
+        // Ikisi ayni objede olursa birbirinin pozisyonunu ezer.
+        Transform rig = cam.transform.parent;
+        if (rig == null || rig.name != "CameraRig")
+        {
+            var rigGO = new GameObject("CameraRig");
+            rig = rigGO.transform;
+            rig.position = Vector3.zero;
+            cam.transform.SetParent(rig, false);
+            Undo.RegisterCreatedObjectUndo(rigGO, "ALEV sahne kurulumu");
+        }
+
+        cam.transform.localPosition = new Vector3(0f, 0f, -10f);
+
+        if (rig.GetComponent<CameraFollow>() == null) rig.gameObject.AddComponent<CameraFollow>();
         if (cam.GetComponent<CameraShake>() == null) cam.gameObject.AddComponent<CameraShake>();
     }
 
