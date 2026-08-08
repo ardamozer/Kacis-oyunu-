@@ -52,6 +52,12 @@ public static class AlevPrefabSetupB
     //  1) PREFABLAR
     // ==================================================================
 
+    // Play modunda sahne kalicı degistirilemiyor (MarkSceneDirty patliyor) ve
+    // zaten Play'de yapilan degisiklikler cikinca geri aliniyor. Menuyu
+    // bastan kapatmak, anlasilmaz bir istisna almaktan iyi.
+    [MenuItem("ALEV/Kisi B — Prefablari Kur", true)]
+    static bool BuildPrefabsValidate() => !EditorApplication.isPlaying;
+
     [MenuItem("ALEV/Kisi B — Prefablari Kur", false, 20)]
     public static void BuildPrefabsMenu()
     {
@@ -332,6 +338,9 @@ public static class AlevPrefabSetupB
     // ==================================================================
     //  2) FINAL SAHNESI
     // ==================================================================
+
+    [MenuItem("ALEV/Kisi B — Finali Sahneye Kur", true)]
+    static bool BuildEndingValidate() => !EditorApplication.isPlaying;
 
     [MenuItem("ALEV/Kisi B — Finali Sahneye Kur", false, 21)]
     public static void BuildEndingMenu()
