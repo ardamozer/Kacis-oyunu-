@@ -12,6 +12,7 @@ Sahne: MainScene
   ZIPLAMA KONTROLU:
     ✔ hepsi ulasilabilir
   ICERIK:
+    (     0,    0)  FINAL      GameEnding
     (     6,    1)  isaret     [PlayerStart] Oyuncu baslangici
     (     6,    1)  OYUNCU     Player
     (    14,  0,8)  isaret     [DogSilhouette] Kopek mamasi
@@ -23,8 +24,8 @@ Sahne: MainScene
 ### Salon   x 34..102   yukseklik 20
 ----------------------------------------------------------------------
   BASILABILIR YUZEYLER (ust yuzey yuksekligine gore):
+    ust=  2,14  x    83,8..92,2    gen=  8,4  Salon_Piyano
     ust=   2,2  x      46..54      gen=    8  Salon_Koltuk
-    ust=   3,2  x    83,5..92,5    gen=    9  Salon_Piyano
     ust=  2,65  x      43..49      gen=    6  Salon_T1
     ust=  4,45  x    51,5..56,5    gen=    5  Salon_T2
     ust=  6,25  x    59,5..64,5    gen=    5  Salon_T3
@@ -44,7 +45,7 @@ Sahne: MainScene
     (    68,   12)  isaret     [WallMonster] Salon kitapligi
     (    68,   12)  WALLMONSTER WallMonster
     (    92,    4)  isaret     [WallMonster] Salon
-    (    92,    4)  WALLMONSTER WallMonster
+    (    92,  2,8)  WALLMONSTER WallMonster
     (   102,  1,7)  KILIT      KilitliKapi_Mavi
     dekoratif ates sayisi: 6
 
@@ -94,6 +95,7 @@ Sahne: MainScene
     (   184,    1)  isaret     [WallMonster] Koridor 3/3
     (   184,    1)  WALLMONSTER WallMonster
     (   188,  1,7)  KILIT      KilitliKapi_Mor
+    (   188,  3,6)  ALEVDUVARI AlevDuvari
     (   188,    2)  isaret     [FlameWall] GERI DONUS KAPANIR. Karabas kurtulunca burada alev duvari yukselir, oyuncu ileri gitmek zorunda kalir. GORUNUR sekilde olsun.
     dekoratif ates sayisi: 4
 
@@ -110,11 +112,12 @@ Sahne: MainScene
     ✔ hepsi ulasilabilir
   ICERIK:
     (   188,  1,7)  KILIT      KilitliKapi_Mor
+    (   188,  3,6)  ALEVDUVARI AlevDuvari
     (   188,    2)  isaret     [FlameWall] GERI DONUS KAPANIR. Karabas kurtulunca burada alev duvari yukselir, oyuncu ileri gitmek zorunda kalir. GORUNUR sekilde olsun.
     (   196,    1)  isaret     [CoveringFire] Karabas'i orten ates (can 50). Sondurulunce kurtulur.
     (   196,    1)  isaret     [Dog] KARABAS
-    (   196,    1)  DOGCOMPANİON Karabas
     (   196,  1,3)  TRAPPEDFİRECOVER TrappedFire
+    (   196,    1)  DOGCOMPANİON Karabas
     (   212,  0,5)  isaret     [FloorFire] Cocuk odasi
     (   212,  0,5)  FLOORFİRE  FloorFire
     dekoratif ates sayisi: 4
@@ -143,7 +146,6 @@ Sahne: MainScene
     (   254,  0,5)  isaret     [FloorFire] KACIS Karabas'li
     (   254,  0,5)  FLOORFİRE  FloorFire
     (   264,  9,4)  TAHTA      DeathDebris
-    (   264,  9,4)  TAHTA      Tahta_OLUM (EndingSequence -> Death Debris)
     (   264,    2)  TETIK      Tetik_KopeginOlumu
     (   270,  0,5)  isaret     [FloorFire] YALNIZ
     (   270,  0,5)  FLOORFİRE  FloorFire
