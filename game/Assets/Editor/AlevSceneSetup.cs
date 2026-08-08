@@ -60,7 +60,8 @@ public static class AlevSceneSetup
     //  Sprite
     // ------------------------------------------------------------------
 
-    static Sprite GetOrCreateSquareSprite()
+    /// <summary>Beyaz kare sprite. AlevLevelBuilder da bunu kullaniyor.</summary>
+    public static Sprite GetOrCreateSquareSprite()
     {
         Sprite existing = AssetDatabase.LoadAssetAtPath<Sprite>(SpritePath);
         if (existing != null) return existing;
