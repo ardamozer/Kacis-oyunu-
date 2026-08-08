@@ -569,10 +569,10 @@ public static class AlevLevelBuilder
 
         (SpawnMarker.Kind.WallMonster,  21f, 1f, "Antre - ilk, ZAYIF (can 40)"),
         (SpawnMarker.Kind.WallMonster,  68f,12f, "Salon kitapligi - YUKSEK, tirmanis rotasinda"),
-        (SpawnMarker.Kind.WallMonster,  92f, 4f, "Salon"),
+        (SpawnMarker.Kind.WallMonster,  88f, 4f, "Salon - Piyano kenari, koltuktan atlayisi korur"),
         (SpawnMarker.Kind.WallMonster, 126f, 8f, "Mutfak"),
-        (SpawnMarker.Kind.WallMonster, 158f, 1f, "Koridor 1/3 - su YOK, 2'sine yeter"),
-        (SpawnMarker.Kind.WallMonster, 170f, 4f, "Koridor 2/3 - YUKSEK"),
+        (SpawnMarker.Kind.WallMonster, 166f, 1.9f, "Koridor 1/3 - Devrik dolap ustu, su YOK"),
+        (SpawnMarker.Kind.WallMonster, 174f, 4f, "Koridor 2/3 - YUKSEK, raf kenari, mor anahtari korur"),
         (SpawnMarker.Kind.WallMonster, 184f, 1f, "Koridor 3/3"),
         // ⚠️ Bu ikisi y=6'daydi ve oyuncu onlari HIC GORMUYORDU: zemin y=0,
         // oyuncu y~1'de yuruyor, alev 6 hizasindan kafanin ustunden geciyordu.
@@ -583,8 +583,8 @@ public static class AlevLevelBuilder
         // Karabas onunde canli canavar varken duruyor ve oyuncunun sondurmesini
         // bekliyor (PLAN.md madde 7). Kopek ZEMINDE yurudugu icin canavar da
         // zeminde olmali, yoksa o an hic tetiklenmiyor.
-        (SpawnMarker.Kind.WallMonster, 250f, 1f, "Arka koridor - Karabas'i durdurur, oyuncu sondurmeli"),
-        (SpawnMarker.Kind.WallMonster, 316f, 1.5f, "Arka kapi - YALNIZ, boss oncesi son engel"),
+        (SpawnMarker.Kind.WallMonster, 248f, 3.45f, "Arka koridor - Karabas'i durdurur, oyuncu sondurmeli"),
+        (SpawnMarker.Kind.WallMonster, 312f, 3.65f, "Arka kapi - YALNIZ, boss oncesi son engel"),
 
         (SpawnMarker.Kind.FloorFire,   124f, 0.5f, "Mutfak"),
         (SpawnMarker.Kind.FloorFire,   142f, 0.5f, "Mutfak"),

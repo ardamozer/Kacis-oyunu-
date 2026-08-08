@@ -56,7 +56,7 @@ public class DogCompanion : MonoBehaviour
              "kopegin atesleri sondurmesini izliyor.")]
     public bool stopAtMonsters = true;
     [Tooltip("Onunde bu mesafede canavar varsa durur.")]
-    public float monsterBlockRange = 4.5f;
+    public float monsterBlockRange = 6f;
     [Tooltip("Beklerken kac saniyede bir havlasin — 'buraya gecemiyorum'.")]
     public float blockedBarkInterval = 1.8f;
 
@@ -311,7 +311,9 @@ public class DogCompanion : MonoBehaviour
         float half = monsterBlockRange * 0.5f;
 
         // Sadece ILERIYE bak: arkada kalan canavar kopegi durdurmamalı.
-        Vector2 center = (Vector2)transform.position + Vector2.right * dir * half;
+        // Canavarlar yuksekte (or. y=3.45) kopek zeminde (y=1) olabilecegi icin
+        // arama merkezini biraz yukari (y+1.5) aliyoruz ki dikeydeki canavarlar da kapsama girsin.
+        Vector2 center = (Vector2)transform.position + Vector2.up * 1.5f + Vector2.right * dir * half;
 
         foreach (Collider2D c in Physics2D.OverlapCircleAll(center, half))
         {
