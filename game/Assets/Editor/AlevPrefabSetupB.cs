@@ -294,6 +294,18 @@ public static class AlevPrefabSetupB
         dog.audioSource = audio;
         dog.whineClip = whine;
         dog.happyBarkClip = bark;
+
+        // Ses tasarimi — PLAN.md "bastan duyulsun, yaklastikca inlemeye donsun":
+        //   acilista bir havlama  -> "ileride bir kopek var"
+        //   bir onceki odadan kisik inleme -> "yaklasiyorum"
+        //   ayni odada net inleme -> "buradaymis"
+        dog.openingBark = true;
+        dog.openingBarkDelay = 1.5f;
+        dog.openingBarkVolume = 0.5f;
+        dog.maxHearDistance = 32f;          // oda ~20 birim, bu bir onceki odayi kapsar
+        dog.minDistanceForMaxVolume = 4f;
+        dog.whineInterval = 7f;             // seyrek: surekli inlerse kulak aliskanlik yapiyor
+        dog.whineIntervalJitter = 2.5f;     // duzenli aralik metronom gibi duyuluyor
         // Bunlar olmadan kopek dikeyde hic hareket etmez: platforma cikan
         // oyuncunun altinda kalir, kat degisince de bir daha bulamaz.
         dog.groundLayer = LayerMask.GetMask("Ground");
