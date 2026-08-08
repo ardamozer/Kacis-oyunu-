@@ -238,11 +238,20 @@ public static class AlevPrefabSetupB
         AudioSource audio = go.AddComponent<AudioSource>();
         audio.playOnAwake = false;
 
+        // Sesler varsa bagla. Yoksa bos kalir — DogCompanion null kontrolu
+        // yapiyor, sessizce calisir. Uretmek icin: ALEV → Kisi B — Sesleri Uret
+        AudioClip whine = AssetDatabase.LoadAssetAtPath<AudioClip>(
+            "Assets/Audio/Generated/DogWhine.wav");
+        AudioClip bark = AssetDatabase.LoadAssetAtPath<AudioClip>(
+            "Assets/Audio/Generated/DogBark.wav");
+
         DogCompanion dog = go.AddComponent<DogCompanion>();
         dog.followDistance = 1.5f;
         dog.followSpeed = 4f;
         dog.fireDetectRange = 1f;
         dog.audioSource = audio;
+        dog.whineClip = whine;
+        dog.happyBarkClip = bark;
         // Bunlar olmadan kopek dikeyde hic hareket etmez: platforma cikan
         // oyuncunun altinda kalir, kat degisince de bir daha bulamaz.
         dog.groundLayer = LayerMask.GetMask("Ground");
