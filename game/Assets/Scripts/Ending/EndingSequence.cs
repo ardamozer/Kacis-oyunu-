@@ -54,6 +54,10 @@ public class EndingSequence : MonoBehaviour
     bool bossSceneEnding;
     float bossFireTimer;
 
+    // Alevin sahnede ayarladiginiz gercek boyutu. Sabit Vector3.one KULLANMIYORUZ:
+    // Inspector'da alevi buyutup kucultmekte ozgur olmalisiniz, kod onu ezmesin.
+    Vector3 bigFlameBaseScale = Vector3.one;
+
     void Start()
     {
         if (player == null)
@@ -63,7 +67,13 @@ public class EndingSequence : MonoBehaviour
         }
 
         if (bossObject != null) bossObject.SetActive(false);
-        if (bigFlameVisual != null) bigFlameVisual.SetActive(false);
+
+        if (bigFlameVisual != null)
+        {
+            bigFlameBaseScale = bigFlameVisual.transform.localScale;
+            bigFlameVisual.SetActive(false);
+        }
+
         if (collarPickup != null) collarPickup.SetActive(false);
         if (ghostVisual != null) ghostVisual.SetActive(false);
     }
@@ -112,15 +122,18 @@ public class EndingSequence : MonoBehaviour
         {
             if (dogDeathPoint != null) bigFlameVisual.transform.position = dogDeathPoint.position;
             bigFlameVisual.SetActive(true);
-            yield return ScaleRoutine(bigFlameVisual.transform, Vector3.zero, Vector3.one, flameRiseDuration);
+            yield return ScaleRoutine(bigFlameVisual.transform, Vector3.zero, bigFlameBaseScale, flameRiseDuration);
         }
 
         yield return new WaitForSeconds(silenceDuration);
 
         if (bigFlameVisual != null)
         {
-            yield return ScaleRoutine(bigFlameVisual.transform, bigFlameVisual.transform.localScale, Vector3.zero, flameFallDuration);
+            yield return ScaleRoutine(bigFlameVisual.transform, bigFlameBaseScale, Vector3.zero, flameFallDuration);
             bigFlameVisual.SetActive(false);
+
+            // Sonraki acilista sifir boyutta kalmasin.
+            bigFlameVisual.transform.localScale = bigFlameBaseScale;
         }
 
         // "Yerde sadece tasma kalir."
@@ -222,6 +235,34 @@ public class EndingSequence : MonoBehaviour
     // ============================================================
     //  Yardimcilar
     // ============================================================
+
+    /// <summary>
+    /// Bir transform'u verilen sure boyunca 'from' olceginden 'to' olcegine tasir.
+    /// Olumun buyuyen/sonen alevi ve benzeri kisa gecisler icin.
+    /// </summary>
+    IEnumerator ScaleRoutine(Transform target, Vector3 from, Vector3 to, float duration)
+    {
+        if (target == null) yield break;
+
+        // Sure 0 veya negatifse Lerp'te sifira bolme olur — direkt son duruma gec.
+        if (duration <= 0f)
+        {
+            target.localScale = to;
+            yield break;
+        }
+
+        float t = 0f;
+        target.localScale = from;
+
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            target.localScale = Vector3.Lerp(from, to, t / duration);
+            yield return null;
+        }
+
+        target.localScale = to;
+    }
 
     void SetPlayerControl(bool canControl)
     {
