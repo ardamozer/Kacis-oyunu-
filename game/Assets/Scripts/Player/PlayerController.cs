@@ -46,6 +46,18 @@ public class PlayerController : MonoBehaviour
     [Tooltip("Ground layer'ini secin.")]
     public LayerMask groundLayer;
 
+    [Header("Basamak Yardimi")]
+    [Tooltip("Bu yukseklige kadar olan cikintilara takilmadan cikar.\n" +
+             "Seviyedeki mobilyalar 1.8-2.9 arasi yuksekliklerde ve bazilari\n" +
+             "ust uste biniyor; ornegin Salon_Koltuk (2.20) ile Salon_T1 (2.65)\n" +
+             "arasinda 0.45 birimlik bir basamak var. Bu yukseklik ziplamayi\n" +
+             "hak etmeyecek kadar kucuk, yuruyerek cikilamayacak kadar buyuk —\n" +
+             "oyuncu goze gorunmez bir seye toslamis gibi hissediyor.\n" +
+             "0 = kapali.")]
+    public float maxStepHeight = 0.55f;
+    [Tooltip("Cikintinin ne kadar onunden algilansin.")]
+    public float stepCheckDistance = 0.3f;
+
     [Header("Ezme (Stomp)")]
     [Tooltip("Bir dusmani ezdikten sonraki sekme kuvveti.")]
     public float stompBounce = 13f;
@@ -63,6 +75,7 @@ public class PlayerController : MonoBehaviour
 
     Rigidbody2D rb;
     SpriteRenderer sprite;
+    Collider2D bodyCollider;
 
     float horizontalInput;
     float coyoteCounter;
@@ -72,6 +85,7 @@ public class PlayerController : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         sprite = GetComponentInChildren<SpriteRenderer>();
+        bodyCollider = GetComponent<Collider2D>();
 
         // Karakterin devrilmemesi icin. Inspector'dan da ayarlanabilir ama
         // unutulmasin diye burada garantiye aliyoruz.
@@ -118,6 +132,43 @@ public class PlayerController : MonoBehaviour
     {
         ApplyHorizontalMovement();
         ApplyBetterGravity();
+        TryStepUp();
+    }
+
+    /// <summary>
+    /// Kucuk cikintilara takilmadan cikar.
+    ///
+    /// Iki isin atiyoruz: ayak hizasindan ileri ve basamak yuksekliginden
+    /// ileri. Alttaki carpip usttteki bostaysa "asilabilir bir basamak"
+    /// demektir ve oyuncuyu yukari kaldiriyoruz.
+    ///
+    /// Ustteki de carpiyorsa bu bir DUVAR — dokunmuyoruz, yoksa oyuncu
+    /// duvarlara tirmanir.
+    /// </summary>
+    void TryStepUp()
+    {
+        if (maxStepHeight <= 0f || bodyCollider == null) return;
+        if (!IsGrounded || Mathf.Abs(horizontalInput) < 0.01f) return;
+
+        float dir = Mathf.Sign(horizontalInput);
+        Bounds b = bodyCollider.bounds;
+
+        Vector2 side = new Vector2(dir > 0f ? b.max.x : b.min.x, 0f);
+        Vector2 low = new Vector2(side.x, b.min.y + 0.05f);
+        Vector2 high = new Vector2(side.x, b.min.y + maxStepHeight + 0.05f);
+        Vector2 forward = Vector2.right * dir;
+
+        RaycastHit2D lowHit = Physics2D.Raycast(low, forward, stepCheckDistance, groundLayer);
+        if (lowHit.collider == null) return;                 // onunde bir sey yok
+
+        RaycastHit2D highHit = Physics2D.Raycast(high, forward, stepCheckDistance, groundLayer);
+        if (highHit.collider != null) return;                // duvar, basamak degil
+
+        float lift = lowHit.collider.bounds.max.y - b.min.y;
+        if (lift <= 0.01f || lift > maxStepHeight) return;
+
+        // Ayaklari cikintinin ustune al. Kucuk pay, tekrar icine gommesin.
+        transform.position += new Vector3(0f, lift + 0.02f, 0f);
     }
 
     void ApplyHorizontalMovement()
