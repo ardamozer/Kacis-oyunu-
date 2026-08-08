@@ -45,23 +45,40 @@ public static class AlevPlaceAtMarkers
             return;
         }
 
-        SpawnMarker[] all = Object.FindObjectsByType<SpawnMarker>(FindObjectsSortMode.None);
+        SpawnMarker[] all = Object.FindObjectsByType<SpawnMarker>(
+            FindObjectsInactive.Include, FindObjectsSortMode.None);
 
-        if (all.Length == 0)
+        // ⚠️ ONCE YERLESTIRILECEK BIR SEY VAR MI DIYE BAK — SONRA SIL.
+        // Bu sira hayati: isaretler onceki calistirmada tuketilmis olabilir.
+        // Once silip sonra "koyacak sey yok" dersek sahnedeki her seyi
+        // silip yerine hicbir sey koymamis oluruz. (Bir kez basimiza geldi.)
+        int placeable = 0;
+        foreach (SpawnMarker m in all)
+        {
+            if (m.kind == SpawnMarker.Kind.WallMonster ||
+                m.kind == SpawnMarker.Kind.FloorFire ||
+                m.kind == SpawnMarker.Kind.Dog)
+            {
+                placeable++;
+            }
+        }
+
+        if (placeable == 0)
         {
             EditorUtility.DisplayDialog(
-                "Isaret yok",
-                "Sahnede hic SpawnMarker bulunamadi.\n\n" +
-                "Once evi kurun: ALEV → Evi Kur",
+                "Yerlestirilecek isaret yok",
+                "Sahnede duvar canavari / yer atesi / kopek isareti bulunamadi.\n\n" +
+                "Muhtemelen onceki calistirmada tuketildiler.\n" +
+                "Isaretleri geri getirmek icin:\n\n" +
+                "    ALEV → Evi Kur\n\n" +
+                "Sahnedeki mevcut objelere DOKUNULMADI.",
                 "Tamam");
             return;
         }
 
-        // ⚠️ ONCE ESKILERI TEMIZLE — yoksa komut her calisinda ust uste yigiyor.
-        // Evi Kur isaretleri sifirdan geri getiriyor; temizlemezsek ikinci
-        // calistirmada ayni noktalara ikinci bir set daha koyuluyor. Ayrica
-        // elle surukLENMIS eski test objeleri de orijin civarinda kaliyor ve
-        // ev ile ic ice gorunuyor.
+        // Artik silmek guvenli: yerine koyacagimiz sey oldugunu biliyoruz.
+        // Temizlik sart, yoksa Evi Kur isaretleri geri getirdiginde ayni
+        // noktalara ikinci bir set biniyor ve sahne kopyalarla doluyor.
         int cleared = ClearPreviouslyPlaced();
 
         int wm = 0, ff = 0, dog = 0;
