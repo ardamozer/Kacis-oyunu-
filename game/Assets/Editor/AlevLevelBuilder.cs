@@ -228,6 +228,23 @@ public static class AlevLevelBuilder
             fd.warningDuration = 1f;
             fd.autoTrigger = true;
         }
+
+        // ---- OLUM TAHTASI ----
+        // Karabas'in uzerine dusecek olan. Digerlerinden iki farki var:
+        //   autoTrigger = FALSE  → oyuncu yaklasinca kendi kendine dusmez,
+        //                          sadece EndingSequence cagirinca duser
+        //   yer isareti YOK      → DropNow(false) zaten uyari gostermiyor
+        var death = NewSprite(debris, "Tahta_OLUM (EndingSequence -> Death Debris)",
+                              new Vector2(44f, 14.5f), new Vector2(3f, 0.5f),
+                              new Color(0.5f, 0.3f, 0.16f));
+        var dcol = death.AddComponent<BoxCollider2D>();
+        dcol.isTrigger = true;
+
+        var dfd = death.AddComponent<FallingDebris>();
+        dfd.groundLayer = LayerMask.GetMask("Ground");
+        dfd.autoTrigger = false;      // ⚠️ kritik — erken dusmesin
+        dfd.groundMarker = null;      // uyari gorseli olmayacak
+        dfd.lifetimeAfterLanding = 0f;
     }
 
     // ==================================================================
