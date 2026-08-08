@@ -28,7 +28,7 @@ public static class AlevLevelBuilder
 {
     const float DoorH = 3.4f;
 
-    static Sprite square, glow;
+    static Sprite square, glow, flameSprite;
     static Transform rooms, geo, plats, props, water, debris, triggers, markers, fires, keys;
 
     static readonly Color CWall  = new Color(0.11f, 0.09f, 0.09f);
@@ -64,6 +64,7 @@ public static class AlevLevelBuilder
 
         square = AlevSceneSetup.GetOrCreateSquareSprite();
         glow = GetOrCreateGlowSprite();
+        flameSprite = GetOrCreateFlameSprite();
 
         GameObject old = GameObject.Find("Level");
         if (old != null) Object.DestroyImmediate(old);
@@ -189,7 +190,8 @@ public static class AlevLevelBuilder
         Solid(plats, "Salon_Koltuk", 50f, 1.3f, 8f, 1.8f, CPlat);
         Solid(plats, "Salon_Piyano", 88f, 1.8f, 9f, 2.8f, CPlat);
 
-        Fire("Salon_SomineAtes", 40f, 2.2f, 5f, 5f, 1.5f);
+        // Somine: tek dev kare yerine uc ayri alev. Cok daha ikna edici.
+        FireCluster("Salon_Somine", 40f, 2.2f, 1.3f);
         Fire("Salon_Alev1", 78f, 1f, 2f, 2.8f);
         Fire("Salon_Alev2", 36f, 16f, 1.5f, 2.1f);
         Fire("Salon_Alev3", 99f, 12f, 1.7f, 2.3f);
@@ -552,20 +554,49 @@ public static class AlevLevelBuilder
     static void Prop(string name, float x, float y, float w, float h, Color c, int order = -2)
         => Sprite2(props, name, x, y, w, h, c, order);
 
+    /// <summary>
+    /// Dekoratif alev.
+    ///
+    /// ⚠️ ONEMLI DERSLER (ilk hali cok kotu duruyordu):
+    ///   1. Kare sprite ASLA ates gibi gorunmez. Ates bir SILUET meselesi.
+    ///      Artik proseduel uretilen alev dili sekli kullaniliyor.
+    ///   2. Buyuk ates = turuncu blok. Kucuk ve INCE alevler ikna edicidir.
+    ///      Buyuk ates isteniyorsa tek buyuk yerine BIRKAC KUCUK kullanin.
+    ///   3. sortingOrder POZITIF olmamali — dekoratif ates oyuncunun onune
+    ///      gecerse ekrani kirletir. Artik arkada (-3), isik daha da arkada.
+    /// </summary>
     static void Fire(string name, float x, float y, float w, float h, float glowScale = 1f)
     {
-        var go = Sprite2(fires, name, x, y, w, h, new Color(1f, 0.55f, 0.12f, 0.95f), 5);
+        var go = new GameObject(name);
+        go.transform.SetParent(fires, false);
+        go.transform.position = new Vector3(x, y, 0f);
+        go.transform.localScale = new Vector3(w, h, 1f);
+
+        var sr = go.AddComponent<SpriteRenderer>();
+        sr.sprite = flameSprite;              // alev dili sekli, renkleri icinde
+        sr.color = Color.white;               // tint YOK, dokudaki renkler gecerli
+        sr.sortingOrder = -3;                 // oyuncunun ARKASINDA
 
         var g = new GameObject("Isik");
         g.transform.SetParent(go.transform, false);
-        g.transform.localScale = new Vector3(9f * glowScale / Mathf.Max(w, 0.01f),
-                                             9f * glowScale / Mathf.Max(h, 0.01f), 1f);
+        // Isik halkasi daha kucuk ve daha soluk — eskiden dev turuncu
+        // lekeler olusturuyordu.
+        g.transform.localScale = new Vector3(5.5f * glowScale / Mathf.Max(w, 0.01f),
+                                             5.5f * glowScale / Mathf.Max(h, 0.01f), 1f);
         var gsr = g.AddComponent<SpriteRenderer>();
         gsr.sprite = glow;
-        gsr.color = new Color(1f, 0.5f, 0.15f, 0.35f);
-        gsr.sortingOrder = 4;
+        gsr.color = new Color(1f, 0.45f, 0.12f, 0.18f);
+        gsr.sortingOrder = -4;
 
         go.AddComponent<AmbientFire>().glow = gsr;
+    }
+
+    /// <summary>Buyuk ates: tek dev kare yerine farkli boyda birkac alev.</summary>
+    static void FireCluster(string name, float x, float y, float scale = 1f)
+    {
+        Fire($"{name}_a", x - 1.1f * scale, y, 1.0f * scale, 1.9f * scale, 0.7f);
+        Fire($"{name}_b", x, y + 0.25f * scale, 1.4f * scale, 2.7f * scale, 1.1f);
+        Fire($"{name}_c", x + 1.1f * scale, y, 1.0f * scale, 2.0f * scale, 0.7f);
     }
 
     static void Tap(string name, float x, float y, WaterSource.SourceType type,
@@ -582,6 +613,79 @@ public static class AlevLevelBuilder
         src.type = type;
         if (type == WaterSource.SourceType.Infinite) src.refillPerSecond = rate;
         else { src.instantAmount = rate; src.destroyAfterUse = true; }
+    }
+
+    /// <summary>
+    /// Alev dili sekli uretir — kare sprite ates gibi gorunmuyordu.
+    ///
+    /// Profil: dipte dar, %30 yukseklikte en genis, tepede sivri.
+    /// Renk dokunun ICINE bakiliyor: cekirdek sari-beyaz, ortasi turuncu,
+    /// kenari koyu kirmizi. Boylece tint gerekmiyor ve ates "sicak"
+    /// gorunuyor — tek renk turuncu bir sekil hep yassi durur.
+    /// </summary>
+    public static Sprite GetOrCreateFlameSprite()
+    {
+        const string path = "Assets/Art/Generated/Flame.png";
+        var existing = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+        if (existing != null) return existing;
+
+        if (!AssetDatabase.IsValidFolder("Assets/Art")) AssetDatabase.CreateFolder("Assets", "Art");
+        if (!AssetDatabase.IsValidFolder("Assets/Art/Generated"))
+            AssetDatabase.CreateFolder("Assets/Art", "Generated");
+
+        const int W = 64, H = 96;
+        var tex = new Texture2D(W, H);
+        var px = new Color[W * H];
+
+        var core = new Color(1.00f, 0.95f, 0.62f);   // sari-beyaz cekirdek
+        var mid  = new Color(1.00f, 0.55f, 0.10f);   // turuncu
+        var edge = new Color(0.85f, 0.20f, 0.04f);   // koyu kirmizi kenar
+
+        for (int yi = 0; yi < H; yi++)
+        {
+            float y = yi / (float)(H - 1);           // 0 = dip, 1 = tepe
+
+            // Alev profili: dipte dar, %30'da en genis, tepede sivri
+            float bulge = Mathf.Sin(Mathf.Clamp01(y / 0.3f) * Mathf.PI * 0.5f);
+            float halfW = 0.5f * (1f - y) * (0.55f + 0.45f * bulge);
+
+            for (int xi = 0; xi < W; xi++)
+            {
+                float x = xi / (float)(W - 1) - 0.5f;   // -0.5 .. 0.5
+                float ax = Mathf.Abs(x);
+
+                if (halfW <= 0.001f || ax > halfW) { px[yi * W + xi] = Color.clear; continue; }
+
+                float d = ax / halfW;                   // 0 = eksen, 1 = kenar
+
+                // Renk: cekirdekten kenara. Tepeye dogru cekirdek soner.
+                float coreStrength = Mathf.Clamp01(1f - y * 1.3f);
+                Color c = d < 0.45f
+                    ? Color.Lerp(core, mid, d / 0.45f)
+                    : Color.Lerp(mid, edge, (d - 0.45f) / 0.55f);
+                c = Color.Lerp(mid, c, 0.35f + 0.65f * coreStrength);
+
+                // Kenarlarda ve tepede yumusak sonme
+                float a = Mathf.Clamp01((1f - d) * 3f) * Mathf.Clamp01((1f - y) * 2.2f + 0.15f);
+                c.a = a;
+
+                px[yi * W + xi] = c;
+            }
+        }
+
+        tex.SetPixels(px);
+        tex.Apply();
+        File.WriteAllBytes(path, tex.EncodeToPNG());
+        Object.DestroyImmediate(tex);
+
+        AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
+        var fimp = (TextureImporter)AssetImporter.GetAtPath(path);
+        fimp.textureType = TextureImporterType.Sprite;
+        fimp.alphaIsTransparency = true;
+        fimp.textureCompression = TextureImporterCompression.Uncompressed;
+        fimp.SaveAndReimport();
+
+        return AssetDatabase.LoadAssetAtPath<Sprite>(path);
     }
 
     static Sprite GetOrCreateGlowSprite()
