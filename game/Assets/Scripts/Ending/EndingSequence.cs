@@ -31,6 +31,22 @@ public class EndingSequence : MonoBehaviour
     public float flameRiseDuration = 1f;
     public float flameFallDuration = 1f;
 
+    [Header("Olum — dusen tahta (tercih edilen yontem)")]
+    [Tooltip("Karabas'in uzerine dusecek yanan tahta.\n" +
+             "Atanirsa buyuyen alev yerine BU kullanilir.\n" +
+             "Auto Trigger'i kod zaten kapatiyor — erken dusmez.")]
+    public FallingDebris deathDebris;
+    [Tooltip("Tahta dustukten sonra kopegin gizlenmesine kadar gecen sure. " +
+             "Tahtanin yere varma suresine gore ayarlayin.")]
+    public float debrisImpactDelay = 0.55f;
+
+    [Header("Olum — oyuncuyu itme")]
+    [Tooltip("Karabas oyuncuyu kac birim yana iter. 0 = itme yok.\n" +
+             "Anlami: kopek seni kurtariyor. Mekanigi: dusen tahtanin " +
+             "altindan cikiyorsun, tahta sana hasar vermiyor.")]
+    public float pushDistance = 2f;
+    public float pushDuration = 0.35f;
+
     [Header("Boss")]
     [Tooltip("BossCore tasiyan dev alev objesi. Sahnede devre disi baslamali.")]
     public GameObject bossObject;
@@ -115,19 +131,38 @@ public class EndingSequence : MonoBehaviour
         float previousVolume = AudioListener.volume;
         AudioListener.volume = 0f; // PLAN.md: "3 saniye, tum sesler kesilir"
 
-        // Kopek gorunmez olur — kanli/grafik degil, sessiz ve yumusak (PLAN.md).
-        if (dog != null) dog.gameObject.SetActive(false);
+        // Karabas oyuncuyu iter. Iki isi birden yapar:
+        //   anlam  — kopek seni kurtariyor, olum senin hatan degil (PLAN.md sarti)
+        //   mekanik— dusen tahtanin altindan cikarsin, FallingDebris sana vurmaz
+        yield return PushPlayerAside();
 
-        if (bigFlameVisual != null)
+        if (deathDebris != null)
         {
+            // ⚠️ DropNow(false): UYARI YOK.
+            // Oyun boyunca "unlem gorursen kac" ogretiliyor. Olum aninda unlem
+            // cikarsa oyuncu "kacabilirdim, benim hatam" der; duygu suclulukdan
+            // ofkeye doner ve final coker. Kacilamaz olmasi KASITLI.
+            deathDebris.autoTrigger = false;   // oyuncu yaklasinca erken dusmesin
+            deathDebris.DropNow(false);
+
+            yield return new WaitForSeconds(debrisImpactDelay);
+        }
+        else if (bigFlameVisual != null)
+        {
+            // Yedek yol: sahnede tahta atanmadiysa eski buyuyen alev oynar.
+            // Boylece tahta baglanmadan da sahne test edilebilir.
             if (dogDeathPoint != null) bigFlameVisual.transform.position = dogDeathPoint.position;
             bigFlameVisual.SetActive(true);
             yield return ScaleRoutine(bigFlameVisual.transform, Vector3.zero, bigFlameBaseScale, flameRiseDuration);
         }
 
+        // Kopek gorunmez olur — kanli/grafik degil, sessiz ve yumusak (PLAN.md).
+        // Tahta indikten SONRA gizleniyor ki carpma gorunur olsun.
+        if (dog != null) dog.gameObject.SetActive(false);
+
         yield return new WaitForSeconds(silenceDuration);
 
-        if (bigFlameVisual != null)
+        if (deathDebris == null && bigFlameVisual != null)
         {
             yield return ScaleRoutine(bigFlameVisual.transform, bigFlameBaseScale, Vector3.zero, flameFallDuration);
             bigFlameVisual.SetActive(false);
@@ -145,6 +180,41 @@ public class EndingSequence : MonoBehaviour
 
         AudioListener.volume = previousVolume;
         SetPlayerControl(true);
+    }
+
+    /// <summary>
+    /// Oyuncuyu kopekten UZAGA, yana kaydirir.
+    ///
+    /// Olcek animasyonu degil duz pozisyon lerp'i — "itildim" hissi
+    /// dogrudan konum degisiminden geliyor.
+    /// </summary>
+    IEnumerator PushPlayerAside()
+    {
+        if (player == null || pushDistance <= 0f || pushDuration <= 0f) yield break;
+
+        // Kopek neredeyse onun TERSINE it.
+        float dir = 1f;
+        if (dog != null)
+            dir = player.position.x >= dog.transform.position.x ? 1f : -1f;
+
+        Rigidbody2D rb = player.GetComponent<Rigidbody2D>();
+
+        Vector3 from = player.position;
+        Vector3 to = from + Vector3.right * dir * pushDistance;
+
+        float t = 0f;
+        while (t < pushDuration)
+        {
+            t += Time.deltaTime;
+            player.position = Vector3.Lerp(from, to, t / pushDuration);
+
+            // Rigidbody'nin kendi hizi bizi geri cekmesin.
+            if (rb != null) rb.linearVelocity = Vector2.zero;
+
+            yield return null;
+        }
+
+        player.position = to;
     }
 
     // ============================================================
