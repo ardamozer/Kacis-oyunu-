@@ -108,16 +108,18 @@ public static class AlevLevelAudit
         while (grew)
         {
             grew = false;
+            // ⚠️ 'reached' uzerinde donerken ona ekleme yapilamaz
+            // (InvalidOperationException). Bu turda eklenecekleri ayri
+            // toplayip tur bitince ekliyoruz.
+            var toAdd = new List<int>();
+
             for (int i = 0; i < targets.Count; i++)
             {
                 if (reached.Contains(i)) continue;
-
-                foreach (int j in reached)
-                {
-                    if (CanJump(targets[j], targets[i])) { reached.Add(i); grew = true; break; }
-                }
-                if (grew) break;
+                if (reached.Any(j => CanJump(targets[j], targets[i]))) toAdd.Add(i);
             }
+
+            foreach (int i in toAdd) { reached.Add(i); grew = true; }
         }
 
         int found = 0;
