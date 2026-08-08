@@ -42,6 +42,13 @@ public class WaterSource : MonoBehaviour
 
     bool used;
 
+    // ⚠️ OnTriggerStay2D'ye GUVENMIYORUZ.
+    // Unity'de Rigidbody2D hareketsiz kalinca uyur (sleep) ve uyuyan cisim icin
+    // OnTriggerStay2D cagrilmaz. Sonuc: oyuncu muslugun onunde DURUNCA su dolmaz,
+    // sadece hareket edince dolar. Onun yerine giris/cikisi takip edip Update'te
+    // dolduruyoruz — uyku durumundan tamamen bagimsiz calisir.
+    WaterTank tankInside;
+
     void Reset()
     {
         // Yeni eklendiginde collider otomatik trigger olsun — sik yapilan hatayi onler.
@@ -55,10 +62,18 @@ public class WaterSource : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (type != SourceType.OneShot) return;
+        var enteringTank = other.GetComponentInParent<WaterTank>();
+        if (enteringTank == null) return;
 
-        var tank = other.GetComponentInParent<WaterTank>();
-        if (tank == null || used) return;
+        if (type == SourceType.Infinite)
+        {
+            tankInside = enteringTank;   // dolumu Update yapacak
+            return;
+        }
+
+        // ---- OneShot ----
+        var tank = enteringTank;
+        if (used) return;
 
         // Depo zaten doluysa harcama — oyuncu geri gelip kullanabilsin.
         if (tank.IsFull) return;
@@ -72,24 +87,33 @@ public class WaterSource : MonoBehaviour
         if (destroyAfterUse) Destroy(gameObject, 0.1f);
     }
 
-    void OnTriggerStay2D(Collider2D other)
+    void OnTriggerExit2D(Collider2D other)
+    {
+        if (other.GetComponentInParent<WaterTank>() == tankInside && tankInside != null)
+        {
+            tankInside = null;
+            StopFeedback();
+        }
+    }
+
+    void Update()
     {
         if (type != SourceType.Infinite) return;
 
-        var tank = other.GetComponentInParent<WaterTank>();
-        if (tank == null || tank.IsFull)
+        if (tankInside == null)
         {
             StopFeedback();
             return;
         }
 
-        tank.Refill(refillPerSecond * Time.deltaTime);
-        PlayFeedback();
-    }
+        if (tankInside.IsFull)
+        {
+            StopFeedback();
+            return;
+        }
 
-    void OnTriggerExit2D(Collider2D other)
-    {
-        if (other.GetComponentInParent<WaterTank>() != null) StopFeedback();
+        tankInside.Refill(refillPerSecond * Time.deltaTime);
+        PlayFeedback();
     }
 
     void SetVisual(bool isUsed)
