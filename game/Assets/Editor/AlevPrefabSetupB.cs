@@ -52,7 +52,7 @@ public static class AlevPrefabSetupB
     // ==================================================================
 
     [MenuItem("ALEV/Kisi B — Prefablari Kur", false, 20)]
-    public static void BuildPrefabs()
+    public static void BuildPrefabsMenu()
     {
         if (!EditorUtility.DisplayDialog(
                 "Kisi B prefablarini kur",
@@ -67,6 +67,12 @@ public static class AlevPrefabSetupB
             return;
         }
 
+        BuildPrefabs();
+    }
+
+    /// <summary>Diyalogsuz surum — tazeleme komutu bunu cagirir.</summary>
+    public static void BuildPrefabs()
+    {
         if (!CheckLayersAndTags()) return;
 
         EnsureFolder(PrefabRoot);
@@ -327,7 +333,7 @@ public static class AlevPrefabSetupB
     // ==================================================================
 
     [MenuItem("ALEV/Kisi B — Finali Sahneye Kur", false, 21)]
-    public static void BuildEnding()
+    public static void BuildEndingMenu()
     {
         if (!EditorUtility.DisplayDialog(
                 "Finali sahneye kur",
@@ -340,6 +346,12 @@ public static class AlevPrefabSetupB
             return;
         }
 
+        BuildEnding();
+    }
+
+    /// <summary>Diyalogsuz surum — tazeleme komutu bunu cagirir.</summary>
+    public static void BuildEnding()
+    {
         if (!CheckLayersAndTags()) return;
 
         Sprite square = GetOrCreateSprite(SquarePath, Shape.Square);
