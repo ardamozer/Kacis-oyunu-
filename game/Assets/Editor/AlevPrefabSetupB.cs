@@ -273,7 +273,7 @@ public static class AlevPrefabSetupB
         Sprite square = GetOrCreateSprite(SquarePath, false);
         Sprite circle = GetOrCreateSprite(CirclePath, true);
 
-        RemoveIfExists("EndingSequence", "Boss", "BigDeathFlame", "Collar",
+        RemoveIfExists("EndingSequence", "Boss", "BigDeathFlame", "Collar", "DeathDebris",
                        "DogGhost", "GhostStart", "GhostEnd", "DogDeathPoint");
 
         GameObject flamePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
@@ -302,6 +302,19 @@ public static class AlevPrefabSetupB
             new Color(0.55f, 0.35f, 0.15f), new Vector3(0.3f, 0.2f, 1f),
             new Vector3(4f, -3.3f, 0f), 4);
         collar.SetActive(false);
+
+        // Kopegin uzerine dusecek yanan tahta (Kisi A'nin FallingDebris'i).
+        GameObject debris = MakeSprite("DeathDebris", square,
+            new Color(0.5f, 0.25f, 0.1f), new Vector3(2.2f, 0.35f, 1f),
+            new Vector3(4f, 2.5f, 0f), 5);
+        debris.AddComponent<BoxCollider2D>().isTrigger = true;
+
+        FallingDebris fd = debris.AddComponent<FallingDebris>();
+        // ⚠️ Oyuncu yaklasinca kendiliginden (ve UYARIYLA) dusmesin —
+        // bu tahta sadece EndingSequence tetikleyince, uyarisiz duser.
+        fd.autoTrigger = false;
+        fd.groundLayer = LayerMask.GetMask("Ground");
+        fd.lifetimeAfterLanding = 4f;
 
         // ---- Boss ----
         // PLAN.md: duvar canavarinin sprite'i 4 kat buyutulmus + koyu kirmizi.
@@ -336,7 +349,10 @@ public static class AlevPrefabSetupB
         EndingSequence ending = manager.AddComponent<EndingSequence>();
 
         ending.dogDeathPoint = deathPoint.transform;
-        ending.bigFlameVisual = bigFlame;
+        ending.bigFlameVisual = bigFlame;      // yedek yol (tahta yoksa)
+        ending.deathDebris = fd;               // tercih edilen yol
+        ending.debrisImpactDelay = 0.55f;
+        ending.pushDistance = 2f;
         ending.collarPickup = collar;
         ending.silenceDuration = 3f;
 
