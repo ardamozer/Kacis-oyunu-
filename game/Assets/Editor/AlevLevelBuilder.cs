@@ -120,6 +120,7 @@ public static class AlevLevelBuilder
         BuildFlameWallDirect();
         SetupCamera();
         MovePlayerToStart();
+        AlevAtmosphereSetup.SetupAtmosphere();
 
         Selection.activeGameObject = root.gameObject;
         EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());

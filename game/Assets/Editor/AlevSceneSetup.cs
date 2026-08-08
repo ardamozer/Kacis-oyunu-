@@ -347,7 +347,7 @@ public static class AlevSceneSetup
     /// Ortasi saydam, kenarlari opak bir vinyet dokusu uretir.
     /// Hasar alinca kenarlardan alev giriyormus hissi verir.
     /// </summary>
-    static Sprite GetOrCreateVignetteSprite()
+    public static Sprite GetOrCreateVignetteSprite()
     {
         const string path = SpriteFolder + "/Vignette.png";
         Sprite existing = AssetDatabase.LoadAssetAtPath<Sprite>(path);
