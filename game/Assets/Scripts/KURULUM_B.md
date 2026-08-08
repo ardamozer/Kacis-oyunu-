@@ -25,23 +25,40 @@ Proje konumu artik: `Kacis-oyunu-\game\` (kucuk harf `game`, kokte
 | Unity surumu | Unity Hub, proje satiri | **6000.5.7f1** ✅ repoda kilitli |
 | Input Handling | `Project Settings → Player → Other Settings` | **Both** ✅ repoda ayarli |
 | Tag'ler | `Project Settings → Tags and Layers → Tags` | `Enemy`, `WaterSource`, `Dog` ✅ repoda islendi |
-| Layer'lar | ayni ekran, Layers | 8=`Ground`, 9=`Player`, 10=`Enemy` ✅ repoda islendi |
+| Layer'lar | ayni ekran, Layers | 6=`Ground`, 7=`Player`, 8=`Enemy` ✅ repoda islendi |
 
 > `Player` tag'i listede GORUNMEZ — Unity'nin yerlesik tag'i, zaten var.
 > Inspector'daki Tag menusunde secebilirsiniz. Bu normal.
 
-Bir tanesi eksikse Console'da hata alirsiniz; o zaman elle ekleyin ve
-commit'leyin.
+### ⚠️ Layer'lari ozellikle bir kez goz kontrolu yapin
+
+Layer'lar 6, 7, 8 slotlarina yazildi. Unity'de **0-7 arasi "Builtin Layer"**
+olarak ayrilmistir ve Tags&Layers ekraninda duzenlenemez gorunur — yani
+`Ground` (6) ve `Player` (7) o ekranda **gri/duzenlenemez** gorunebilir.
+
+**5 saniyelik kontrol:** herhangi bir objeyi sec → Inspector'un sag ustundeki
+**Layer** acilir menusune bak. `Ground`, `Player`, `Enemy` uculu de listede
+cikiyorsa **sorun yok, devam et.**
+
+Cikmiyorsa (ozellikle `Ground` yoksa — `PlayerController.groundLayer`
+ayarlanamaz, ziplama calismaz): Tags&Layers ekranindan **User Layer 8/9/10**
+satirlarina `Ground`/`Player`/`Enemy` yazin, eskilerini bosaltin, sonra
+Kisi A'ya haber verip ikiniz de ayni sekilde yapin ve commit'leyin.
 
 ## 0.3 ⚠️ .meta DOSYALARI — EN KRITIK ADIM
 
-Repodaki `.cs` dosyalarinin cogunun `.meta` dosyasi **henuz yok**. Unity bir
-script'i ilk gorunce ona rastgele bir **GUID** uretip `.meta` dosyasina yazar.
-Prefab'lar ve sahneler script'lere **isimle degil, bu GUID ile** baglanir.
+Unity bir script'i ilk gorunce ona rastgele bir **GUID** uretip `.meta`
+dosyasina yazar. Prefab'lar ve sahneler script'lere **isimle degil, bu GUID
+ile** baglanir.
 
 **Tehlike:** Ayni `.cs` dosyasi icin sen ve Kisi A ayri ayri Unity acarsaniz,
 Unity ikinize **FARKLI GUID** uretir. Sonra senin prefab'in onun makinesinde
 "Missing (Mono Script)" olur. Jam'de takim durduran klasik hata budur.
+
+**Durum:**
+- `Enemies/` → ✅ meta'lar Kisi A tarafindan uretilip push'landi, sorun yok.
+- `Dog/` ve `Ending/` → ❌ meta'lari **henuz yok**, Unity'yi acinca sende
+  olusacak.
 
 **Kural — istisnasiz:**
 
@@ -50,12 +67,12 @@ Unity ikinize **FARKLI GUID** uretir. Sonra senin prefab'in onun makinesinde
 
 ```bash
 git add game/Assets/Scripts
-git commit -m "meta dosyalarini uret"
+git commit -m "Dog ve Ending meta dosyalarini uret"
 git push
 ```
 
 3. Kisi A'ya "meta'lari push'ladim, pull yap" de. **O pull yapmadan
-   script'leri hicbir objeye baglamasin.**
+   `DogCompanion` / `EndingSequence`'i hicbir objeye baglamasin.**
 
 ## 0.4 Kendi test sahneni olustur
 
