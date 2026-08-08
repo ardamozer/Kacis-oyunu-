@@ -574,8 +574,17 @@ public static class AlevLevelBuilder
         (SpawnMarker.Kind.WallMonster, 158f, 1f, "Koridor 1/3 - su YOK, 2'sine yeter"),
         (SpawnMarker.Kind.WallMonster, 170f, 4f, "Koridor 2/3 - YUKSEK"),
         (SpawnMarker.Kind.WallMonster, 184f, 1f, "Koridor 3/3"),
-        (SpawnMarker.Kind.WallMonster, 250f, 6f, "Arka koridor - Karabas'li"),
-        (SpawnMarker.Kind.WallMonster, 316f, 6f, "Arka kapi - YALNIZ"),
+        // ⚠️ Bu ikisi y=6'daydi ve oyuncu onlari HIC GORMUYORDU: zemin y=0,
+        // oyuncu y~1'de yuruyor, alev 6 hizasindan kafanin ustunden geciyordu.
+        // Altlarindaki sandiklarin ustu 3.45 ve 3.65 — yani oraya cikilsa bile
+        // canavar hala 2.5 birim yukarida kalıyordu.
+        //
+        // 250 ozellikle kritik: escort bolumunun TEK mekanik ani orada.
+        // Karabas onunde canli canavar varken duruyor ve oyuncunun sondurmesini
+        // bekliyor (PLAN.md madde 7). Kopek ZEMINDE yurudugu icin canavar da
+        // zeminde olmali, yoksa o an hic tetiklenmiyor.
+        (SpawnMarker.Kind.WallMonster, 250f, 1f, "Arka koridor - Karabas'i durdurur, oyuncu sondurmeli"),
+        (SpawnMarker.Kind.WallMonster, 316f, 1.5f, "Arka kapi - YALNIZ, boss oncesi son engel"),
 
         (SpawnMarker.Kind.FloorFire,   124f, 0.5f, "Mutfak"),
         (SpawnMarker.Kind.FloorFire,   142f, 0.5f, "Mutfak"),
