@@ -57,6 +57,13 @@ public static class AlevPlaceAtMarkers
             return;
         }
 
+        // ⚠️ ONCE ESKILERI TEMIZLE — yoksa komut her calisinda ust uste yigiyor.
+        // Evi Kur isaretleri sifirdan geri getiriyor; temizlemezsek ikinci
+        // calistirmada ayni noktalara ikinci bir set daha koyuluyor. Ayrica
+        // elle surukLENMIS eski test objeleri de orijin civarinda kaliyor ve
+        // ev ile ic ice gorunuyor.
+        int cleared = ClearPreviouslyPlaced();
+
         int wm = 0, ff = 0, dog = 0;
         var skipped = new List<string>();
         Transform holder = GetOrCreateHolder();
@@ -110,6 +117,11 @@ public static class AlevPlaceAtMarkers
         EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
 
         var sb = new StringBuilder();
+
+        if (cleared > 0)
+            sb.Append("<b>[ALEV-B]</b> ").Append(cleared)
+              .Append(" eski obje temizlendi.\n");
+
         sb.Append("<b>[ALEV-B]</b> Yerlestirildi — ")
           .Append(wm).Append(" duvar canavari, ")
           .Append(ff).Append(" yer atesi, ")
@@ -125,6 +137,46 @@ public static class AlevPlaceAtMarkers
     }
 
     // ------------------------------------------------------------------
+
+    /// <summary>
+    /// Daha once yerlestirilmis (ya da elle surukLENMIS) tum Kisi B
+    /// objelerini siler. Komutun tekrar tekrar calistirilabilmesini saglar.
+    ///
+    /// Bilesen tipine gore ariyoruz, isme gore degil: elle surukLENEN
+    /// kopyalar "Karabas (1)" gibi adlar aliyor ve isim eslesmesi kaciriyordu.
+    /// </summary>
+    static int ClearPreviouslyPlaced()
+    {
+        var doomed = new List<GameObject>();
+
+        Collect<WallMonster>(doomed);
+        Collect<FloorFire>(doomed);
+        Collect<DogCompanion>(doomed);
+
+        foreach (GameObject go in doomed)
+            if (go != null) Object.DestroyImmediate(go);
+
+        return doomed.Count;
+    }
+
+    static void Collect<T>(List<GameObject> into) where T : Component
+    {
+        foreach (T c in Object.FindObjectsByType<T>(
+                     FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (c == null) continue;
+
+            // Karabas'in icindeki ates ebeveyniyle birlikte gidecek,
+            // ayrica silmeye calisirsak null referans olur.
+            if (c.transform.parent != null &&
+                c.transform.parent.GetComponentInParent<DogCompanion>() != null)
+            {
+                continue;
+            }
+
+            if (!into.Contains(c.gameObject)) into.Add(c.gameObject);
+        }
+    }
 
     /// <summary>
     /// Canavarin duvardan hangi yone cikacagini konumdan cikarir.
