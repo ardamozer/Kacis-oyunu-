@@ -78,4 +78,25 @@ public static class CheckpointManager
         Current = Vector3.zero;
         CurrentName = null;
     }
+
+    /// <summary>
+    /// Oyuncunun BASLANGIC konumunu ilk checkpoint sayar.
+    ///
+    /// ⚠️ Bu olmadan ilk odada olen oyuncu sahneyi bastan yukluyordu:
+    /// odalarin checkpoint'i sol kenarda (Antre icin x=3) ama oyuncu
+    /// x=6'da basliyor — yani ilk checkpoint'in SAGINDA doguyor ve ona
+    /// hic degmiyor. "Checkpoint calismiyor" sikayetinin sebebi buydu.
+    /// </summary>
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    static void CaptureStart()
+    {
+        if (HasCheckpoint) return;
+
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null) return;
+
+        Current = player.transform.position;
+        CurrentName = "Baslangic";
+        HasCheckpoint = true;
+    }
 }

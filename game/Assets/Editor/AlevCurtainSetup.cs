@@ -117,20 +117,42 @@ public static class AlevCurtainSetup
 
             float groundY = hit.collider != null ? hit.point.y : room.MinY;
 
-            const float height = 5f;
+            // ⚠️ ZEMINDEN TAVANA. Ilk surumde 5 birimdi ve oyuncu ustunden
+            // atliyordu: odalarda 2.5 birim yuksekliginde mobilyalar var,
+            // oyuncu ~3 birim ziplyor, yani 5.5 birime ulasiyor.
+            // Perde "asilamaz" olacaksa gercekten asilamaz olmali.
+            float height = Mathf.Max(6f, room.MaxY - groundY);
 
             GameObject go = new GameObject("AlevPerdesi_" + room.roomName);
             go.transform.SetParent(holder, false);
             go.transform.position = new Vector3(x, groundY + height * 0.5f, 0f);
-            go.transform.localScale = new Vector3(0.9f, height, 1f);
+
+            // Dekoratif aleslerden KALIN olsun — oyuncu bakinca "bu gecilmez"
+            // demeli. Seviyede 23 dekoratif alev var ve hepsi gecilebilir;
+            // perde onlardan ayirt edilemezse oyuncu hangisinin duvar
+            // oldugunu bilemez.
+            go.transform.localScale = new Vector3(1.6f, height, 1f);
 
             go.layer = LayerMask.NameToLayer("Enemy");   // WaterGun sadece bu layer'i tariyor
             go.tag = "Enemy";
 
             SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
             sr.sprite = square;
-            sr.color = new Color(1f, 0.4f, 0.08f, 0.92f);
-            sr.sortingOrder = 3;
+            // Dekoratif alevler turuncu; perde neredeyse BEYAZ-SARI ve tam
+            // opak. "Bu daha sicak, buna dokunulmaz" okunmali.
+            sr.color = new Color(1f, 0.82f, 0.35f, 1f);
+            sr.sortingOrder = 6;                       // her seyin onunde
+
+            // Icine daha koyu bir cekirdek: duz tek renk dikdortgen
+            // "alev" degil "sari duvar" gibi duruyor.
+            GameObject core = new GameObject("Cekirdek");
+            core.transform.SetParent(go.transform, false);
+            core.transform.localScale = new Vector3(0.55f, 0.97f, 1f);
+
+            SpriteRenderer coreSr = core.AddComponent<SpriteRenderer>();
+            coreSr.sprite = square;
+            coreSr.color = new Color(1f, 0.45f, 0.05f, 1f);
+            coreSr.sortingOrder = 7;
 
             // ⚠️ TRIGGER DEGIL: gecidi gercekten kapatmasi gerekiyor.
             go.AddComponent<BoxCollider2D>();
