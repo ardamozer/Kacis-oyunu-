@@ -615,7 +615,17 @@ public static class AlevLevelBuilder
         // Karabas onunde canli canavar varken duruyor ve oyuncunun sondurmesini
         // bekliyor (PLAN.md madde 7). Kopek ZEMINDE yurudugu icin canavar da
         // zeminde olmali, yoksa o an hic tetiklenmiyor.
-        (SpawnMarker.Kind.WallMonster, 248f, 3.45f, "Arka koridor - Karabas'i durdurur, oyuncu sondurmeli"),
+        // ⚠️ BU CANAVAR ZEMINDE KALMALI — 3.45'e (sandigin ustune) alinmisti
+        // ama o zaman escort ani hic tetiklenmiyor.
+        //
+        // Escort bolgesi x=226..264 (kopek 264'te oluyor). Karabas ZEMINDE
+        // yuruyor; DogCompanion onunde 2.25 birim yaricapinda canavar ariyor.
+        // Canavar 3.45'teyken kopekten ~3 birim yukarida kaliyor, algilanmiyor
+        // ve "oyuncu kopegi korur" ani (PLAN.md madde 7) hic yasanmiyor.
+        //
+        // Ayrica canavar zeminde degilse alevini de kopegin/oyuncunun
+        // yuruduğu hizaya atmiyor — yani gercekten tehdit de etmiyor.
+        (SpawnMarker.Kind.WallMonster, 248f, 1f, "Arka koridor - ZEMINDE kalmali, Karabas'i durdurur"),
         (SpawnMarker.Kind.WallMonster, 312f, 3.65f, "Arka kapi - YALNIZ, boss oncesi son engel"),
 
         (SpawnMarker.Kind.FloorFireGrown, 124f, 0.5f, "Mutfak - BUYUMUS baslar, 'buyuk ates = su' dersi"),

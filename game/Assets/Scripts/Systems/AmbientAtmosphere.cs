@@ -42,7 +42,19 @@ public class AmbientAtmosphere : MonoBehaviour
 
     void Update()
     {
-        EnsureAtmosphere();
+        // ⚠️ EnsureAtmosphere BURADA CAGRILMIYOR, bilerek.
+        // Her karede cagrildiginda:
+        //   - referans bulunamazsa FindFirstObjectByType<Canvas>() calisiyordu
+        //     (sahne geneli arama, her kare)
+        //   - SetupFullRect her karede RectTransform yaziyordu, bu da her
+        //     karede Canvas layout rebuild tetikliyor — WebGL'de bu tek
+        //     basina kare suresini gozle gorulur sekilde dusuruyor
+        //   - Editor'de ExecuteAlways ile birlesince sahne surekli "kaydedilmemis"
+        //     kaliyordu
+        // Referanslar OnEnable/Start/OnValidate'te bir kez kuruluyor; kaybolurlarsa
+        // asagidaki ucuz null kontrolu yakaliyor.
+        if (overlayImage == null || vignetteImage == null) EnsureAtmosphere();
+
         ApplyColors();
     }
 
@@ -77,22 +89,26 @@ public class AmbientAtmosphere : MonoBehaviour
         overlayImage.raycastTarget = false;
 
         // 2. Vignette Image
+        // ⚠️ VINYETI SIFIRDAN YARATMIYORUZ.
+        // Vinyetin isi ekran KENARLARINI karartmak; bunu yapan sey radyal
+        // gecisli sprite (merkez saydam, kenar opak). Sprite'siz bir Image
+        // duz beyaz dikdortgendir ve vignetteColor ile boyandiginda EKRANIN
+        // TAMAMINI %60 karartir — oyun kapkara olur.
+        //
+        // Sprite'i sadece Editor script'i uretebiliyor (AlevSceneSetup).
+        // Bulamazsak vinyeti sessizce atliyoruz; siyah ekran vermektense
+        // vinyetsiz calismak yeglenir.
         if (vignetteImage == null)
         {
             Transform t = canvasTF.Find("AmbientVignetteOverlay");
             if (t != null) vignetteImage = t.GetComponent<Image>();
         }
 
-        if (vignetteImage == null)
+        if (vignetteImage != null)
         {
-            var go = new GameObject("AmbientVignetteOverlay", typeof(RectTransform), typeof(Image));
-            go.transform.SetParent(canvasTF, false);
-            go.transform.SetSiblingIndex(1); // Overlay'in ustunde
-            vignetteImage = go.GetComponent<Image>();
+            SetupFullRect(vignetteImage.rectTransform);
+            vignetteImage.raycastTarget = false;
         }
-
-        SetupFullRect(vignetteImage.rectTransform);
-        vignetteImage.raycastTarget = false;
     }
 
     void SetupFullRect(RectTransform rt)
