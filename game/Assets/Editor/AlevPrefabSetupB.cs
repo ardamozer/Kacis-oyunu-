@@ -27,6 +27,7 @@ public static class AlevPrefabSetupB
     const string SquarePath = ArtFolder + "/WhiteSquare.png";
     const string CirclePath = ArtFolder + "/WhiteCircle.png";
     const string HeartPath = ArtFolder + "/WhiteHeart.png";
+    const string DogPath = ArtFolder + "/DogSilhouette.png";
 
     const string PrefabRoot = "Assets/Prefabs";
     const string EnemyPrefabFolder = PrefabRoot + "/Enemies";
@@ -94,7 +95,7 @@ public static class AlevPrefabSetupB
         GameObject heartPrefab = BuildHeart(heart);
         BuildWallMonster(square, flamePrefab);
         BuildFloorFire(square);
-        BuildKarabas(square, heartPrefab);
+        BuildKarabas(GetOrCreateSprite(DogPath, Shape.Dog), heartPrefab);
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
@@ -268,14 +269,15 @@ public static class AlevPrefabSetupB
 
     // ---- Karabas (+ sikismis ates) ----
 
-    static void BuildKarabas(Sprite square, GameObject heartPrefab)
+    static void BuildKarabas(Sprite dogSprite, GameObject heartPrefab)
     {
         GameObject go = new GameObject("Karabas");
         go.tag = "Dog";
-        go.transform.localScale = new Vector3(0.9f, 0.7f, 1f);
+        // Siluetin kendi orantisi var; kutu gibi ezmeyelim.
+        go.transform.localScale = new Vector3(1.1f, 1.1f, 1f);
 
         SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
-        sr.sprite = square;
+        sr.sprite = dogSprite;
         sr.color = new Color(0.35f, 0.22f, 0.15f);     // kahverengi
         sr.sortingOrder = -1;                          // atesin ARKASINDA baslasin
 
@@ -315,7 +317,8 @@ public static class AlevPrefabSetupB
         fire.layer = LayerMask.NameToLayer("Enemy");
 
         SpriteRenderer fireSr = fire.AddComponent<SpriteRenderer>();
-        fireSr.sprite = square;
+        // Ates kare kalsin; kopek silueti sadece kopege ait.
+        fireSr.sprite = GetOrCreateSprite(SquarePath, Shape.Square);
         fireSr.color = new Color(1f, 0.45f, 0.1f);
         fireSr.sortingOrder = 0;
 
@@ -446,8 +449,11 @@ public static class AlevPrefabSetupB
         Vector3 ghostFrom = bossPos + Vector3.right * 9f + Vector3.up * 0.8f;
         Vector3 ghostTo = bossPos + Vector3.left * 4f + Vector3.up * 0.8f;
 
-        GameObject ghost = MakeSprite("DogGhost", square,
-            new Color(0.6f, 0.85f, 1f, 0.5f), new Vector3(0.9f, 0.7f, 1f),
+        // PLAN.md: "kopek sprite'i mavi/beyaz tint + %50 saydam".
+        // Kare bir hayalet Karabas gibi okunmuyor — ayni silueti kullaniyoruz,
+        // oyuncu onu tanimali.
+        GameObject ghost = MakeSprite("DogGhost", GetOrCreateSprite(DogPath, Shape.Dog),
+            new Color(0.6f, 0.85f, 1f, 0.5f), new Vector3(1.1f, 1.1f, 1f),
             ghostFrom, 6);
         ghost.SetActive(false);
 
@@ -637,7 +643,38 @@ public static class AlevPrefabSetupB
 
     // ---- Sprite uretimi ----
 
-    enum Shape { Square, Circle, Heart }
+    enum Shape { Square, Circle, Heart, Dog }
+
+    /// <summary>
+    /// Karabas'in silueti — 16x16 piksel, yandan, saga bakiyor.
+    ///
+    /// Neden elle cizilmis harita: kalp bir formulle uretilebiliyordu ama
+    /// kopek uretilemiyor. PLAN.md kopegi oyunun duygusal merkezi ilan
+    /// ediyor; kare bir kopegin olumu ile silueti belli bir kopeginki ayni
+    /// sey degil. Cizilmis asset gelene kadar bu bosluğu kapatiyor.
+    ///
+    /// Ayaklar en alt satirda: DogCompanion zemine otururken sprite'in
+    /// yariyuksekligini kullaniyor, altta bosluk birakirsak kopek havada durur.
+    /// </summary>
+    static readonly string[] DogPixels =
+    {
+        "................",
+        "...#........##..",   // kuyruk ucu · kulak
+        "...##......####.",
+        "....#.....######",   // bas
+        "....#....#######",
+        "..##############",   // govde + burun
+        "..#############.",
+        "..#############.",
+        "..############..",
+        "..############..",
+        "..############..",
+        "..##..##.##..#..",   // bacaklar
+        "..##..##.##..#..",
+        "..##..##.##..#..",
+        "..##..##.##..#..",
+        "..##..##.##..#..",
+    };
 
     static Sprite GetOrCreateSprite(string path, Shape shape)
     {
@@ -676,6 +713,14 @@ public static class AlevPrefabSetupB
 
                         float a = hx * hx + hy * hy - 1f;
                         on = a * a * a - hx * hx * hy * hy * hy <= 0f;
+                        break;
+                    }
+
+                    case Shape.Dog:
+                    {
+                        // Doku tabandan yukari taranir, harita ise yukaridan
+                        // asagi yazildi — satiri ters cevirmek gerekiyor.
+                        on = DogPixels[SpriteSize - 1 - y][x] == '#';
                         break;
                     }
 
