@@ -89,51 +89,39 @@ git push
 
 ---
 
-# BOLUM 1 — Test ortami (zemin + gecici oyuncu)
+# BOLUM 1 — Test ortami
 
-## 1.1 Zemin
+> ✅ **ELLE KURMANA GEREK YOK.** Kisi A bir Editor script'i yazdi.
+> `TestScene_B` acikken ust menuden **`ALEV → Test Sahnesini Kur`**.
+> Onay kutusuna **Kur** de. Zemin, platformlar, oyuncu, kamera, HUD,
+> musluk ve akvaryum tek seferde olusur.
 
-1. `Hierarchy → sag tik → 2D Object → Sprites → Square` · adi **`Ground`**
-2. Inspector ust kisim → **Layer → Ground**
-3. **Transform → Scale**: X = `30`, Y = `1`
-4. **Transform → Position**: X = `0`, Y = `-4`
-5. **Add Component → Box Collider 2D**
+## Bu komut neyi siler, neyi silmez
 
-## 1.2 Duvar (canavarin icinden cikacagi sey)
+Sadece su isimli objeleri silip yeniden yaratir:
+`Ground` · `Player` · `Musluk` · `Akvaryum` · `TestTarget_Su` ·
+`TestTarget_Ezme` · `HUD` · `Platform`
 
-1. `Hierarchy → sag tik → 2D Object → Sprites → Square` · adi **`Wall`**
-2. **Layer → Ground**
-3. **Scale**: X = `1`, Y = `6`
-4. **Position**: X = `8`, Y = `-0.5`
-5. **Add Component → Box Collider 2D**
-6. Sprite Renderer → **Color** → koyu gri yap (duvar gibi gorunsun)
+**Senin objelerine DOKUNMAZ:** `WallMonster`, `FloorFire`, `Karabas`,
+`TrappedFire`, `Boss`, `EndingSequence`. Yani dusmanlarini kurduktan
+sonra bile guvenle tekrar calistirabilirsin.
 
-## 1.3 Gecici oyuncu
+## ⚠️ Test yardimcilarimi ARTIK EKLEME
 
-1. `Hierarchy → sag tik → 2D Object → Sprites → Square` · adi **`Player`**
-2. **Layer → Player**, **Tag → Player** ⚠️ ikisi de sart
-3. **Scale**: X = `0.8`, Y = `1.6`
-4. **Position**: X = `0`, Y = `0`
-5. **Add Component → Rigidbody 2D**
-   - **Gravity Scale**: `4`
-   - **Constraints → Freeze Rotation Z** ✅
-   - **Collision Detection**: `Continuous`
-6. **Add Component → Box Collider 2D**
-7. **Add Component → Player Controller** (Kisi A'nin script'i)
-8. **Add Component → Test Player Dummy** (benim test script'im)
-9. **Add Component → Test Water Sprayer** (benim test script'im)
+Bu komutun urettigi `Player`, Kisi A'nin **gercek** kodunu tasiyor:
+`PlayerController` + `WaterGun` + `WaterTank` + `PlayerHealth`.
 
-### Zemin kontrol noktasi
+`TestPlayerDummy` ve `TestWaterSprayer` script'lerimi bu objeye
+**ekleme.** Ikisi de artik gereksiz — dahasi `TestPlayerDummy` eklersen
+`EndingSequence` boss sahnesinde gercek `PlayerHealth` yerine onu okur
+ve final yanlis canla tetiklenir.
 
-10. `Player`'a sag tik → **Create Empty** · adi **`GroundCheck`**
-11. **Position**: X = `0`, Y = `-0.52`, Z = `0`
-12. `Player`'i sec → **Player Controller** bileseninde:
-    - **Ground Check** → Hierarchy'den `GroundCheck`'i surukle birak
-    - **Ground Layer** → acilir menuden **sadece `Ground`**'u isaretle
-      (⚠️ bos birakma, "Everything" secme)
+(O script'ler repoda kalsin, zarari yok; sadece sahnede kullanma.)
 
-**Test et:** Play → `A`/`D` yuru, `Space` zipla. Calismiyorsa
-`KURULUM.md` satir 96'daki tabloya bak.
+## Test et
+
+Play → `A`/`D` yuru, `Space` zipla, sol fare ile su sik.
+Ekranin solunda mavi su bari ve kalpler gorunmeli.
 
 ---
 
@@ -457,7 +445,7 @@ Sikismisken kopek govdesi tam gorunmesin diye `Karabas`'in Sprite Renderer'ini
 | # | Test | Beklenen |
 |---|---|---|
 | 1 | Sikmaya basla | Ates beyaza calip flash yapiyor |
-| 2 | ~0.9 sn sikmeye devam et (18 can / ~20 su-sn) | Ates kuculerek kayboluyor |
+| 2 | ~0.5 sn sikmeye devam et (18 can / ~40 su-sn) | Ates kuculerek kayboluyor |
 | 3 | Ates kaybolur kaybolmaz | Karabas artik gorunur (Order in Layer dogruysa) |
 | 4 | ~1.2 sn bekle | Kopek kendiliginden takibe basliyor (StartFollowing otomatik cagrildi) |
 | 5 | Ates sonmeden birak, tekrar sik | Can kaldigi yerden devam ediyor, sifirlanmiyor |

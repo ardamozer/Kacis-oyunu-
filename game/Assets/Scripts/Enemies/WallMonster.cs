@@ -40,7 +40,7 @@ public class WallMonster : MonoBehaviour, IWaterDamageable
     public float firstShotDelay = 0.7f;
 
     [Header("Can")]
-    [Tooltip("WaterGun saniyede ~20 su verir. 40 can = ~2 saniye sikma.")]
+    [Tooltip("WaterGun saniyede ~40 su verir. 40 can = ~1 saniye sikma. Daha uzun dayansin istersen buyut.")]
     public float maxHealth = 40f;
 
     [Header("Gorsel")]
