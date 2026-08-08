@@ -6,32 +6,27 @@ using UnityEngine;
 /// <summary>
 /// EVI KURAR — menuden: ALEV → Evi Kur
 ///
-/// ── ZIPLAMA MATEMATIGI (parkurlarin bug'siz olmasi buna bagli) ──
-/// jumpForce 15, gravityScale 4 → maksimum yukselme ~2.87 birim.
-/// Guvenli sinirlar:
-///     yukselme 2.0 → yatay bosluk en fazla 3.5
-///     yukselme 1.0 → yatay bosluk en fazla 4.5
-///     duz        → yatay bosluk en fazla 5.0
-/// Bu tablonun disina CIKMAYIN, cikilamayan platform olusur.
+/// ── DUZ DIZILIM (tek hat, kat yok) ──
+/// Odalar yan yana. Ne dikey saft var ne de ust kat. Kazanclari:
+///   - Navigasyon karismiyor: hep ileri gidiyorsunuz
+///   - Katlar arasi bug sinifi yok (dusman/tahta yanlis kattan tetiklenmez)
+///   - Odalar birbirinin YUKSEKLIGINI KISITLAMIYOR: Salon 26 birim yuksek
+///     olabilir, Koridor 6.5 birim alcak olabilir, hicbir cakisma olmadan.
+///     Yani olcek cesitliligini kaybetmiyoruz, kazaniyoruz.
 ///
-/// ── ODA BOYUTLARI ──
-/// Tek kat odalar 16 yuksek, ekran 14 → 2 birim dikey kayma (canli durur).
-/// Salon 68x32 ve Cocuk odasi 34x32 iki kat — kamera serbestce gezer.
-/// Koridor oynanabilir yukseklik 6.5 — alcak, bogucu, kasitli.
+/// AKIS (hep ileri, geri donus yok):
+///   Antre → Salon → [MAVI] → Mutfak → [YESIL] → Koridor → [MOR] →
+///   Cocuk odasi (KARABAS) → giris alevle kapanir →
+///   Arka koridor (OLUM) → Arka kapi (BOSS) → cikis
 ///
-/// ── ANAHTARLAR ──
-/// Her anahtar, kilidinin HEMEN ONCEKI odasinda ve ana yoldan GORUNUR.
-/// Asla geride degil. "Geri don ara" degil "su tepeye tirman" demek —
-/// yanan ev oyununda aciliyeti oldurmemek icin sart.
+/// ── ZIPLAMA MATEMATIGI ──
+/// jumpForce 15, gravityScale 4 → maksimum yukselme 2.87.
+///   yukselme 2.0 → yatay bosluk max 3.5
+///   yukselme 1.0 → max 4.5   /   duz → max 5.0
 /// </summary>
 public static class AlevLevelBuilder
 {
-    const float LevelW = 258f;
-    const float SlabY = 16f;         // katlar arasi doseme (15.5 - 16.5)
-    const float AtticFloor = 16.5f;
-    const float RoofY = 32.5f;
     const float DoorH = 3.4f;
-    const float DropMin = 5f, DropMax = 16f;   // TavanAntre -> Antre inis safti
 
     static Sprite square, glow;
     static Transform rooms, geo, plats, props, water, debris, triggers, markers, fires, keys;
@@ -43,13 +38,28 @@ public static class AlevLevelBuilder
     static readonly Color CDoor  = new Color(0.36f, 0.22f, 0.14f);
     static readonly Color CBack  = new Color(0.135f, 0.105f, 0.10f);
 
+    // ---- ODALAR: hepsi yan yana, y=0 zemininde. Yukseklikler serbest. ----
+    static readonly (string name, float x0, float x1, float h)[] RoomDefs =
+    {
+        ("Antre",         0f,   34f, 16f),
+        ("Salon",        34f,  102f, 26f),   // dev oda, dikey tirmanis
+        ("Mutfak",      102f,  152f, 16f),   // su bol, nefes odasi
+        ("Koridor",     152f,  188f, 16f),   // oynanabilir yukseklik 6.5
+        ("CocukOdasi",  188f,  226f, 22f),   // KARABAS
+        ("ArkaKoridor", 226f,  294f, 16f),   // kacis + OLUM
+        ("ArkaKapi",    294f,  336f, 20f),   // BOSS + cikis
+    };
+
+    const float LevelW = 336f;
+
     [MenuItem("ALEV/Evi Kur", false, 1)]
     public static void BuildHouse()
     {
         if (!EditorUtility.DisplayDialog("Evi kur",
-                "'Level' silinip yeniden kurulacak.\n\n" +
-                "10 oda, 3 anahtar + 3 kilitli kapi, yangin atmosferi.\n" +
-                "Player ve HUD etkilenmez.\n\nDevam?", "Kur", "Vazgec"))
+                "'Level' silinip DUZ DIZILIMLE yeniden kurulacak.\n\n" +
+                "7 oda yan yana, kat yok. Player ve HUD etkilenmez.\n\n" +
+                "⚠️ Bu son otomatik kurulum olsun — sonrasinda elle tasarlayin, " +
+                "yoksa yaptiklariniz silinir.\n\nDevam?", "Kur", "Vazgec"))
             return;
 
         square = AlevSceneSetup.GetOrCreateSquareSprite();
@@ -81,15 +91,13 @@ public static class AlevLevelBuilder
 
         BuildRooms();
         BuildShell();
-        BuildDoorways();
-        BuildAntre();
-        BuildSalon();
-        BuildMutfak();
-        BuildKoridor();
-        BuildBanyo();
-        BuildCocukOdasi();
-        BuildAttic();
-        BuildLocks();
+        Antre();
+        Salon();
+        Mutfak();
+        Koridor();
+        CocukOdasi();
+        ArkaKoridor();
+        ArkaKapi();
         BuildTriggers();
         BuildMarkers();
         SetupCamera();
@@ -98,125 +106,84 @@ public static class AlevLevelBuilder
         Selection.activeGameObject = root.gameObject;
         EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
 
-        Debug.Log("<b>[ALEV]</b> Ev kuruldu — 258 birim, 10 oda, 3 anahtar.\n" +
-                  "ARAMA:  Antre → Salon → [MAVI kilit] → Mutfak → Koridor → " +
-                  "[YESIL kilit] → Banyo → [MOR kilit] → Cocuk odasi\n" +
-                  "KACIS:  tirmanis → TavanB/C/D → SALONUN TEPESINDEKI KIRISLER " +
-                  "→ TavanAntre → Antre'ye dusus → BOSS\n" +
-                  "⚠️ Once dusmansiz tam tur atin.");
+        Debug.Log("<b>[ALEV]</b> Ev kuruldu — 7 oda, DUZ dizilim, 336 birim.\n" +
+                  "Antre → Salon → [MAVI] → Mutfak → [YESIL] → Koridor → [MOR] → " +
+                  "Cocuk odasi → Arka koridor (OLUM) → Arka kapi (BOSS) → cikis\n" +
+                  "⚠️ Simdi 'Seviyeyi Denetle' calistirin, sonra elle tasarima gecin.");
     }
 
     // ==================================================================
-    //  Odalar
-    // ==================================================================
-
-    static readonly (string name, float x0, float y0, float x1, float y1)[] RoomDefs =
-    {
-        ("Antre",        0f,  0f,  34f, 16f),
-        ("Salon",       34f,  0f, 102f, 32f),   // 68x32 — iki kat, gosterisli
-        ("Mutfak",     102f,  0f, 152f, 16f),   // 50x16 — genis, su bol
-        ("Koridor",    152f,  0f, 188f, 16f),   // alcak tunel (oynanabilir 6.5)
-        ("Banyo",      188f,  0f, 224f, 16f),
-        ("CocukOdasi", 224f,  0f, 258f, 32f),   // 34x32 — yuksek, tirmanis
-
-        ("TavanAntre",   0f, 16f,  34f, 32f),
-        ("TavanD",     102f, 16f, 152f, 32f),
-        ("TavanC",     152f, 16f, 188f, 32f),
-        ("TavanB",     188f, 16f, 224f, 32f),
-    };
 
     static void BuildRooms()
     {
-        foreach (var (name, x0, y0, x1, y1) in RoomDefs)
+        foreach (var (name, x0, x1, h) in RoomDefs)
         {
             var go = new GameObject("Oda_" + name);
             go.transform.SetParent(rooms, false);
-            go.transform.position = new Vector3((x0 + x1) * 0.5f, (y0 + y1) * 0.5f, 0f);
+            go.transform.position = new Vector3((x0 + x1) * 0.5f, h * 0.5f, 0f);
             var r = go.AddComponent<Room>();
             r.roomName = name;
-            r.size = new Vector2(x1 - x0, y1 - y0);
+            r.size = new Vector2(x1 - x0, h);
         }
     }
 
     static void BuildShell()
     {
         Solid(geo, "Zemin", LevelW * 0.5f, -0.5f, LevelW, 1f, CFloor);
-        Solid(geo, "Cati", LevelW * 0.5f, RoofY, LevelW, 1f, CWall);
-        Solid(geo, "SolDuvar", -0.5f, 16f, 1f, 34f, CWall);
-        Solid(geo, "SagDuvar", LevelW + 0.5f, 16f, 1f, 34f, CWall);
+        Solid(geo, "SolDuvar", -0.5f, 13f, 1f, 28f, CWall);
+        Solid(geo, "SagDuvar", LevelW + 0.5f, 13f, 1f, 28f, CWall);
 
-        // Doseme SADECE tek kat odalarin uzerinde.
-        // Salon (34-102) ve Cocuk odasi (224-258) iki kat — dosemeleri yok.
-        Solid(geo, "Doseme_Antre_Sol", DropMin * 0.5f, SlabY, DropMin, 1f, CFloor);
-        Solid(geo, "Doseme_Antre_Sag", (DropMax + 34f) * 0.5f, SlabY, 34f - DropMax, 1f, CFloor);
-        Solid(geo, "Doseme_Orta", 163f, SlabY, 122f, 1f, CFloor);   // 102 - 224
+        foreach (var (name, x0, x1, h) in RoomDefs)
+        {
+            // Her odanin kendi tavani — yukseklikler farkli olabildigi icin
+            Solid(geo, $"Tavan_{name}", (x0 + x1) * 0.5f, h + 0.5f, x1 - x0, 1f, CWall);
+            Prop($"Arka_{name}", (x0 + x1) * 0.5f, h * 0.5f, x1 - x0 - 1f, h - 1f, CBack, -20);
+        }
 
-        // Koridor'un alcak tavani — oynanabilir yukseklik 6.5
-        Solid(geo, "Koridor_AlcakTavan", 170f, 11f, 36f, 8.5f, CWall);
+        // Koridor'un ALCAK TAVANI — oynanabilir yukseklik 6.5, bogucu
+        Solid(geo, "Koridor_AlcakTavan", 170f, 11.25f, 36f, 9.5f, CWall);
 
-        foreach (var (name, x0, y0, x1, y1) in RoomDefs)
-            Prop($"Arka_{name}", (x0 + x1) * 0.5f, (y0 + y1) * 0.5f,
-                 x1 - x0 - 1f, y1 - y0 - 1f, CBack, -20);
-    }
-
-    static void BuildDoorways()
-    {
-        // Alt kat
-        Doorway(34f, 0f, SlabY - 0.5f);
-        Doorway(102f, 0f, SlabY - 0.5f);
-        Doorway(152f, 0f, 6.5f);      // alcak koridor
-        Doorway(188f, 0f, 6.5f);
-        Doorway(224f, 0f, SlabY - 0.5f);
-
-        // Ust kat
-        Doorway(34f, AtticFloor, RoofY - 0.5f);
-        Doorway(102f, AtticFloor, RoofY - 0.5f);
-        Doorway(152f, AtticFloor, RoofY - 0.5f);
-        Doorway(188f, AtticFloor, RoofY - 0.5f);
-        Doorway(224f, AtticFloor, RoofY - 0.5f);
-    }
-
-    static void Doorway(float x, float floorY, float ceilY)
-    {
-        float wb = floorY + DoorH;
-        if (ceilY > wb)
-            Solid(geo, $"Duvar_{x}_{floorY}", x, (wb + ceilY) * 0.5f, 0.7f, ceilY - wb, CWall);
-        Prop($"Kapi_{x}_{floorY}", x, floorY + DoorH * 0.5f, 1.8f, DoorH, CDoor, -1);
+        // Odalar arasi duvarlar + kapi bosluklari
+        for (int i = 1; i < RoomDefs.Length; i++)
+        {
+            float bx = RoomDefs[i].x0;
+            float top = Mathf.Max(RoomDefs[i - 1].h, RoomDefs[i].h);
+            Solid(geo, $"Duvar_{bx}", bx, (DoorH + top) * 0.5f, 0.8f, top - DoorH, CWall);
+            Prop($"Kapi_{bx}", bx, DoorH * 0.5f, 1.8f, DoorH, CDoor, -1);
+        }
     }
 
     // ==================================================================
-    //  ANTRE — 34x16, dar, ogretici
+    //  1. ANTRE — giris, ogretici, sonda BOSS degil: sonda ALEV DUVARI
     // ==================================================================
 
-    static void BuildAntre()
+    static void Antre()
     {
         Prop("Antre_Portmanto", 3f, 2.6f, 0.9f, 5.2f, CProp);
         Prop("Antre_Tablo", 17f, 8f, 2.6f, 3.2f, CProp);
         Prop("Antre_Hali", 17f, 0.15f, 12f, 0.3f, new Color(0.26f, 0.14f, 0.12f), 1);
+        Prop("Antre_GirisKapisi", 1.5f, 2f, 2.4f, 4f, new Color(0.30f, 0.19f, 0.12f), -1);
 
         Solid(plats, "Antre_Ayakkabilik", 9f, 0.8f, 4f, 1.6f, CPlat);
         Solid(plats, "Antre_Konsol", 24f, 2.2f, 5f, 0.6f, CPlat);
 
         Fire("Antre_Alev1", 30f, 1f, 1.8f, 2.6f);
-        Fire("Antre_Alev2", 2f, 6.5f, 1.3f, 1.9f);
+        Fire("Antre_Alev2", 2f, 7f, 1.3f, 1.9f);
 
-        // Kalorifer peteginden sizan su. Denetim "susuz bolge" dedi:
-        // oyuncu sonda buraya boss icin geri duşuyor, susuz kalmamali.
         Tap("Antre_Kalorifer", 31f, 1.2f, WaterSource.SourceType.Infinite, 25f,
             new Color(0.25f, 0.60f, 0.95f), 1f, 2.2f);
     }
 
     // ==================================================================
-    //  SALON — 68x32, iki kat. Evin gosterisli odasi.
+    //  2. SALON — 68x26. Evin gosterisli odasi, MAVI anahtar tepede.
     // ==================================================================
 
-    static void BuildSalon()
+    static void Salon()
     {
         Prop("Salon_Somine", 40f, 3.4f, 8f, 6.8f, new Color(0.20f, 0.15f, 0.14f));
-        Prop("Salon_Kitaplik", 62f, 6f, 4f, 12f, CProp);
-        Prop("Salon_Kitaplik2", 95f, 5f, 3.5f, 10f, CProp);
-        Prop("Salon_Avize", 68f, 29f, 6f, 3f, new Color(0.35f, 0.28f, 0.14f));
-        Prop("Salon_Perde", 54f, 23f, 3.5f, 14f, new Color(0.24f, 0.13f, 0.13f));
+        Prop("Salon_Kitaplik", 68f, 6f, 4f, 12f, CProp);
+        Prop("Salon_Avize", 68f, 23f, 6f, 3f, new Color(0.35f, 0.28f, 0.14f));
+        Prop("Salon_Perde", 96f, 17f, 3.5f, 16f, new Color(0.24f, 0.13f, 0.13f));
         Prop("Salon_Hali", 62f, 0.15f, 22f, 0.3f, new Color(0.26f, 0.14f, 0.12f), 1);
 
         Solid(plats, "Salon_Koltuk", 50f, 1.3f, 8f, 1.8f, CPlat);
@@ -224,200 +191,156 @@ public static class AlevLevelBuilder
 
         Fire("Salon_SomineAtes", 40f, 2.2f, 5f, 5f, 1.5f);
         Fire("Salon_Alev1", 78f, 1f, 2f, 2.8f);
-        Fire("Salon_Alev2", 36f, 18f, 1.5f, 2.1f);
-        Fire("Salon_Alev3", 98f, 14f, 1.7f, 2.3f);
+        Fire("Salon_Alev2", 36f, 16f, 1.5f, 2.1f);
+        Fire("Salon_Alev3", 99f, 12f, 1.7f, 2.3f);
 
-        // ---- TIRMANIS: sadece MAVI ANAHTARA kadar (y 7.8) ----
-        // ⚠️ BILEREK KIRISLERE ULASMIYOR. Eskiden yerden tepeye kadar
-        // cikiyordu ve oyuncu daha oyunun basinda kacis yoluna ulasip
-        // final tetikleyicilerine basabiliyordu — oyun kiriliyordu.
-        // En yuksek nokta 8.05; guvenlik sahanligi 12.25'te, arada 4.2 birim
-        // var (maksimum ziplama 2.87). Asagidan cikilamaz.
-        Solid(plats, "Salon_T1", 46f, 2.4f, 6f, 0.5f, CPlat);
-        Solid(plats, "Salon_T2", 54f, 4.2f, 5f, 0.5f, CPlat);
-        Solid(plats, "Salon_T3", 62f, 6.0f, 5f, 0.5f, CPlat);   // anahtar burada
-        Solid(plats, "Salon_T4", 54f, 7.8f, 4f, 0.5f, CPlat);
-
-        // ---- GUVENLIK SAHANLIKLARI ----
-        // Kacis sirasinda kiristen duserseniz buraya dusersiniz ve geri
-        // tirmanirsiniz. Yerden ULASILAMAZ (4+ birim bosluk), sadece
-        // yukaridan dusunce inilir. Olum degil, birkac saniyelik bedel.
-        Solid(plats, "Salon_Sahanlik_Sol", 58f, 12.0f, 32f, 0.6f, CPlat);
-        Solid(plats, "Salon_Sahanlik_Sag", 90f, 12.0f, 22f, 0.6f, CPlat);
-
-        Solid(plats, "Salon_Geri_1", 48f, 13.8f, 5f, 0.5f, CPlat);
-        Solid(plats, "Salon_Geri_2", 42f, 15.6f, 5f, 0.5f, CPlat);
-        Solid(plats, "Salon_Geri_3", 94f, 13.8f, 5f, 0.5f, CPlat);
-        Solid(plats, "Salon_Geri_4", 99f, 15.6f, 5f, 0.5f, CPlat);
-
-        // ---- KACIS KIRISLERI — salonun tepesi (sagdan sola) ----
-        // Bosluklar tek tek hesaplandi: hicbiri 3.5'i gecmiyor.
-        // Duserseniz asagi inersiniz ve tirmanirsiniz. Olum degil, bedel.
-        Solid(plats, "Kiris_1", 98f, 17.0f, 7f, 0.5f, CPlat);
-        Solid(plats, "Kiris_2", 88f, 18.4f, 6f, 0.5f, CPlat);
-        Solid(plats, "Kiris_3", 78f, 17.0f, 5f, 0.5f, CPlat);
-        Solid(plats, "Kiris_4", 70f, 18.6f, 5f, 0.5f, CPlat);
-        Solid(plats, "Kiris_5", 62f, 17.2f, 4f, 0.5f, CPlat);
-        Solid(plats, "Kiris_6", 54f, 18.4f, 5f, 0.5f, CPlat);
-        Solid(plats, "Kiris_7", 46f, 17.0f, 6f, 0.5f, CPlat);
-        Solid(plats, "Kiris_8", 38f, 16.8f, 6f, 0.5f, CPlat);
+        // Dikey tirmanis — odanin tepesine kadar. MAVI anahtar en ustte:
+        // buyuk odanin buyuk odulu. Yukselmeler 1.8, bosluklar 3-4.
+        Solid(plats, "Salon_T1", 46f,  2.4f, 6f, 0.5f, CPlat);
+        Solid(plats, "Salon_T2", 54f,  4.2f, 5f, 0.5f, CPlat);
+        Solid(plats, "Salon_T3", 62f,  6.0f, 5f, 0.5f, CPlat);
+        Solid(plats, "Salon_T4", 54f,  7.8f, 4f, 0.5f, CPlat);
+        Solid(plats, "Salon_T5", 62f,  9.6f, 3.5f, 0.5f, CPlat);   // dar, hassas
+        Solid(plats, "Salon_T6", 53f, 11.4f, 5f, 0.5f, CPlat);
+        Solid(plats, "Salon_T7", 62f, 13.2f, 4f, 0.5f, CPlat);
+        Solid(plats, "Salon_T8", 54f, 15.0f, 5f, 0.5f, CPlat);
+        Solid(plats, "Salon_T9", 62f, 16.8f, 5f, 0.5f, CPlat);
 
         Tap("Salon_Akvaryum", 37f, 0.7f, WaterSource.SourceType.OneShot, 100f,
             new Color(0.15f, 0.85f, 0.75f), 2.2f, 1.4f);
+
+        Key(KeyColor.Mavi, 62f, 18.4f);
+        Lock(KeyColor.Mavi, 102f);
     }
 
     // ==================================================================
-    //  MUTFAK — 50x16, genis, su bol, nefes odasi
+    //  3. MUTFAK — 50x16. Su bol (kuvet de burada), YESIL anahtar.
     // ==================================================================
 
-    static void BuildMutfak()
+    static void Mutfak()
     {
         Prop("Mutfak_Buzdolabi", 107f, 3.4f, 4f, 6.8f, CProp);
-        Prop("Mutfak_UstDolap", 126f, 7f, 18f, 2.4f, CProp);
-        Prop("Mutfak_Fayans", 127f, 4.5f, 44f, 7f, new Color(0.17f, 0.16f, 0.15f), -10);
+        Prop("Mutfak_Fayans", 127f, 5f, 44f, 8f, new Color(0.17f, 0.16f, 0.15f), -10);
 
-        Solid(plats, "Mutfak_Tezgah", 118f, 1.8f, 14f, 1.8f, CPlat);
-        Solid(plats, "Mutfak_Masa", 140f, 2.0f, 8f, 0.6f, CPlat);
-        Solid(plats, "Mutfak_Dolap", 147f, 4.0f, 5f, 0.5f, CPlat);
+        Solid(plats, "Mutfak_Tezgah", 116f, 1.8f, 12f, 1.8f, CPlat);
+        Solid(plats, "Mutfak_Masa", 132f, 2.0f, 7f, 0.6f, CPlat);
+        Solid(plats, "Mutfak_Dolap1", 140f, 3.8f, 5f, 0.5f, CPlat);
+        Solid(plats, "Mutfak_Dolap2", 133f, 5.6f, 4f, 0.5f, CPlat);
 
         Fire("Mutfak_Alev1", 148f, 1f, 1.8f, 2.4f);
-        Fire("Mutfak_Alev2", 112f, 9f, 1.5f, 2.1f);
+        Fire("Mutfak_Alev2", 112f, 10f, 1.5f, 2.1f);
 
-        Tap("Mutfak_Musluk", 122f, 3.4f, WaterSource.SourceType.Infinite, 30f,
+        Tap("Mutfak_Musluk", 120f, 3.4f, WaterSource.SourceType.Infinite, 30f,
             new Color(0.25f, 0.60f, 0.95f), 1.2f, 1.8f);
-        Tap("Mutfak_Musluk2", 143f, 0.8f, WaterSource.SourceType.Infinite, 30f,
-            new Color(0.25f, 0.60f, 0.95f), 1.2f, 1.6f);
+        Tap("Mutfak_Kuvet", 146f, 0.7f, WaterSource.SourceType.Infinite, 50f,
+            new Color(0.25f, 0.60f, 0.95f), 6f, 0.8f);
+
+        Key(KeyColor.Yesil, 133f, 7.2f);
+        Lock(KeyColor.Yesil, 152f);
     }
 
     // ==================================================================
-    //  KORIDOR — 36x16 ama oynanabilir yukseklik 6.5. Su YOK.
+    //  4. KORIDOR — alcak tavan (6.5), SU YOK. Kitlik odasi. MOR anahtar.
     // ==================================================================
 
-    static void BuildKoridor()
+    static void Koridor()
     {
         Prop("Koridor_Tablo1", 160f, 4.5f, 2.2f, 2.6f, CProp);
-        Prop("Koridor_Tablo2", 182f, 4.5f, 2.2f, 2.6f, CProp);
+        Prop("Koridor_Tablo2", 184f, 4.5f, 2.2f, 2.6f, CProp);
         Prop("Koridor_Hali", 170f, 0.15f, 30f, 0.3f, new Color(0.24f, 0.13f, 0.12f), 1);
 
         Solid(plats, "Koridor_DevrikDolap", 166f, 1.6f, 4.5f, 0.6f, CPlat);
-        Solid(plats, "Koridor_Raf", 176f, 3.4f, 3.5f, 0.5f, CPlat);   // anahtar buraya
+        Solid(plats, "Koridor_Raf", 176f, 3.4f, 3.5f, 0.5f, CPlat);
 
         Fire("Koridor_Alev1", 156f, 1f, 1.5f, 2.1f);
         Fire("Koridor_Alev2", 185f, 1f, 1.5f, 2.1f);
-        // ⚠️ Su kaynagi YOK ve yer atesi de YOK — kasitli kitlik odasi,
-        //    ama buyuyen ates gecisi kapatamaz, kilitlenme riski sifir.
+        // Su YOK, yer atesi de YOK — kitlik hissi var ama kilitlenme riski yok.
+
+        Key(KeyColor.Mor, 176f, 5.0f);
+        Lock(KeyColor.Mor, 188f);
     }
 
     // ==================================================================
-    //  BANYO — 36x16, yogun dusman, kuvet var
+    //  5. COCUK ODASI — 38x22. Karabas. Sol yarisi NEFES bolgesi.
     // ==================================================================
 
-    static void BuildBanyo()
+    static void CocukOdasi()
     {
-        Prop("Banyo_Ayna", 208f, 5.5f, 3.5f, 4f, new Color(0.20f, 0.22f, 0.24f));
-        Prop("Banyo_Fayans", 206f, 6f, 34f, 10f, new Color(0.16f, 0.17f, 0.18f), -10);
-        Prop("Banyo_Lavabo", 208f, 1.6f, 3.5f, 3.2f, CProp);
+        Prop("Cocuk_DuvarKagidi", 207f, 11f, 36f, 20f, new Color(0.20f, 0.15f, 0.16f), -15);
+        Prop("Cocuk_Yatak", 197f, 1f, 8f, 2f, CProp);
+        Prop("Cocuk_Cizim", 203f, 9f, 2.4f, 2.8f, new Color(0.30f, 0.26f, 0.20f));
+        Prop("Cocuk_BoyCizgisi", 191f, 5f, 0.5f, 10f, new Color(0.28f, 0.24f, 0.20f));
 
-        Solid(plats, "Banyo_Kuvet", 196f, 1.6f, 9f, 2f, CPlat);
-        Solid(plats, "Banyo_Raf1", 208f, 3.4f, 4f, 0.5f, CPlat);
-        Solid(plats, "Banyo_Raf2", 216f, 5.2f, 3.5f, 0.5f, CPlat);   // anahtar buraya
+        Solid(plats, "Cocuk_Ranza", 197f, 2.6f, 8f, 0.6f, CPlat);
+        Solid(plats, "Cocuk_Sandik", 208f, 0.9f, 3.5f, 1.8f, CPlat);
+        Solid(plats, "Cocuk_Raf", 216f, 3.4f, 4f, 0.5f, CPlat);
 
-        Fire("Banyo_Alev1", 200f, 1f, 1.6f, 2.3f);
-        Fire("Banyo_Alev2", 220f, 10f, 1.4f, 1.9f);
-
-        Tap("Banyo_Kuvet_Su", 196f, 2.9f, WaterSource.SourceType.Infinite, 50f,
-            new Color(0.25f, 0.60f, 0.95f), 7f, 0.7f);
+        Fire("Cocuk_Alev1", 223f, 1f, 1.5f, 2.1f);
+        Fire("Cocuk_Alev2", 190f, 15f, 1.7f, 2.3f);
     }
 
     // ==================================================================
-    //  COCUK ODASI — 34x32, Karabas + tirmanis
+    //  6. ARKA KORIDOR — 68x16. Kacis. Karabas yaninizda. OLUM burada.
     // ==================================================================
 
-    static void BuildCocukOdasi()
+    static void ArkaKoridor()
     {
-        Prop("Cocuk_DuvarKagidi", 241f, 16f, 32f, 30f, new Color(0.20f, 0.15f, 0.16f), -15);
-        Prop("Cocuk_Yatak", 230f, 1f, 8f, 2f, CProp);
-        Prop("Cocuk_Cizim", 236f, 9f, 2.4f, 2.8f, new Color(0.30f, 0.26f, 0.20f));
-        Prop("Cocuk_BoyCizgisi", 226f, 5f, 0.5f, 10f, new Color(0.28f, 0.24f, 0.20f));
+        Prop("Arka_Tugla", 260f, 8f, 62f, 14f, new Color(0.16f, 0.13f, 0.12f), -12);
+        Prop("Arka_Boru", 244f, 12f, 30f, 0.8f, new Color(0.24f, 0.20f, 0.18f), -3);
 
-        Solid(plats, "Cocuk_Ranza", 230f, 2.6f, 8f, 0.6f, CPlat);
-        Solid(plats, "Cocuk_Sandik", 238f, 0.9f, 3.5f, 1.8f, CPlat);
+        Solid(plats, "Arka_Kasa1", 238f, 1.6f, 5f, 0.6f, CPlat);
+        Solid(plats, "Arka_Kasa2", 250f, 3.2f, 4f, 0.5f, CPlat);
+        Solid(plats, "Arka_Kasa3", 262f, 1.8f, 5f, 0.6f, CPlat);
+        Solid(plats, "Arka_Kiris", 276f, 3.6f, 6f, 0.5f, CPlat);
+        Solid(plats, "Arka_Kasa4", 288f, 1.8f, 4f, 0.6f, CPlat);
 
-        // ---- TIRMANIS: yerden ust kata (16.5) ----
-        Solid(plats, "Tirmanis_1", 246f,  2.2f, 5f, 0.5f, CPlat);
-        Solid(plats, "Tirmanis_2", 253f,  4.0f, 4f, 0.5f, CPlat);
-        Solid(plats, "Tirmanis_3", 246f,  5.8f, 4f, 0.5f, CPlat);
-        Solid(plats, "Tirmanis_4", 253f,  7.6f, 4f, 0.5f, CPlat);
-        Solid(plats, "Tirmanis_5", 246f,  9.4f, 3.5f, 0.5f, CPlat);  // kucuk
-        Solid(plats, "Tirmanis_6", 253f, 11.2f, 4f, 0.5f, CPlat);
-        Solid(plats, "Tirmanis_7", 245f, 13.0f, 5f, 0.5f, CPlat);
-        Solid(plats, "Tirmanis_8", 237f, 14.8f, 5f, 0.5f, CPlat);
-        Solid(plats, "Tirmanis_Sahanlik", 228f, 16.2f, 9f, 0.6f, CPlat);
+        Fire("Arka_Alev1", 232f, 1f, 1.6f, 2.2f);
+        Fire("Arka_Alev2", 256f, 13f, 1.5f, 2f);
+        Fire("Arka_Alev3", 284f, 1f, 1.7f, 2.3f);
 
-        Fire("Cocuk_Alev1", 256f, 1f, 1.5f, 2.1f);
-        Fire("Cocuk_Alev2", 226f, 21f, 1.7f, 2.3f);
-    }
+        // Olumden ONCE dolsun
+        Tap("Arka_Musluk", 240f, 0.8f, WaterSource.SourceType.Infinite, 30f,
+            new Color(0.25f, 0.60f, 0.95f), 1.2f, 1.6f);
 
-    // ==================================================================
-    //  TAVAN ARASI
-    // ==================================================================
-
-    static void BuildAttic()
-    {
-        Solid(plats, "TavanB_Kiris", 205f, 19.4f, 6f, 0.5f, CPlat);
-        Solid(plats, "TavanC_Kiris", 170f, 19.6f, 6f, 0.5f, CPlat);
-        Solid(plats, "TavanD_Kiris", 128f, 19.4f, 6f, 0.5f, CPlat);
-
-        Prop("Tavan_Kiris1", 205f, 30f, 46f, 1.2f, new Color(0.19f, 0.14f, 0.11f), -5);
-        Prop("Tavan_Kiris2", 128f, 30f, 46f, 1.2f, new Color(0.19f, 0.14f, 0.11f), -5);
-
-        Fire("Tavan_A1", 214f, 17.4f, 1.7f, 2.3f);
-        Fire("Tavan_A2", 180f, 17.4f, 1.6f, 2.1f);
-        Fire("Tavan_A3", 146f, 17.4f, 1.7f, 2.3f);
-        Fire("Tavan_A4", 110f, 17.4f, 1.6f, 2.1f);
-        Fire("Tavan_A5", 24f, 17.4f, 1.7f, 2.3f);
-
-        Prop("TavanAntre_Sandik", 27f, 17.6f, 3.5f, 2.6f, CProp);
-
-        // Olumden ONCE dolsun — kacis yolu susuz kalmasin
-        Tap("TavanB_Musluk", 210f, 17.4f, WaterSource.SourceType.Infinite, 30f,
-            new Color(0.25f, 0.60f, 0.95f), 1.2f, 1.8f);
-        // Yalniz bolumde tek kullanimlik hizli dolum
-        Tap("TavanD_Bidon", 108f, 17.2f, WaterSource.SourceType.OneShot, 50f,
-            new Color(0.20f, 0.70f, 0.85f), 1.4f, 1.6f);
-
-        // ---- PATLAK BORULAR — yalniz bolumun kilitlenme sigortasi ----
-        // Denetim TavanD ve TavanAntre'yi "susuz bolge" olarak isaretledi.
-        // Buyumus yer atesi artik sadece suyla soniyor, yani sonsuz kaynak
-        // olmadan oyuncu gercekten sikisabilir.
-        //
-        // Ama bu bolumun gerilimi de bozulmamali. Cozum: SONSUZ ama YAVAS
-        // (saniyede 15, muslugun yarisi). Doldurmak icin beklemek zorundasiniz
-        // ve o sirada atesler buyuyor. Kilitlenme yok, baski duruyor.
-        Tap("TavanD_PatlakBoru", 122f, 17.4f, WaterSource.SourceType.Infinite, 15f,
-            new Color(0.22f, 0.52f, 0.85f), 0.8f, 2f);
-
-        Tap("TavanAntre_PatlakBoru", 17f, 17.4f, WaterSource.SourceType.Infinite, 15f,
-            new Color(0.22f, 0.52f, 0.85f), 0.8f, 2f);
-
-        Beam(1,  56f, 14.0f, "Salon - ILK KARSILASMA, genis ve guvenli");
-        Beam(2, 132f, 14.6f, "Mutfak");
-        Beam(3, 172f,  5.6f, "Koridor - alcak tavan, gerilim yuksek");
-        Beam(4, 204f, 14.6f, "Banyo");
-        Beam(5, 198f, 31f, "TavanB");
-        Beam(6, 138f, 31f, "TavanD");
-        Beam(7,  66f, 31f, "Salon kirisleri uzerinde - yalniz bolum");
-
-        // OLUM TAHTASI — TavanD, autoTrigger KAPALI
+        // OLUM ANI — odanin ~%55'i. Sonrasinda 74 birim yalnizsiniz.
         var death = Sprite2(debris, "Tahta_OLUM (EndingSequence -> Death Debris)",
-                            126f, 31f, 4f, 0.5f, new Color(0.5f, 0.3f, 0.16f));
+                            264f, 14f, 4f, 0.5f, new Color(0.5f, 0.3f, 0.16f));
         death.AddComponent<BoxCollider2D>().isTrigger = true;
         var dfd = death.AddComponent<FallingDebris>();
         dfd.groundLayer = LayerMask.GetMask("Ground");
         dfd.autoTrigger = false;
         dfd.groundMarker = null;
         dfd.lifetimeAfterLanding = 0f;
+
+        Beam(3, 246f, 14.4f, "Arka koridor");
+        Beam(4, 282f, 14.4f, "Arka koridor - yalniz bolum");
     }
+
+    // ==================================================================
+    //  7. ARKA KAPI — 42x20. Yalniz, BOSS, cikis.
+    // ==================================================================
+
+    static void ArkaKapi()
+    {
+        Prop("ArkaKapi_Tugla", 315f, 10f, 40f, 18f, new Color(0.16f, 0.13f, 0.12f), -12);
+        Prop("ArkaKapi_Kapi", 333f, 2.2f, 3f, 4.4f, new Color(0.34f, 0.24f, 0.14f), -1);
+
+        Solid(plats, "ArkaKapi_Kasa1", 302f, 1.8f, 5f, 0.6f, CPlat);
+        Solid(plats, "ArkaKapi_Kasa2", 312f, 3.4f, 4f, 0.5f, CPlat);
+        Solid(plats, "ArkaKapi_Kasa3", 321f, 1.8f, 5f, 0.6f, CPlat);
+
+        Fire("ArkaKapi_Alev1", 298f, 1f, 1.8f, 2.5f);
+        Fire("ArkaKapi_Alev2", 318f, 14f, 1.6f, 2.2f);
+
+        // Yalniz bolumun sigortasi: sonsuz ama YAVAS. Beklemek zorundasiniz,
+        // o sirada atesler buyuyor. Kilitlenme yok, baski var.
+        Tap("ArkaKapi_PatlakBoru", 306f, 1.2f, WaterSource.SourceType.Infinite, 15f,
+            new Color(0.22f, 0.52f, 0.85f), 0.8f, 2f);
+
+        Beam(5, 310f, 18.4f, "Arka kapi - yalniz bolum");
+    }
+
+    // ==================================================================
 
     static void Beam(int i, float x, float y, string note)
     {
@@ -434,33 +357,13 @@ public static class AlevLevelBuilder
         fd.groundLayer = LayerMask.GetMask("Ground");
         fd.groundMarker = gm;
         fd.warningDuration = 1f;
-        fd.triggerHeight = 15f;
+        fd.triggerHeight = 20f;
         fd.autoTrigger = true;
-    }
-
-    // ==================================================================
-    //  ANAHTARLAR ve KILITLI KAPILAR
-    // ==================================================================
-
-    static void BuildLocks()
-    {
-        // MAVI — Salon'un tirmanis rotasinda, yerden GORUNUR. Kilidi Mutfak girisi.
-        Key(KeyColor.Mavi, 62f, 7.6f);
-        Lock(KeyColor.Mavi, 102f);
-
-        // YESIL — Koridor'da rafta. Alcak tavanli odada canavarlar arasinda.
-        Key(KeyColor.Yesil, 176f, 5.0f);
-        Lock(KeyColor.Yesil, 188f);
-
-        // MOR — Banyo'da ust rafta. Kuvetten iki ziplama.
-        Key(KeyColor.Mor, 216f, 6.8f);
-        Lock(KeyColor.Mor, 224f);
     }
 
     static void Key(KeyColor c, float x, float y)
     {
         Color col = KeyColors.Of(c);
-
         var go = Sprite2(keys, $"Anahtar_{c}", x, y, 0.9f, 1.4f, col, 6);
         go.AddComponent<BoxCollider2D>().isTrigger = true;
 
@@ -479,14 +382,11 @@ public static class AlevLevelBuilder
 
     static void Lock(KeyColor c, float x)
     {
-        var go = Sprite2(keys, $"KilitliKapi_{c}", x, DoorH * 0.5f, 1.8f, DoorH,
-                         CDoor, 1);
+        var go = Sprite2(keys, $"KilitliKapi_{c}", x, DoorH * 0.5f, 1.8f, DoorH, CDoor, 1);
 
-        // Kati engel — acilinca kapatilir
         var blocker = go.AddComponent<BoxCollider2D>();
         blocker.isTrigger = false;
 
-        // Algilama — daha genis, oyuncu yaklasinca tepki versin
         var sense = go.AddComponent<BoxCollider2D>();
         sense.isTrigger = true;
         sense.size = new Vector2(2.2f, 1.2f);
@@ -498,35 +398,25 @@ public static class AlevLevelBuilder
     }
 
     // ==================================================================
-    //  Tetikleyiciler / isaretler
-    // ==================================================================
 
     static void BuildTriggers()
     {
-        // ⚠️ SIRADISILIK KORUMASI
-        // Oyuncu beklenmedik bir yoldan kacis rotasina ulasirsa final
-        // sahnesi yanlis sirada tetiklenmesin. Fiziksel engelleme (Salon
-        // tirmanisinin kisaltilmasi) yeterli olmali, ama bu ikinci kat
-        // guvenlik: bilmedigimiz bir kestirme bulunsa bile oyun kirilmaz.
-        var death = Zone("Tetik_KopeginOlumu", 126f, 18.5f, 2f, 4f,
+        var death = Zone("Tetik_KopeginOlumu", 264f, 2f, 2f, 4f,
                          EndingTriggerZone.What.DogDeath);
-        death.requiredKeyCount = 3;   // 3 anahtar = cocuk odasina ulasildi
+        death.requiredKeyCount = 3;
 
-        var boss = Zone("Tetik_BossSahnesi", 24f, 18.5f, 2f, 4f,
+        var boss = Zone("Tetik_BossSahnesi", 300f, 2f, 2f, 4f,
                         EndingTriggerZone.What.BossScene);
-        boss.requires = death;        // once Karabas olmeli
+        boss.requires = death;
 
-        // ---- CIKIS: oyunun kazanma noktasi ----
-        // Giris kapisinin oldugu yer. Boss cozulmeden calismaz.
         var exit = new GameObject("Tetik_EvdenCikis");
         exit.transform.SetParent(triggers, false);
-        exit.transform.position = new Vector3(1.5f, 1.5f, 0f);
+        exit.transform.position = new Vector3(334f, 2f, 0f);
         var ecol = exit.AddComponent<BoxCollider2D>();
         ecol.isTrigger = true;
-        ecol.size = new Vector2(3f, 4f);
+        ecol.size = new Vector2(3f, 5f);
         exit.AddComponent<EscapeTrigger>();
 
-        // Final ekranini yoneten obje
         var ge = new GameObject("GameEnding");
         ge.transform.SetParent(triggers, false);
         ge.AddComponent<GameEnding>();
@@ -549,43 +439,39 @@ public static class AlevLevelBuilder
 
     static readonly (SpawnMarker.Kind k, float x, float y, string note)[] MarkerSpots =
     {
-        (SpawnMarker.Kind.PlayerStart,   6f,  1f, "Oyuncu baslangici"),
-        (SpawnMarker.Kind.FlameWall,     2f,  1f, "Giris alev duvari. Karabas kurtulunca GORUNUR sekilde yukselir."),
-        (SpawnMarker.Kind.Boss,          5f,  1f, "Dev alev. Oyuncu tavandan buraya duser. Cani hic azalmaz."),
-        (SpawnMarker.Kind.DogSilhouette,14f,  0.8f,"Kopek mamasi — 'burada bir kopek yasiyor' ipucu."),
+        (SpawnMarker.Kind.PlayerStart,   6f, 1f, "Oyuncu baslangici"),
+        (SpawnMarker.Kind.DogSilhouette,14f, 0.8f, "Kopek mamasi - 'burada bir kopek yasiyor' ipucu"),
+        (SpawnMarker.Kind.FlameWall,   188f, 2f, "GERI DONUS KAPANIR. Karabas kurtulunca burada alev duvari yukselir, oyuncu ileri gitmek zorunda kalir. GORUNUR sekilde olsun."),
+        (SpawnMarker.Kind.Boss,        328f, 1f, "Dev alev, arka kapiyi kapatir. Cani hic azalmaz."),
 
-        (SpawnMarker.Kind.WallMonster,  21f,  1f, "Antre - ilk, ZAYIF (can 40)"),
-        (SpawnMarker.Kind.WallMonster,  62f, 12f, "Salon kitapligi - YUKSEK, tirmanis rotasinda"),
-        (SpawnMarker.Kind.WallMonster,  95f,  8f, "Salon ikinci kitaplik"),
-        (SpawnMarker.Kind.WallMonster, 126f,  8f, "Mutfak ust dolap"),
-        (SpawnMarker.Kind.WallMonster, 158f,  1f, "Koridor 1/3 - su YOK, 2'sine yeter"),
-        (SpawnMarker.Kind.WallMonster, 170f,  4f, "Koridor 2/3 - YUKSEK"),
-        (SpawnMarker.Kind.WallMonster, 184f,  1f, "Koridor 3/3"),
-        (SpawnMarker.Kind.WallMonster, 208f,  6f, "Banyo ayna - YUKSEK"),
-        (SpawnMarker.Kind.WallMonster, 192f,  1f, "Banyo"),
-        (SpawnMarker.Kind.WallMonster, 200f, 20f, "TavanB"),
-        (SpawnMarker.Kind.WallMonster, 118f, 20f, "TavanD - yalniz bolum"),
+        (SpawnMarker.Kind.WallMonster,  21f, 1f, "Antre - ilk, ZAYIF (can 40)"),
+        (SpawnMarker.Kind.WallMonster,  68f,12f, "Salon kitapligi - YUKSEK, tirmanis rotasinda"),
+        (SpawnMarker.Kind.WallMonster,  92f, 4f, "Salon"),
+        (SpawnMarker.Kind.WallMonster, 126f, 8f, "Mutfak"),
+        (SpawnMarker.Kind.WallMonster, 158f, 1f, "Koridor 1/3 - su YOK, 2'sine yeter"),
+        (SpawnMarker.Kind.WallMonster, 170f, 4f, "Koridor 2/3 - YUKSEK"),
+        (SpawnMarker.Kind.WallMonster, 184f, 1f, "Koridor 3/3"),
+        (SpawnMarker.Kind.WallMonster, 250f, 6f, "Arka koridor - Karabas'li"),
+        (SpawnMarker.Kind.WallMonster, 316f, 6f, "Arka kapi - YALNIZ"),
 
-        (SpawnMarker.Kind.FloorFire,   202f, 0.5f, "Banyo"),
-        (SpawnMarker.Kind.FloorFire,   218f, 0.5f, "Banyo"),
-        (SpawnMarker.Kind.FloorFire,   136f, 0.5f, "Mutfak"),
+        (SpawnMarker.Kind.FloorFire,   124f, 0.5f, "Mutfak"),
+        (SpawnMarker.Kind.FloorFire,   142f, 0.5f, "Mutfak"),
+        (SpawnMarker.Kind.FloorFire,   212f, 0.5f, "Cocuk odasi"),
 
-        (SpawnMarker.Kind.FloorFire,   216f,17.0f, "KACIS Karabas'li - seyrek"),
-        (SpawnMarker.Kind.FloorFire,   198f,17.0f, "KACIS Karabas'li"),
-        (SpawnMarker.Kind.FloorFire,   178f,17.0f, "KACIS Karabas'li"),
-        (SpawnMarker.Kind.FloorFire,   160f,17.0f, "KACIS Karabas'li"),
-        (SpawnMarker.Kind.FloorFire,   140f,17.0f, "KACIS Karabas'li - olumden hemen once"),
+        (SpawnMarker.Kind.FloorFire,   234f, 0.5f, "KACIS Karabas'li - SEYREK (8 birim ara)"),
+        (SpawnMarker.Kind.FloorFire,   244f, 0.5f, "KACIS Karabas'li"),
+        (SpawnMarker.Kind.FloorFire,   254f, 0.5f, "KACIS Karabas'li - olumden hemen once"),
 
-        (SpawnMarker.Kind.FloorFire,   120f,17.0f, "YALNIZ - sik araliklar kaybi hissettirir"),
-        (SpawnMarker.Kind.FloorFire,   114f,17.0f, "YALNIZ"),
-        (SpawnMarker.Kind.FloorFire,   106f,17.0f, "YALNIZ"),
-        (SpawnMarker.Kind.FloorFire,    98f,17.5f, "YALNIZ - salon kirisi uzerinde"),
-        (SpawnMarker.Kind.FloorFire,    78f,17.5f, "YALNIZ - salon kirisi uzerinde"),
-        (SpawnMarker.Kind.FloorFire,    46f,17.5f, "YALNIZ - salon kirisi uzerinde"),
-        (SpawnMarker.Kind.FloorFire,    30f,17.0f, "YALNIZ - son"),
+        (SpawnMarker.Kind.FloorFire,   270f, 0.5f, "YALNIZ - 4 birim ara. Yari mesafe, sifir yardim."),
+        (SpawnMarker.Kind.FloorFire,   274f, 0.5f, "YALNIZ"),
+        (SpawnMarker.Kind.FloorFire,   279f, 0.5f, "YALNIZ"),
+        (SpawnMarker.Kind.FloorFire,   286f, 0.5f, "YALNIZ"),
+        (SpawnMarker.Kind.FloorFire,   296f, 0.5f, "YALNIZ"),
+        (SpawnMarker.Kind.FloorFire,   304f, 0.5f, "YALNIZ"),
+        (SpawnMarker.Kind.FloorFire,   314f, 0.5f, "YALNIZ - son"),
 
-        (SpawnMarker.Kind.Dog,         229f, 1f, "KARABAS - sikismis halde baslar"),
-        (SpawnMarker.Kind.CoveringFire,229f, 1f, "Karabas'i orten ates (can 50)."),
+        (SpawnMarker.Kind.Dog,         196f, 1f, "KARABAS - sikismis halde baslar"),
+        (SpawnMarker.Kind.CoveringFire,196f, 1f, "Karabas'i orten ates (can 50). Sondurulunce kurtulur."),
     };
 
     static void BuildMarkers()
@@ -601,8 +487,6 @@ public static class AlevLevelBuilder
         }
     }
 
-    // ==================================================================
-    //  Kamera / oyuncu
     // ==================================================================
 
     static void SetupCamera()
@@ -629,13 +513,10 @@ public static class AlevLevelBuilder
     {
         GameObject p = GameObject.FindGameObjectWithTag("Player");
         if (p == null) return;
-
         p.transform.position = new Vector3(6f, 1f, 0f);
         if (p.GetComponent<KeyInventory>() == null) p.AddComponent<KeyInventory>();
     }
 
-    // ==================================================================
-    //  Yardimcilar
     // ==================================================================
 
     static Transform Child(Transform parent, string name)
@@ -684,8 +565,7 @@ public static class AlevLevelBuilder
         gsr.color = new Color(1f, 0.5f, 0.15f, 0.35f);
         gsr.sortingOrder = 4;
 
-        var af = go.AddComponent<AmbientFire>();
-        af.glow = gsr;
+        go.AddComponent<AmbientFire>().glow = gsr;
     }
 
     static void Tap(string name, float x, float y, WaterSource.SourceType type,
