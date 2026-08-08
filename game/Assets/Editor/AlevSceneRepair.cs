@@ -104,13 +104,16 @@ public static class AlevSceneRepair
             Debug.Log("[ALEV Onarim] EndingSequence → Death Debris baglandi.");
         }
 
-        // Ayni isi yapan fazladan tahtalar varsa uyar
-        foreach (var d in all)
+        // Ayni isi yapan fazladan olum tahtalarini SIL.
+        // Ikisi ayni noktada dusunce goruntu bozuluyordu. EndingSequence
+        // hangisine bagliysa o kalir, digerleri gider.
+        foreach (var d in all.ToList())
         {
             if (d == target) continue;
-            if (d.name.Contains("OLUM") || d.name.Contains("Death"))
-                Debug.LogWarning($"[ALEV Onarim] Fazladan olum tahtasi: '{d.name}'. " +
-                                 "Silmeniz gerekebilir.", d);
+            if (!d.name.Contains("OLUM") && !d.name.Contains("Death")) continue;
+
+            Debug.Log($"[ALEV Onarim] Fazladan olum tahtasi silindi: '{d.name}'");
+            Undo.DestroyObjectImmediate(d.gameObject);
         }
 
         return 1;

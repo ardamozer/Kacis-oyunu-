@@ -95,7 +95,7 @@ Sahne: MainScene
     (   184,    1)  WALLMONSTER WallMonster
     (   188,  1,7)  KILIT      KilitliKapi_Mor
     (   188,    2)  isaret     [FlameWall] GERI DONUS KAPANIR. Karabas kurtulunca burada alev duvari yukselir, oyuncu ileri gitmek zorunda kalir. GORUNUR sekilde olsun.
-    dekoratif ates sayisi: 2
+    dekoratif ates sayisi: 4
 
 ### CocukOdasi   x 188..226   yukseklik 15
 ----------------------------------------------------------------------
@@ -111,14 +111,13 @@ Sahne: MainScene
   ICERIK:
     (   188,  1,7)  KILIT      KilitliKapi_Mor
     (   188,    2)  isaret     [FlameWall] GERI DONUS KAPANIR. Karabas kurtulunca burada alev duvari yukselir, oyuncu ileri gitmek zorunda kalir. GORUNUR sekilde olsun.
-    (   196,    6)  TAHTA      DeathDebris
-    (   196,    1)  isaret     [Dog] KARABAS
     (   196,    1)  isaret     [CoveringFire] Karabas'i orten ates (can 50). Sondurulunce kurtulur.
+    (   196,    1)  isaret     [Dog] KARABAS
     (   196,    1)  DOGCOMPANİON Karabas
     (   196,  1,3)  TRAPPEDFİRECOVER TrappedFire
     (   212,  0,5)  isaret     [FloorFire] Cocuk odasi
     (   212,  0,5)  FLOORFİRE  FloorFire
-    dekoratif ates sayisi: 2
+    dekoratif ates sayisi: 4
 
 ### ArkaKoridor   x 226..294   yukseklik 11
 ----------------------------------------------------------------------
@@ -143,6 +142,7 @@ Sahne: MainScene
     (   250,    6)  WALLMONSTER WallMonster
     (   254,  0,5)  isaret     [FloorFire] KACIS Karabas'li
     (   254,  0,5)  FLOORFİRE  FloorFire
+    (   264,  9,4)  TAHTA      DeathDebris
     (   264,  9,4)  TAHTA      Tahta_OLUM (EndingSequence -> Death Debris)
     (   264,    2)  TETIK      Tetik_KopeginOlumu
     (   270,  0,5)  isaret     [FloorFire] YALNIZ
@@ -178,6 +178,7 @@ Sahne: MainScene
     (   316,    6)  isaret     [WallMonster] Arka kapi
     (   316,    6)  WALLMONSTER WallMonster
     (   328,    1)  isaret     [Boss] Dev alev, arka kapiyi kapatir. Cani hic azalmaz.
+    (   328,  3,4)  BOSSCORE   Boss [PASIF]
     (   334,    2)  CIKIS      Tetik_EvdenCikis
     dekoratif ates sayisi: 2
 

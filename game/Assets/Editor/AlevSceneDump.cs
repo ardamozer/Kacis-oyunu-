@@ -47,6 +47,8 @@ public static class AlevSceneDump
         Add<AmbientFire>(others, "dekor-ates");
         Add<EndingTriggerZone>(others, "TETIK");
         Add<EscapeTrigger>(others, "CIKIS");
+        Add<FlameWallGate>(others, "ALEVDUVARI");
+        Add<GameEnding>(others, "FINAL");
         Add<SpawnMarker>(others, "isaret");
 
         // Kisi B'nin siniflari — isimle yakala, derleme bagimliligi kurma
