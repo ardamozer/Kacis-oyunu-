@@ -21,7 +21,7 @@ public class TrappedFireCover : MonoBehaviour, IWaterDamageable
     public DogCompanion dog;
 
     [Header("Sondurme")]
-    [Tooltip("WaterGun saniyede ~20 verir. Kucuk tutun — bu bir bulmaca degil, bir an.")]
+    [Tooltip("WaterGun saniyede ~40 verir. 18 can = ~0.45 sn. Kucuk tutun — bu bir bulmaca degil, bir an.")]
     public float maxHealth = 18f;
     public Color hitFlashColor = Color.white;
     public float extinguishDuration = 0.3f;

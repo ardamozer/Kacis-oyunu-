@@ -35,7 +35,7 @@ public class FloorFire : MonoBehaviour, IStompable, IWaterDamageable
     public Color grownColor = new Color(1f, 0.35f, 0.1f);
 
     [Header("Su")]
-    [Tooltip("WaterGun saniyede ~20 verir. 25 can = ~1.2 saniye.")]
+    [Tooltip("WaterGun saniyede ~40 verir. 25 can = ~0.6 saniye.")]
     public float maxHealth = 25f;
 
     [Header("Sonme")]

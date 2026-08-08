@@ -445,7 +445,7 @@ Sikismisken kopek govdesi tam gorunmesin diye `Karabas`'in Sprite Renderer'ini
 | # | Test | Beklenen |
 |---|---|---|
 | 1 | Sikmaya basla | Ates beyaza calip flash yapiyor |
-| 2 | ~0.9 sn sikmeye devam et (18 can / ~20 su-sn) | Ates kuculerek kayboluyor |
+| 2 | ~0.5 sn sikmeye devam et (18 can / ~40 su-sn) | Ates kuculerek kayboluyor |
 | 3 | Ates kaybolur kaybolmaz | Karabas artik gorunur (Order in Layer dogruysa) |
 | 4 | ~1.2 sn bekle | Kopek kendiliginden takibe basliyor (StartFollowing otomatik cagrildi) |
 | 5 | Ates sonmeden birak, tekrar sik | Can kaldigi yerden devam ediyor, sifirlanmiyor |
