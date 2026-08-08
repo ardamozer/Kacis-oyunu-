@@ -248,7 +248,7 @@ public static class AlevLevelBuilder
         Plat("Salon_PiyanoTabure", 81f, 0.7f, 3f, 1.4f);
 
         // ---- Tirmanis: her platform duvara DIREKLE bagli, havada durmuyor ----
-        ClimbStep("Salon_T1", 46f, 2.4f, 6f);
+        ClimbStep("Salon_T1", 46f, 1.9f, 6f);
         ClimbStep("Salon_T2", 54f, 4.2f, 5f);
         ClimbStep("Salon_T3", 62f, 6.0f, 5f);
         ClimbStep("Salon_T4", 54f, 7.8f, 4f);
@@ -333,15 +333,16 @@ public static class AlevLevelBuilder
 
         Prop("Koridor_Hali", 170f, 0.2f, 32f, 0.4f, new Color(0.25f, 0.13f, 0.12f), 1);
 
-        Plat("Koridor_DevrikDolap", 166f, 1.6f, 4.5f, 0.6f);
-        Plat("Koridor_Basamak", 171f, 2.4f, 3f);
-        Plat("Koridor_Raf", 176f, 3.9f, 3.5f);
-        Prop("Koridor_RafDirek", 176f, 2.9f, 0.3f, 1.6f, CProp2, -1);
+        Plat("Koridor_DevrikDolap", 166f, 1.5f, 4.5f, 0.6f);
+        Plat("Koridor_Basamak1", 170.5f, 1.5f, 3f);
+        Plat("Koridor_Basamak2", 174f, 2.9f, 3f);
+        Plat("Koridor_Raf", 177.5f, 4.2f, 3.5f);
+        Prop("Koridor_RafDirek", 177.5f, 3.2f, 0.3f, 1.6f, CProp2, -1);
 
         Fire("Koridor_Alev1", 156f, 1.3f, 2.1f, 3.3f);
         Fire("Koridor_Alev2", 185f, 1.3f, 2.1f, 3.3f);
 
-        Key(KeyColor.Mor, 176f, 5.4f);
+        Key(KeyColor.Mor, 177.5f, 5.6f);
         Lock(KeyColor.Mor, 188f);
     }
 
