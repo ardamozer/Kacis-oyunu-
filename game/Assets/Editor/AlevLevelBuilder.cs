@@ -31,12 +31,20 @@ public static class AlevLevelBuilder
     static Sprite square, glow, flameSprite;
     static Transform rooms, geo, plats, props, water, debris, triggers, markers, fires, keys;
 
-    static readonly Color CWall  = new Color(0.11f, 0.09f, 0.09f);
-    static readonly Color CFloor = new Color(0.17f, 0.13f, 0.12f);
-    static readonly Color CPlat  = new Color(0.31f, 0.23f, 0.17f);
-    static readonly Color CProp  = new Color(0.22f, 0.16f, 0.14f);
-    static readonly Color CDoor  = new Color(0.36f, 0.22f, 0.14f);
-    static readonly Color CBack  = new Color(0.135f, 0.105f, 0.10f);
+    // ── RENK DILI ──
+    // En onemli kural: BASILABILIR seyler ACIK ve SICAK, dekor KOYU ve SONUK.
+    // Ilk surumde hepsi ayni kahverengiydi ve oyuncu neye basabilecegini
+    // anlayamiyordu. Bu bir estetik degil OYNANABILIRLIK meselesi.
+    static readonly Color CWall    = new Color(0.11f, 0.09f, 0.09f);
+    static readonly Color CFloor   = new Color(0.19f, 0.15f, 0.13f);
+    static readonly Color CPlat    = new Color(0.44f, 0.32f, 0.21f);   // ACIK — basilir
+    static readonly Color CPlatTop = new Color(0.68f, 0.50f, 0.30f);   // ust kenar parlak
+    static readonly Color CProp    = new Color(0.16f, 0.13f, 0.12f);   // KOYU — dekor
+    static readonly Color CProp2   = new Color(0.21f, 0.16f, 0.14f);   // dekor, biraz acik
+    static readonly Color CDoor    = new Color(0.36f, 0.22f, 0.14f);
+    static readonly Color CBack    = new Color(0.135f, 0.105f, 0.10f);
+    static readonly Color CTrim    = new Color(0.26f, 0.19f, 0.16f);   // supurgelik
+    static readonly Color CGlass   = new Color(0.13f, 0.16f, 0.20f);   // pencere cami
 
     // ---- ODALAR: hepsi yan yana, y=0 zemininde. Yukseklikler serbest. ----
     //
@@ -142,34 +150,28 @@ public static class AlevLevelBuilder
         Solid(geo, "SolDuvar", -0.5f, 10f, 1f, 22f, CWall);
         Solid(geo, "SagDuvar", LevelW + 0.5f, 10f, 1f, 22f, CWall);
 
-        foreach (var (name, x0, x1, h) in RoomDefs)
+        // Her odanin kendi tavani + duvar detayi. Tintler farkli: odalar
+        // birbirinin ayni gorunuyordu, hafif renk kimligi ayirt ettiriyor.
+        var tints = new[]
         {
-            // Her odanin kendi tavani — yukseklikler farkli olabildigi icin
+            new Color(0.150f, 0.115f, 0.100f),  // Antre  — sicak kahve
+            new Color(0.165f, 0.120f, 0.110f),  // Salon  — daha zengin
+            new Color(0.130f, 0.135f, 0.125f),  // Mutfak — soguk, fayans
+            new Color(0.120f, 0.100f, 0.100f),  // Koridor— koyu, bogucu
+            new Color(0.165f, 0.130f, 0.140f),  // Cocuk  — pembemsi
+            new Color(0.125f, 0.115f, 0.110f),  // Arka   — servis alani
+            new Color(0.130f, 0.110f, 0.105f),  // ArkaKapi
+        };
+
+        for (int i = 0; i < RoomDefs.Length; i++)
+        {
+            var (name, x0, x1, h) = RoomDefs[i];
             Solid(geo, $"Tavan_{name}", (x0 + x1) * 0.5f, h + 0.5f, x1 - x0, 1f, CWall);
-            Prop($"Arka_{name}", (x0 + x1) * 0.5f, h * 0.5f, x1 - x0 - 1f, h - 1f, CBack, -20);
+            WallDetail(name, x0, x1, h, tints[i]);
         }
 
         // Koridor'un ALCAK TAVANI — oynanabilir yukseklik 6.5, bogucu
         Solid(geo, "Koridor_AlcakTavan", 170f, 8.75f, 36f, 4.5f, CWall);
-
-        // ---- TAVAN DETAYLARI ----
-        // Odalarin ustu bombos siyah bosluktu. Kirisler, borular ve
-        // tavana yakin alevler o boslugu dolduruyor: bakis her yerde bir
-        // seye takiliyor, oda "kutu" olmaktan cikip "mekan" oluyor.
-        foreach (var (name, x0, x1, h) in RoomDefs)
-        {
-            float w = x1 - x0;
-            float cx = (x0 + x1) * 0.5f;
-
-            // Tavan kirisleri
-            Prop($"TavanKiris_{name}_1", cx - w * 0.25f, h - 0.9f, w * 0.42f, 0.7f,
-                 new Color(0.20f, 0.15f, 0.12f), -4);
-            Prop($"TavanKiris_{name}_2", cx + w * 0.25f, h - 0.9f, w * 0.42f, 0.7f,
-                 new Color(0.20f, 0.15f, 0.12f), -4);
-
-            // Duvar dibinde koyu golge — zemin ile duvar arasinda gecis
-            Prop($"Golge_{name}", cx, 0.6f, w, 1.2f, new Color(0.10f, 0.08f, 0.08f), -14);
-        }
 
         // Odalar arasi duvarlar + kapi bosluklari
         for (int i = 1; i < RoomDefs.Length; i++)
@@ -187,13 +189,21 @@ public static class AlevLevelBuilder
 
     static void Antre()
     {
-        Prop("Antre_Portmanto", 3f, 2.6f, 0.9f, 5.2f, CProp);
-        Prop("Antre_Tablo", 17f, 8f, 2.6f, 3.2f, CProp);
-        Prop("Antre_Hali", 17f, 0.15f, 12f, 0.3f, new Color(0.26f, 0.14f, 0.12f), 1);
-        Prop("Antre_GirisKapisi", 1.5f, 2f, 2.4f, 4f, new Color(0.30f, 0.19f, 0.12f), -1);
+        // Giris holu: portmanto, ayna, pencere. Her sey zemine ya da
+        // duvara BAGLI — havada duran esya yok.
+        Prop("Antre_Portmanto", 3f, 3f, 1f, 6f, CProp2);
+        Prop("Antre_Palto1", 2.2f, 4.6f, 1.4f, 2.8f, new Color(0.24f, 0.14f, 0.12f), -1);
+        Prop("Antre_Palto2", 3.9f, 4.4f, 1.3f, 2.6f, new Color(0.18f, 0.16f, 0.20f), -1);
 
-        Solid(plats, "Antre_Ayakkabilik", 9f, 0.8f, 4f, 1.6f, CPlat);
-        Solid(plats, "Antre_Konsol", 24f, 2.2f, 5f, 0.6f, CPlat);
+        Frame("Antre_Ayna", 17f, 5.4f, 2.2f, 3f, new Color(0.16f, 0.18f, 0.21f));
+        Window("Antre_Pencere", 28f, 6f, 3.4f, 3.4f);
+
+        Prop("Antre_Hali", 17f, 0.2f, 13f, 0.4f, new Color(0.27f, 0.14f, 0.12f), 1);
+
+        Plat("Antre_Ayakkabilik", 9f, 0.8f, 4f, 1.6f);
+        Plat("Antre_Konsol", 24f, 1.9f, 5f);
+        Prop("Antre_KonsolAyak1", 22f, 1f, 0.35f, 2.2f, CProp2, -1);
+        Prop("Antre_KonsolAyak2", 26f, 1f, 0.35f, 2.2f, CProp2, -1);
 
         Fire("Antre_Alev1", 30f, 1.4f, 2.4f, 3.8f);
         Fire("Antre_Alev2", 2f, 6.5f, 1.9f, 3f);
@@ -208,33 +218,48 @@ public static class AlevLevelBuilder
 
     static void Salon()
     {
-        Prop("Salon_Somine", 40f, 3.4f, 8f, 6.8f, new Color(0.20f, 0.15f, 0.14f));
-        Prop("Salon_Kitaplik", 68f, 6f, 4f, 12f, CProp);
-        Prop("Salon_Avize", 68f, 17.4f, 6f, 2.6f, new Color(0.35f, 0.28f, 0.14f));
-        Prop("Salon_AvizeZincir", 68f, 19.2f, 0.3f, 2f, new Color(0.28f, 0.24f, 0.16f));
-        Prop("Salon_Perde", 96f, 12f, 3.5f, 12f, new Color(0.24f, 0.13f, 0.13f));
-        Prop("Salon_Hali", 62f, 0.15f, 22f, 0.3f, new Color(0.26f, 0.14f, 0.12f), 1);
-
-        Solid(plats, "Salon_Koltuk", 50f, 1.3f, 8f, 1.8f, CPlat);
-        Solid(plats, "Salon_Piyano", 88f, 1.8f, 9f, 2.8f, CPlat);
-
-        // Somine: tek dev kare yerine uc ayri alev. Cok daha ikna edici.
+        // ---- Somine: ocak + davlumbaz + rafi ----
+        Prop("Salon_SomineGovde", 40f, 3.2f, 9f, 6.4f, CProp2, -6);
+        Prop("Salon_SomineIc", 40f, 2.2f, 6f, 4f, new Color(0.09f, 0.06f, 0.06f), -5);
+        Prop("Salon_SomineRaf", 40f, 6.6f, 10f, 0.6f, CTrim, -4);
         FireCluster("Salon_Somine", 40f, 2.6f, 1.9f);
-        Fire("Salon_Alev1", 78f, 1.5f, 2.7f, 4.2f);
-        Fire("Salon_Alev2", 36f, 15f, 2.1f, 3.3f);
-        Fire("Salon_Alev3", 99f, 11f, 2.3f, 3.5f);
 
-        // Dikey tirmanis — odanin tepesine kadar. MAVI anahtar en ustte:
-        // buyuk odanin buyuk odulu. Yukselmeler 1.8, bosluklar 3-4.
-        Solid(plats, "Salon_T1", 46f,  2.4f, 6f, 0.5f, CPlat);
-        Solid(plats, "Salon_T2", 54f,  4.2f, 5f, 0.5f, CPlat);
-        Solid(plats, "Salon_T3", 62f,  6.0f, 5f, 0.5f, CPlat);
-        Solid(plats, "Salon_T4", 54f,  7.8f, 4f, 0.5f, CPlat);
-        Solid(plats, "Salon_T5", 62f,  9.6f, 3.5f, 0.5f, CPlat);   // dar, hassas
-        Solid(plats, "Salon_T6", 53f, 11.4f, 5f, 0.5f, CPlat);
-        Solid(plats, "Salon_T7", 62f, 13.2f, 4f, 0.5f, CPlat);
-        Solid(plats, "Salon_T8", 54f, 15.0f, 5f, 0.5f, CPlat);
-        Solid(plats, "Salon_T9", 62f, 16.8f, 5f, 0.5f, CPlat);
+        // ---- Kitapliklar: raflari GORUNEN ----
+        Shelf("Salon_Kitaplik1", 66f, 1f, 4.5f, 5);
+        Shelf("Salon_Kitaplik2", 95f, 1f, 4f, 4);
+
+        // ---- Buyuk pencere ve perdeler ----
+        Window("Salon_Pencere", 80f, 9f, 7f, 7f);
+        Prop("Salon_Perde1", 75.5f, 9f, 2f, 9f, new Color(0.26f, 0.13f, 0.13f), -2);
+        Prop("Salon_Perde2", 84.5f, 9f, 2f, 9f, new Color(0.26f, 0.13f, 0.13f), -2);
+
+        // ---- Avize: tavana ZINCIRLE bagli ----
+        Prop("Salon_AvizeZincir", 58f, 18.4f, 0.25f, 3.2f, CTrim, -3);
+        Prop("Salon_Avize", 58f, 16.4f, 5f, 1f, new Color(0.38f, 0.30f, 0.15f), -2);
+        Fire("Salon_AvizeAtes", 58f, 15.6f, 1.2f, 1.9f, 0.8f);
+
+        Prop("Salon_Hali", 62f, 0.2f, 24f, 0.4f, new Color(0.27f, 0.14f, 0.12f), 1);
+        Frame("Salon_Tablo", 50f, 12f, 3f, 3.6f, new Color(0.20f, 0.15f, 0.14f));
+
+        // ---- Basilabilir mobilya ----
+        Plat("Salon_Koltuk", 50f, 1.3f, 8f, 1.8f);
+        Prop("Salon_KoltukSirt", 50f, 2.8f, 8f, 1.6f, CProp2, -1);
+        Plat("Salon_Piyano", 88f, 1.3f, 9f, 2.4f);
+        Plat("Salon_PiyanoTabure", 81f, 0.7f, 3f, 1.4f);
+
+        // ---- Tirmanis: her platform duvara DIREKLE bagli, havada durmuyor ----
+        ClimbStep("Salon_T1", 46f, 2.4f, 6f);
+        ClimbStep("Salon_T2", 54f, 4.2f, 5f);
+        ClimbStep("Salon_T3", 62f, 6.0f, 5f);
+        ClimbStep("Salon_T4", 54f, 7.8f, 4f);
+        ClimbStep("Salon_T5", 62f, 9.6f, 3.5f);
+        ClimbStep("Salon_T6", 53f, 11.4f, 5f);
+        ClimbStep("Salon_T7", 62f, 13.2f, 4f);
+        ClimbStep("Salon_T8", 54f, 15.0f, 5f);
+        ClimbStep("Salon_T9", 62f, 16.8f, 5f);
+
+        Fire("Salon_Alev1", 78f, 1.5f, 2.7f, 4.2f);
+        Fire("Salon_Alev3", 99f, 11f, 2.3f, 3.5f);
 
         Tap("Salon_Akvaryum", 37f, 0.7f, WaterSource.SourceType.OneShot, 100f,
             new Color(0.15f, 0.85f, 0.75f), 2.2f, 1.4f);
@@ -249,13 +274,32 @@ public static class AlevLevelBuilder
 
     static void Mutfak()
     {
-        Prop("Mutfak_Buzdolabi", 107f, 3.4f, 4f, 6.8f, CProp);
-        Prop("Mutfak_Fayans", 127f, 5f, 44f, 8f, new Color(0.17f, 0.16f, 0.15f), -10);
+        // Fayans bandi — mutfak kimligi
+        Prop("Mutfak_Fayans", 127f, 5.5f, 46f, 5f, new Color(0.155f, 0.16f, 0.155f), -16);
+        for (int i = 0; i < 10; i++)
+            Prop($"Mutfak_FayansCizgi{i}", 105f + i * 4.6f, 5.5f, 0.14f, 5f,
+                 new Color(0.20f, 0.21f, 0.20f), -15);
 
-        Solid(plats, "Mutfak_Tezgah", 116f, 1.8f, 12f, 1.8f, CPlat);
-        Solid(plats, "Mutfak_Masa", 132f, 2.0f, 7f, 0.6f, CPlat);
-        Solid(plats, "Mutfak_Dolap1", 140f, 3.8f, 5f, 0.5f, CPlat);
-        Solid(plats, "Mutfak_Dolap2", 133f, 5.6f, 4f, 0.5f, CPlat);
+        Prop("Mutfak_Buzdolabi", 106f, 3.4f, 4.2f, 6.8f, CProp2, -6);
+        Prop("Mutfak_BuzdolabiKapi", 106f, 3.4f, 0.2f, 6.6f, CProp, -5);
+
+        // Ust dolaplar — tek blok yerine ayri kapaklar
+        for (int i = 0; i < 4; i++)
+            Prop($"Mutfak_UstDolap{i}", 116f + i * 4.4f, 7.4f, 4f, 2.6f, CProp2, -6);
+
+        Window("Mutfak_Pencere", 134f, 7.6f, 4f, 3f);
+
+        // Asili tencereler
+        for (int i = 0; i < 3; i++)
+            Prop($"Mutfak_Tencere{i}", 124f + i * 2.2f, 5.6f, 1.2f, 1.4f, CTrim, -2);
+
+        Plat("Mutfak_Tezgah", 116f, 0.9f, 14f, 1.8f);
+        Prop("Mutfak_TezgahAlti", 116f, 0.4f, 13f, 0.9f, CProp, -1);
+        Plat("Mutfak_Masa", 132f, 2.0f, 8f);
+        Prop("Mutfak_MasaAyak1", 129f, 1f, 0.3f, 2f, CProp2, -1);
+        Prop("Mutfak_MasaAyak2", 135f, 1f, 0.3f, 2f, CProp2, -1);
+        Plat("Mutfak_Dolap1", 140f, 3.8f, 5f);
+        Plat("Mutfak_Dolap2", 133f, 5.6f, 4f);
 
         Fire("Mutfak_Alev1", 148f, 1.4f, 2.4f, 3.7f);
         Fire("Mutfak_Alev2", 112f, 7.8f, 2.1f, 3.2f);
@@ -275,18 +319,29 @@ public static class AlevLevelBuilder
 
     static void Koridor()
     {
-        Prop("Koridor_Tablo1", 160f, 4.5f, 2.2f, 2.6f, CProp);
-        Prop("Koridor_Tablo2", 184f, 4.5f, 2.2f, 2.6f, CProp);
-        Prop("Koridor_Hali", 170f, 0.15f, 30f, 0.3f, new Color(0.24f, 0.13f, 0.12f), 1);
+        // Koridor = duvarinda SIRA SIRA fotograf olan yer. Kimligi bu.
+        for (int i = 0; i < 6; i++)
+            Frame($"Koridor_Foto{i}", 157f + i * 5.2f, 4.6f, 1.8f, 2.2f,
+                  new Color(0.19f, 0.16f, 0.14f));
 
-        Solid(plats, "Koridor_DevrikDolap", 166f, 1.6f, 4.5f, 0.6f, CPlat);
-        Solid(plats, "Koridor_Raf", 176f, 3.4f, 3.5f, 0.5f, CPlat);
+        // Duvar aplikleri
+        for (int i = 0; i < 3; i++)
+        {
+            Prop($"Koridor_Aplik{i}", 160f + i * 9f, 5.6f, 0.7f, 1f, CTrim, -2);
+            Fire($"Koridor_AplikAtes{i}", 160f + i * 9f, 6.2f, 0.8f, 1.2f, 0.5f);
+        }
+
+        Prop("Koridor_Hali", 170f, 0.2f, 32f, 0.4f, new Color(0.25f, 0.13f, 0.12f), 1);
+
+        Plat("Koridor_DevrikDolap", 166f, 1.6f, 4.5f, 0.6f);
+        Plat("Koridor_Basamak", 171f, 2.4f, 3f);
+        Plat("Koridor_Raf", 176f, 3.9f, 3.5f);
+        Prop("Koridor_RafDirek", 176f, 2.9f, 0.3f, 1.6f, CProp2, -1);
 
         Fire("Koridor_Alev1", 156f, 1.3f, 2.1f, 3.3f);
         Fire("Koridor_Alev2", 185f, 1.3f, 2.1f, 3.3f);
-        // Su YOK, yer atesi de YOK — kitlik hissi var ama kilitlenme riski yok.
 
-        Key(KeyColor.Mor, 176f, 5.0f);
+        Key(KeyColor.Mor, 176f, 5.4f);
         Lock(KeyColor.Mor, 188f);
     }
 
@@ -296,14 +351,33 @@ public static class AlevLevelBuilder
 
     static void CocukOdasi()
     {
-        Prop("Cocuk_DuvarKagidi", 207f, 7f, 36f, 13f, new Color(0.20f, 0.15f, 0.16f), -15);
-        Prop("Cocuk_Yatak", 197f, 1f, 8f, 2f, CProp);
-        Prop("Cocuk_Cizim", 203f, 9f, 2.4f, 2.8f, new Color(0.30f, 0.26f, 0.20f));
-        Prop("Cocuk_BoyCizgisi", 191f, 5f, 0.5f, 10f, new Color(0.28f, 0.24f, 0.20f));
+        // Cocuk odasi: cizimler, oyuncaklar, boy cizgileri. Bu odanin
+        // isini duygu yapiyor — oyuncu burada birinin yasadigini anlamali.
+        for (int i = 0; i < 4; i++)
+            Frame($"Cocuk_Cizim{i}", 202f + i * 4.5f, 8.4f, 2.2f, 2.6f,
+                  new Color(0.34f, 0.30f, 0.22f));
 
-        Solid(plats, "Cocuk_Ranza", 197f, 2.6f, 8f, 0.6f, CPlat);
-        Solid(plats, "Cocuk_Sandik", 208f, 0.9f, 3.5f, 1.8f, CPlat);
-        Solid(plats, "Cocuk_Raf", 216f, 3.4f, 4f, 0.5f, CPlat);
+        Window("Cocuk_Pencere", 220f, 8f, 3.6f, 3.4f);
+
+        Prop("Cocuk_BoyCizgisi", 190f, 5f, 0.4f, 9f, new Color(0.30f, 0.26f, 0.22f), -2);
+        for (int i = 0; i < 5; i++)
+            Prop($"Cocuk_BoyIsaret{i}", 190.6f, 2f + i * 1.7f, 1f, 0.14f,
+                 new Color(0.34f, 0.30f, 0.24f), -1);
+
+        // Ranza: iki katli, alt yatak dekor, ust kat basilabilir
+        Prop("Cocuk_RanzaGovde", 197f, 1.6f, 8.4f, 3.2f, CProp2, -5);
+        Prop("Cocuk_Yatak", 197f, 0.9f, 7.6f, 1.2f, new Color(0.26f, 0.18f, 0.20f), -4);
+        Plat("Cocuk_Ranza", 197f, 2.2f, 8f, 0.6f);
+        Plat("Cocuk_Tabure", 202.5f, 0.7f, 2.4f, 1.4f);
+
+        Plat("Cocuk_Sandik", 208f, 0.9f, 3.5f, 1.8f);
+        Plat("Cocuk_Raf", 213f, 3.2f, 4f);
+        Prop("Cocuk_RafDirek", 213f, 2.2f, 0.3f, 1.6f, CProp2, -1);
+
+        // Yerde oyuncaklar
+        for (int i = 0; i < 4; i++)
+            Prop($"Cocuk_Oyuncak{i}", 204f + i * 3.1f, 0.5f, 0.9f, 0.9f,
+                 new Color(0.30f + i * 0.06f, 0.20f, 0.16f), 1);
 
         Fire("Cocuk_Alev1", 223f, 1.3f, 2.2f, 3.4f);
         Fire("Cocuk_Alev2", 190f, 11f, 2.3f, 3.5f);
@@ -315,24 +389,33 @@ public static class AlevLevelBuilder
 
     static void ArkaKoridor()
     {
-        Prop("Arka_Tugla", 260f, 5.5f, 62f, 10f, new Color(0.16f, 0.13f, 0.12f), -12);
-        Prop("Arka_Boru", 244f, 8.6f, 30f, 0.8f, new Color(0.24f, 0.20f, 0.18f), -3);
+        // Servis koridoru: borular, sayaclar, kablolar, sandiklar.
+        // Evin "arka tarafi" hissi — sussuz, islevsel.
+        Prop("Arka_Boru1", 244f, 8.8f, 34f, 0.9f, new Color(0.26f, 0.22f, 0.19f), -4);
+        Prop("Arka_Boru2", 272f, 7.4f, 40f, 0.7f, new Color(0.22f, 0.19f, 0.17f), -4);
+        for (int i = 0; i < 7; i++)
+            Prop($"Arka_BoruKelepce{i}", 232f + i * 9f, 8.8f, 0.6f, 1.5f, CTrim, -3);
 
-        Solid(plats, "Arka_Kasa1", 238f, 1.6f, 5f, 0.6f, CPlat);
-        Solid(plats, "Arka_Kasa2", 250f, 3.2f, 4f, 0.5f, CPlat);
-        Solid(plats, "Arka_Kasa3", 262f, 1.8f, 5f, 0.6f, CPlat);
-        Solid(plats, "Arka_Kiris", 276f, 3.6f, 6f, 0.5f, CPlat);
-        Solid(plats, "Arka_Kasa4", 288f, 1.8f, 4f, 0.6f, CPlat);
+        for (int i = 0; i < 3; i++)
+            Prop($"Arka_Sayac{i}", 236f + i * 20f, 5.4f, 2.4f, 2.8f, CProp2, -3);
+
+        Plat("Arka_Kasa1", 238f, 1.6f, 5f, 0.6f);
+        Plat("Arka_Kasa2", 245f, 3.2f, 4f);
+        Plat("Arka_Kasa3", 262f, 1.8f, 5f, 0.6f);
+        Plat("Arka_Kiris", 270f, 3.6f, 6f);
+        Plat("Arka_Kasa4", 288f, 1.8f, 4f, 0.6f);
+
+        Prop("Arka_KasaGovde1", 238f, 0.8f, 4.6f, 1.6f, CProp2, -1);
+        Prop("Arka_KasaGovde3", 262f, 0.9f, 4.6f, 1.8f, CProp2, -1);
+        Prop("Arka_KasaGovde4", 288f, 0.9f, 3.6f, 1.8f, CProp2, -1);
 
         Fire("Arka_Alev1", 232f, 1.4f, 2.3f, 3.5f);
         Fire("Arka_Alev2", 256f, 7.8f, 2.1f, 3.2f);
         Fire("Arka_Alev3", 284f, 1.4f, 2.4f, 3.6f);
 
-        // Olumden ONCE dolsun
         Tap("Arka_Musluk", 240f, 0.8f, WaterSource.SourceType.Infinite, 30f,
             new Color(0.25f, 0.60f, 0.95f), 1.2f, 1.6f);
 
-        // OLUM ANI — odanin ~%55'i. Sonrasinda 74 birim yalnizsiniz.
         var death = Sprite2(debris, "Tahta_OLUM (EndingSequence -> Death Debris)",
                             264f, 9.4f, 4f, 0.5f, new Color(0.5f, 0.3f, 0.16f));
         death.AddComponent<BoxCollider2D>().isTrigger = true;
@@ -352,18 +435,27 @@ public static class AlevLevelBuilder
 
     static void ArkaKapi()
     {
-        Prop("ArkaKapi_Tugla", 315f, 6.5f, 40f, 12f, new Color(0.16f, 0.13f, 0.12f), -12);
-        Prop("ArkaKapi_Kapi", 333f, 2.2f, 3f, 4.4f, new Color(0.34f, 0.24f, 0.14f), -1);
+        // Cikis: kapinin camindan disarisi gorunuyor — kurtulus goze
+        // gorunur olsun, oyuncu neye dogru kostugunu bilsin.
+        Prop("ArkaKapi_Kasa", 333f, 2.6f, 4.2f, 5.6f, new Color(0.30f, 0.21f, 0.13f), -4);
+        Prop("ArkaKapi_Kapi", 333f, 2.4f, 3.2f, 4.8f, new Color(0.36f, 0.24f, 0.14f), -3);
+        Prop("ArkaKapi_Cam", 333f, 3.6f, 1.8f, 1.6f, new Color(0.22f, 0.26f, 0.30f), -2);
+        Prop("ArkaKapi_Kol", 331.8f, 2.2f, 0.5f, 0.4f, CTrim, -1);
 
-        Solid(plats, "ArkaKapi_Kasa1", 302f, 1.8f, 5f, 0.6f, CPlat);
-        Solid(plats, "ArkaKapi_Kasa2", 312f, 3.4f, 4f, 0.5f, CPlat);
-        Solid(plats, "ArkaKapi_Kasa3", 321f, 1.8f, 5f, 0.6f, CPlat);
+        Prop("ArkaKapi_Sigorta", 300f, 6.2f, 2.6f, 3.2f, CProp2, -3);
+        for (int i = 0; i < 4; i++)
+            Prop($"ArkaKapi_Kablo{i}", 302f + i * 7f, 9.4f, 6f, 0.3f,
+                 new Color(0.20f, 0.17f, 0.15f), -3);
+
+        Plat("ArkaKapi_Kasa1", 302f, 1.8f, 5f, 0.6f);
+        Plat("ArkaKapi_Kasa2", 308f, 3.4f, 4f);
+        Plat("ArkaKapi_Kasa3", 321f, 1.8f, 5f, 0.6f);
+        Prop("ArkaKapi_KasaGovde1", 302f, 0.9f, 4.6f, 1.8f, CProp2, -1);
+        Prop("ArkaKapi_KasaGovde3", 321f, 0.9f, 4.6f, 1.8f, CProp2, -1);
 
         Fire("ArkaKapi_Alev1", 298f, 1.5f, 2.5f, 3.9f);
         Fire("ArkaKapi_Alev2", 318f, 9.2f, 2.2f, 3.4f);
 
-        // Yalniz bolumun sigortasi: sonsuz ama YAVAS. Beklemek zorundasiniz,
-        // o sirada atesler buyuyor. Kilitlenme yok, baski var.
         Tap("ArkaKapi_PatlakBoru", 306f, 1.2f, WaterSource.SourceType.Infinite, 15f,
             new Color(0.22f, 0.52f, 0.85f), 0.8f, 2f);
 
@@ -584,6 +676,88 @@ public static class AlevLevelBuilder
 
     static void Prop(string name, float x, float y, float w, float h, Color c, int order = -2)
         => Sprite2(props, name, x, y, w, h, c, order);
+
+    // ==================================================================
+    //  GORSEL YARDIMCILAR
+    // ==================================================================
+
+    /// <summary>
+    /// Basilabilir platform + UST KENARINDA parlak serit.
+    ///
+    /// O serit dekoratif degil, ISLEVSEL: oyuncuya "burasi basilir" diyor.
+    /// Ust kenari vurgulanmamis platform, ayni renkteki mobilyadan ayirt
+    /// edilemiyordu.
+    /// </summary>
+    static void Plat(string name, float x, float y, float w, float h = 0.5f)
+    {
+        Solid(plats, name, x, y, w, h, CPlat);
+        Sprite2(plats, name + "_Kenar", x, y + h * 0.5f - 0.06f, w, 0.14f, CPlatTop, 1);
+    }
+
+    /// <summary>
+    /// Tirmanis basamagi: platform + altinda DIREK.
+    /// Direksiz platformlar boslukta yuzen tahtalar gibi duruyordu;
+    /// destegi gorunen bir raf "buraya konmus" hissi veriyor.
+    /// </summary>
+    static void ClimbStep(string name, float x, float y, float w)
+    {
+        Plat(name, x, y, w);
+        Prop(name + "_Direk1", x - w * 0.35f, y - 0.9f, 0.3f, 1.8f, CProp2, -1);
+        Prop(name + "_Direk2", x + w * 0.35f, y - 0.9f, 0.3f, 1.8f, CProp2, -1);
+    }
+
+    /// <summary>Duvara asili tablo/ayna — cercevesiyle, bosluga asilmasin diye.</summary>
+    static void Frame(string name, float x, float y, float w, float h, Color inner)
+    {
+        Prop(name + "_Cerceve", x, y, w + 0.35f, h + 0.35f, new Color(0.30f, 0.22f, 0.14f), -3);
+        Prop(name, x, y, w, h, inner, -2);
+    }
+
+    /// <summary>Pencere — cam + cercevesi + hac seklinde bolme.</summary>
+    static void Window(string name, float x, float y, float w, float h)
+    {
+        Prop(name + "_Cerceve", x, y, w + 0.5f, h + 0.5f, new Color(0.28f, 0.21f, 0.15f), -4);
+        Prop(name + "_Cam", x, y, w, h, CGlass, -3);
+        Prop(name + "_Dikey", x, y, 0.18f, h, new Color(0.28f, 0.21f, 0.15f), -2);
+        Prop(name + "_Yatay", x, y, w, 0.18f, new Color(0.28f, 0.21f, 0.15f), -2);
+    }
+
+    /// <summary>Raflari GORUNEN kitaplik — duz kahverengi dikdortgen yerine.</summary>
+    static void Shelf(string name, float x, float yBottom, float w, int shelves)
+    {
+        float step = 1.7f;
+        Prop(name + "_Govde", x, yBottom + shelves * step * 0.5f, w, shelves * step, CProp2, -4);
+        for (int i = 0; i <= shelves; i++)
+            Prop($"{name}_Raf{i}", x, yBottom + i * step, w, 0.22f, CTrim, -2);
+        // Kitaplar
+        for (int i = 0; i < shelves; i++)
+            for (int j = 0; j < 3; j++)
+                Prop($"{name}_Kitap{i}{j}", x - w * 0.3f + j * w * 0.3f,
+                     yBottom + i * step + 0.75f, w * 0.22f, 1.1f,
+                     new Color(0.30f + j * 0.05f, 0.15f, 0.13f), -1);
+    }
+
+    /// <summary>
+    /// Odanin duvar detayi: supurgelik, duvar kagidi cizgileri, tavan silmesi.
+    /// Duz siyah duvar "ic mekan" hissi vermiyordu.
+    /// </summary>
+    static void WallDetail(string name, float x0, float x1, float h, Color tint)
+    {
+        float w = x1 - x0, cx = (x0 + x1) * 0.5f;
+
+        Prop($"Duvar_{name}", cx, h * 0.5f, w - 1f, h - 1f, tint, -19);
+        Prop($"Supurgelik_{name}", cx, 0.55f, w - 1f, 0.5f, CTrim, -8);
+        Prop($"TavanSilme_{name}", cx, h - 1.2f, w - 1f, 0.4f, CTrim, -8);
+
+        // Dikey duvar kagidi cizgileri — yuzey duz kalmasin
+        int stripes = Mathf.Max(3, Mathf.RoundToInt(w / 5.5f));
+        for (int i = 0; i < stripes; i++)
+        {
+            float sx = x0 + (i + 0.5f) * w / stripes;
+            Prop($"Cizgi_{name}_{i}", sx, (h + 1f) * 0.5f, 0.16f, h - 2f,
+                 tint * 1.35f, -18);
+        }
+    }
 
     /// <summary>
     /// Dekoratif alev.
