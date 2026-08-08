@@ -163,6 +163,7 @@ public static class AlevSceneSetup
         gun.hitLayers = LayerMask.GetMask("Enemy");
 
         player.AddComponent<PlayerHealth>();
+        player.AddComponent<PetInteraction>();   // E tusu — Karabas'i sevme
 
         return player;
     }
