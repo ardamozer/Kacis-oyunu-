@@ -93,48 +93,81 @@ public static class AlevLevelAudit
             solids.Add((col.transform, b.max.y, b.min.x, b.max.x));
         }
 
-        int found = 0;
+        // ---- ZINCIR TAKIBI (flood fill) ----
+        // Eski surum tek adim bakiyordu: "A'dan B'ye ziplanir mi?" Ama A'nin
+        // kendisine ulasilamiyorsa B de ulasilamaz. Artik ZEMINDEN baslayip
+        // ulasilabilir kumeyi buyutuyoruz — gercek durum bu.
+        var targets = solids.Where(s => s.right - s.left <= 14f && s.top >= 1.5f).ToList();
+        var reached = new HashSet<int>();
 
-        foreach (var p in solids)
+        // Zeminden dogrudan cikilabilenler
+        for (int i = 0; i < targets.Count; i++)
+            if (targets[i].top <= SafeRise) reached.Add(i);
+
+        bool grew = true;
+        while (grew)
         {
-            // Sadece platform benzeri kucuk objeleri kontrol et — zemin,
-            // duvar ve doseme gibi buyuk parcalar zaten hedef degil.
-            float width = p.right - p.left;
-            if (width > 14f) continue;
-            if (p.top < 1.5f) continue;          // yerden zaten cikilir
+            grew = false;
+            // ⚠️ 'reached' uzerinde donerken ona ekleme yapilamaz
+            // (InvalidOperationException). Bu turda eklenecekleri ayri
+            // toplayip tur bitince ekliyoruz.
+            var toAdd = new List<int>();
 
-            bool reachable = false;
-
-            foreach (var q in solids)
+            for (int i = 0; i < targets.Count; i++)
             {
-                if (q.t == p.t) continue;
-
-                float rise = p.top - q.top;
-                if (rise > SafeRise) continue;
-
-                float gap = Mathf.Max(0f, Mathf.Max(q.left - p.right, p.left - q.right));
-
-                // ⚠️ ESKI HATA: rise <= 0 ise "ulasilabilir" deyip geciyordu,
-                // YATAY MESAFEYE BAKMADAN. Yani odanin obur ucundaki yuksek
-                // bir raf, yerden cikilamayan piyanoyu "ulasilabilir"
-                // gosteriyordu. Yukaridan/yandan gelmek de yakinlik ister.
-                float allowed = rise <= 0f ? 5f
-                              : rise > 1.5f ? 3.5f
-                              : rise > 0.6f ? 4.5f : 5f;
-
-                if (gap <= allowed) { reachable = true; break; }
+                if (reached.Contains(i)) continue;
+                if (reached.Any(j => CanJump(targets[j], targets[i]))) toAdd.Add(i);
             }
 
-            if (!reachable)
+            foreach (int i in toAdd) { reached.Add(i); grew = true; }
+        }
+
+        int found = 0;
+        for (int i = 0; i < targets.Count; i++)
+        {
+            if (reached.Contains(i)) continue;
+            var p = targets[i];
+            r.AppendLine($"⚠️ ULASILAMAZ: '{p.t.name}' (ust={p.top:0.##}) — " +
+                         $"zeminden baslayan hicbir zincirle varilamiyor");
+            Debug.LogWarning($"Ulasilamaz platform: {p.t.name}", p.t.gameObject);
+            found++;
+        }
+
+        // ---- DUSUNCE GERI CIKILAMAYAN YERLER ----
+        // Bir tirmanisin en alt basamagi yerden zor cikiliyorsa, oyuncu
+        // duserse sikisir. Sinir 2.87 (fiziksel maksimum) degil 2.2 olmali:
+        // maksimuma yakin ziplama pratikte "cikilmiyor" demek.
+        foreach (var p in targets)
+        {
+            if (p.top <= 2.2f || p.top > SafeRise + 0.8f) continue;
+
+            bool hasLowStep = targets.Any(q =>
+                q.top <= 2.2f &&
+                Mathf.Max(0f, Mathf.Max(q.left - p.right, p.left - q.right)) <= 6f);
+
+            if (!hasLowStep)
             {
-                r.AppendLine($"⚠️ ULASILAMAZ: '{p.t.name}' (y={p.top:0.##}) — " +
-                             $"altindaki hicbir yerden ziplanamiyor");
-                Debug.LogWarning($"Ulasilamaz platform: {p.t.name}", p.t.gameObject);
+                r.AppendLine($"⚠️ DUSUNCE CIKILAMAZ: '{p.t.name}' (ust={p.top:0.##}) — " +
+                             $"yakininda yerden rahat cikilan basamak yok");
+                Debug.LogWarning($"Dusunce cikilamaz: {p.t.name}", p.t.gameObject);
                 found++;
             }
         }
 
         return found;
+    }
+
+    static bool CanJump((Transform t, float top, float left, float right) from,
+                        (Transform t, float top, float left, float right) to)
+    {
+        float rise = to.top - from.top;
+        if (rise > SafeRise) return false;
+
+        float gap = Mathf.Max(0f, Mathf.Max(from.left - to.right, to.left - from.right));
+        float allowed = rise <= 0f ? 5f
+                      : rise > 1.5f ? 3.5f
+                      : rise > 0.6f ? 4.5f : 5f;
+        return gap <= allowed;
     }
 
     // ------------------------------------------------------------------
