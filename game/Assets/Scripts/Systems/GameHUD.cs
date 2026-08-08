@@ -22,6 +22,13 @@ public class GameHUD : MonoBehaviour
     public Color heartFullColor = new Color(0.95f, 0.25f, 0.3f);
     public Color heartEmptyColor = new Color(0.25f, 0.2f, 0.2f);
 
+    [Header("Anahtarlar")]
+    public KeyInventory inventory;
+
+    [Tooltip("Sirasiyla Mavi, Yesil, Mor. Alinmayanlar sonuk gorunur — " +
+             "oyuncu kac tane kaldigini bilsin.")]
+    public Image[] keyIcons;
+
     [Header("Ekran Kenari Alev")]
     [Tooltip("Tam ekran vinyet. Hasar alinca yanip soner.")]
     public Image damageVignette;
@@ -31,7 +38,25 @@ public class GameHUD : MonoBehaviour
     {
         UpdateWater();
         UpdateHearts();
+        UpdateKeys();
         UpdateVignette();
+    }
+
+    void UpdateKeys()
+    {
+        if (keyIcons == null) return;
+
+        for (int i = 0; i < keyIcons.Length; i++)
+        {
+            if (keyIcons[i] == null) continue;
+
+            var kc = (KeyColor)i;
+            bool has = inventory != null && inventory.Has(kc);
+
+            Color c = KeyColors.Of(kc);
+            // Alinmamis anahtar: koyu ve saydam. Yeri gorunur ama "yok" okunur.
+            keyIcons[i].color = has ? c : new Color(c.r * 0.3f, c.g * 0.3f, c.b * 0.3f, 0.35f);
+        }
     }
 
     void UpdateWater()
