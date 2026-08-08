@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 8027032051501706206}
   - component: {fileID: 6537840962338755094}
   - component: {fileID: 2048226922836146688}
+  - component: {fileID: 8459117519563190741}
   m_Layer: 0
   m_Name: Flame
   m_TagString: Untagged
@@ -176,3 +177,20 @@ MonoBehaviour:
   blockingLayers:
     serializedVersion: 2
     m_Bits: 64
+--- !u!114 &8459117519563190741
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4715242513004322984}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69e1cbdbac66a6a4e816fbed683383f1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FireFlicker
+  scaleAmount: 0.06
+  scaleSpeed: 7
+  verticalBias: 1.8
+  brightnessAmount: 0.12
+  brightnessSpeed: 11

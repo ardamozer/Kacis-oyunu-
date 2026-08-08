@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 395176830973551318}
   - component: {fileID: 492691696357995684}
   - component: {fileID: 1408259519577167399}
+  - component: {fileID: 4211975349033055327}
   - component: {fileID: 7653282769286832919}
   m_Layer: 8
   m_Name: TrappedFire
@@ -140,6 +141,23 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1, y: 1}
   m_EdgeRadius: 0
+--- !u!114 &4211975349033055327
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1670560964304136744}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69e1cbdbac66a6a4e816fbed683383f1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FireFlicker
+  scaleAmount: 0.06
+  scaleSpeed: 7
+  verticalBias: 1.8
+  brightnessAmount: 0.12
+  brightnessSpeed: 11
 --- !u!114 &7653282769286832919
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -376,13 +394,19 @@ MonoBehaviour:
   stompHopHeight: 0.3
   stompHopDuration: 0.3
   audioSource: {fileID: 859303257762125793}
-  whineClip: {fileID: 0}
+  whineClip: {fileID: 8300000, guid: 2c1a797df1ca2534f9d32386d51052cf, type: 3}
   minDistanceForMaxVolume: 2
   maxHearDistance: 15
   whineInterval: 3
-  happyBarkClip: {fileID: 0}
-  heartParticlePrefab: {fileID: 0}
+  happyBarkClip: {fileID: 8300000, guid: bc1dfbc5fd2b39f42be83f0ac11702aa, type: 3}
+  pitchVariation: 0.08
+  heartParticlePrefab: {fileID: 8543539251548474356, guid: b3f1720cc8d49554e88c20f7844fbe8f, type: 3}
   heartSpawnPoint: {fileID: 0}
+  heartCount: 3
+  breathAmount: 0.04
+  breathSpeed: 3
+  petSquashAmount: 0.22
+  petSquashDuration: 0.4
 --- !u!114 &4379093775505846960
 MonoBehaviour:
   m_ObjectHideFlags: 0

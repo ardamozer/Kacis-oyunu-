@@ -65,6 +65,11 @@ public class DogCompanion : MonoBehaviour
 
     [Header("Ses — mutlu havlama (Freed / Petted)")]
     public AudioClip happyBarkClip;
+    [Tooltip("Her calista perde bu kadar rastgele sapar (0.08 = ±%8).\n" +
+             "Ayni kaydin ust uste tipatip calmasi kulaga hemen 'dosya'\n" +
+             "gibi geliyor — ozellikle sevme tusu arka arkaya basiliyor.\n" +
+             "0 = kapali.")]
+    public float pitchVariation = 0.08f;
 
     [Header("Sevme (OnPetted)")]
     [Tooltip("Opsiyonel. Bos birakilirsa sadece ses calar, kalp cikmaz.")]
@@ -172,7 +177,22 @@ public class DogCompanion : MonoBehaviour
 
         // Yakinsa tam ses, uzaklastikca sifira dogru soner.
         float t = Mathf.InverseLerp(maxHearDistance, minDistanceForMaxVolume, dist);
-        audioSource.PlayOneShot(whineClip, Mathf.Clamp01(t));
+        PlayVaried(whineClip, Mathf.Clamp01(t));
+    }
+
+    /// <summary>
+    /// Klibi her seferinde biraz farkli perdeyle calar.
+    ///
+    /// Tek bir kaydin ust uste ayni calmasi kulaga hemen "dosya" gibi
+    /// geliyor — ozellikle sevme tusu gibi arka arkaya basilan seylerde.
+    /// Kucuk bir perde sapmasi bunu neredeyse tamamen gizliyor.
+    /// </summary>
+    void PlayVaried(AudioClip clip, float volume = 1f)
+    {
+        if (audioSource == null || clip == null) return;
+
+        audioSource.pitch = Random.Range(1f - pitchVariation, 1f + pitchVariation);
+        audioSource.PlayOneShot(clip, volume);
     }
 
     // ---- Following: basit takip + yoldaki atesi sondurme ----
@@ -290,7 +310,7 @@ public class DogCompanion : MonoBehaviour
     public void OnPetted()
     {
         if (audioSource != null && happyBarkClip != null)
-            audioSource.PlayOneShot(happyBarkClip);
+            PlayVaried(happyBarkClip);
 
         // Govde tepkisi — ses dosyasi olmasa bile bir sey oldugu belli olsun.
         petSquashUntil = Time.time + petSquashDuration;
@@ -324,7 +344,7 @@ public class DogCompanion : MonoBehaviour
         state = State.Freed;
 
         if (audioSource != null && happyBarkClip != null)
-            audioSource.PlayOneShot(happyBarkClip);
+            PlayVaried(happyBarkClip);
     }
 
     /// <summary>Kurtarma animasyonu bitince Kisi A takibi baslatmak icin bunu cagirir.</summary>
