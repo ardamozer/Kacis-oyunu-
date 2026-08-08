@@ -201,7 +201,7 @@ public static class AlevLevelBuilder
         Prop("Antre_Hali", 17f, 0.2f, 13f, 0.4f, new Color(0.27f, 0.14f, 0.12f), 1);
 
         Plat("Antre_Ayakkabilik", 9f, 0.8f, 4f, 1.6f);
-        Plat("Antre_Konsol", 24f, 2.2f, 5f);
+        Plat("Antre_Konsol", 24f, 1.9f, 5f);
         Prop("Antre_KonsolAyak1", 22f, 1f, 0.35f, 2.2f, CProp2, -1);
         Prop("Antre_KonsolAyak2", 26f, 1f, 0.35f, 2.2f, CProp2, -1);
 
@@ -244,7 +244,8 @@ public static class AlevLevelBuilder
         // ---- Basilabilir mobilya ----
         Plat("Salon_Koltuk", 50f, 1.3f, 8f, 1.8f);
         Prop("Salon_KoltukSirt", 50f, 2.8f, 8f, 1.6f, CProp2, -1);
-        Plat("Salon_Piyano", 88f, 1.8f, 9f, 2.8f);
+        Plat("Salon_Piyano", 88f, 1.3f, 9f, 2.4f);
+        Plat("Salon_PiyanoTabure", 81f, 0.7f, 3f, 1.4f);
 
         // ---- Tirmanis: her platform duvara DIREKLE bagli, havada durmuyor ----
         ClimbStep("Salon_T1", 46f, 2.4f, 6f);
@@ -292,8 +293,8 @@ public static class AlevLevelBuilder
         for (int i = 0; i < 3; i++)
             Prop($"Mutfak_Tencere{i}", 124f + i * 2.2f, 5.6f, 1.2f, 1.4f, CTrim, -2);
 
-        Plat("Mutfak_Tezgah", 116f, 1.8f, 14f, 1.8f);
-        Prop("Mutfak_TezgahAlti", 116f, 0.9f, 13f, 1.8f, CProp, -1);
+        Plat("Mutfak_Tezgah", 116f, 0.9f, 14f, 1.8f);
+        Prop("Mutfak_TezgahAlti", 116f, 0.4f, 13f, 0.9f, CProp, -1);
         Plat("Mutfak_Masa", 132f, 2.0f, 8f);
         Prop("Mutfak_MasaAyak1", 129f, 1f, 0.3f, 2f, CProp2, -1);
         Prop("Mutfak_MasaAyak2", 135f, 1f, 0.3f, 2f, CProp2, -1);
@@ -333,13 +334,14 @@ public static class AlevLevelBuilder
         Prop("Koridor_Hali", 170f, 0.2f, 32f, 0.4f, new Color(0.25f, 0.13f, 0.12f), 1);
 
         Plat("Koridor_DevrikDolap", 166f, 1.6f, 4.5f, 0.6f);
-        Plat("Koridor_Raf", 176f, 3.4f, 3.5f);
-        Prop("Koridor_RafDirek", 176f, 2.4f, 0.3f, 1.6f, CProp2, -1);
+        Plat("Koridor_Basamak", 171f, 2.4f, 3f);
+        Plat("Koridor_Raf", 176f, 3.9f, 3.5f);
+        Prop("Koridor_RafDirek", 176f, 2.9f, 0.3f, 1.6f, CProp2, -1);
 
         Fire("Koridor_Alev1", 156f, 1.3f, 2.1f, 3.3f);
         Fire("Koridor_Alev2", 185f, 1.3f, 2.1f, 3.3f);
 
-        Key(KeyColor.Mor, 176f, 5.0f);
+        Key(KeyColor.Mor, 176f, 5.4f);
         Lock(KeyColor.Mor, 188f);
     }
 
@@ -365,11 +367,12 @@ public static class AlevLevelBuilder
         // Ranza: iki katli, alt yatak dekor, ust kat basilabilir
         Prop("Cocuk_RanzaGovde", 197f, 1.6f, 8.4f, 3.2f, CProp2, -5);
         Prop("Cocuk_Yatak", 197f, 0.9f, 7.6f, 1.2f, new Color(0.26f, 0.18f, 0.20f), -4);
-        Plat("Cocuk_Ranza", 197f, 2.6f, 8f, 0.6f);
+        Plat("Cocuk_Ranza", 197f, 2.2f, 8f, 0.6f);
+        Plat("Cocuk_Tabure", 202.5f, 0.7f, 2.4f, 1.4f);
 
         Plat("Cocuk_Sandik", 208f, 0.9f, 3.5f, 1.8f);
-        Plat("Cocuk_Raf", 216f, 3.4f, 4f);
-        Prop("Cocuk_RafDirek", 216f, 2.4f, 0.3f, 1.6f, CProp2, -1);
+        Plat("Cocuk_Raf", 213f, 3.2f, 4f);
+        Prop("Cocuk_RafDirek", 213f, 2.2f, 0.3f, 1.6f, CProp2, -1);
 
         // Yerde oyuncaklar
         for (int i = 0; i < 4; i++)
@@ -397,9 +400,9 @@ public static class AlevLevelBuilder
             Prop($"Arka_Sayac{i}", 236f + i * 20f, 5.4f, 2.4f, 2.8f, CProp2, -3);
 
         Plat("Arka_Kasa1", 238f, 1.6f, 5f, 0.6f);
-        Plat("Arka_Kasa2", 250f, 3.2f, 4f);
+        Plat("Arka_Kasa2", 245f, 3.2f, 4f);
         Plat("Arka_Kasa3", 262f, 1.8f, 5f, 0.6f);
-        Plat("Arka_Kiris", 276f, 3.6f, 6f);
+        Plat("Arka_Kiris", 270f, 3.6f, 6f);
         Plat("Arka_Kasa4", 288f, 1.8f, 4f, 0.6f);
 
         Prop("Arka_KasaGovde1", 238f, 0.8f, 4.6f, 1.6f, CProp2, -1);
@@ -445,7 +448,7 @@ public static class AlevLevelBuilder
                  new Color(0.20f, 0.17f, 0.15f), -3);
 
         Plat("ArkaKapi_Kasa1", 302f, 1.8f, 5f, 0.6f);
-        Plat("ArkaKapi_Kasa2", 312f, 3.4f, 4f);
+        Plat("ArkaKapi_Kasa2", 308f, 3.4f, 4f);
         Plat("ArkaKapi_Kasa3", 321f, 1.8f, 5f, 0.6f);
         Prop("ArkaKapi_KasaGovde1", 302f, 0.9f, 4.6f, 1.8f, CProp2, -1);
         Prop("ArkaKapi_KasaGovde3", 321f, 0.9f, 4.6f, 1.8f, CProp2, -1);

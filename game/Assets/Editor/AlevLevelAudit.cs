@@ -110,12 +110,17 @@ public static class AlevLevelAudit
                 if (q.t == p.t) continue;
 
                 float rise = p.top - q.top;
-                if (rise <= 0f) { reachable = true; break; }   // asagidan degil, yandan
                 if (rise > SafeRise) continue;
 
-                // Yatay olarak ulasilabilir mesafede mi?
                 float gap = Mathf.Max(0f, Mathf.Max(q.left - p.right, p.left - q.right));
-                float allowed = rise > 1.5f ? 3.5f : (rise > 0.6f ? 4.5f : 5f);
+
+                // ⚠️ ESKI HATA: rise <= 0 ise "ulasilabilir" deyip geciyordu,
+                // YATAY MESAFEYE BAKMADAN. Yani odanin obur ucundaki yuksek
+                // bir raf, yerden cikilamayan piyanoyu "ulasilabilir"
+                // gosteriyordu. Yukaridan/yandan gelmek de yakinlik ister.
+                float allowed = rise <= 0f ? 5f
+                              : rise > 1.5f ? 3.5f
+                              : rise > 0.6f ? 4.5f : 5f;
 
                 if (gap <= allowed) { reachable = true; break; }
             }
