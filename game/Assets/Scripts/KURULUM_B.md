@@ -419,14 +419,20 @@ kurulur — Kisi A'ya bagli degildir, TestScene_B'de bastan sona test edilir.
 
 1. `Karabas` objesine sag tik → **2D Object → Sprites → Square** · adi
    **`TrappedFire`**
-2. **Position**: Karabas'in TAM UZERINDE, orn. X = `0`, Y = `0.3`
+2. **Layer → Enemy** ⚠️ **EN KRITIK ADIM, ATLAMAYIN.**
+   Kisi A'nin `WaterGun`'i sadece `hitLayers` maskesindeki objeleri tarar ve
+   o maske **`Enemy`**'ye ayarli. `TrappedFire` `Default` layer'inda kalirsa
+   **su ona hic degmez, Karabas ASLA kurtarilamaz** ve oyun oradan devam
+   etmez. (Tag `Dog` olan Karabas'in KENDISI degil, sadece bu ates cocugu
+   `Enemy` layer'inda olacak.)
+3. **Position**: Karabas'in TAM UZERINDE, orn. X = `0`, Y = `0.3`
    (Karabas'i orten bir ates gibi gorunmeli)
-3. **Scale**: X = `0.7`, Y = `0.7`
-4. Sprite Renderer → **Color** → turuncu/kirmizi (WallMonster'daki gibi)
-5. **Add Component → Box Collider 2D** — **Is Trigger** ✅ gerekmez, ama
+4. **Scale**: X = `0.7`, Y = `0.7`
+5. Sprite Renderer → **Color** → turuncu/kirmizi (WallMonster'daki gibi)
+6. **Add Component → Box Collider 2D** — **Is Trigger** ✅ gerekmez, ama
    WaterGun/TestWaterSprayer `OverlapBox` ile IWaterDamageable arayacagi
    icin trigger olmasi sorun yaratmaz, isaretleyebilirsiniz.
-6. **Add Component → Trapped Fire Cover**
+7. **Add Component → Trapped Fire Cover**
 
 ## 7.2 Inspector alanlarini bagla
 
@@ -464,7 +470,7 @@ kopegi izole test etmek icin kullanislidir, biri digerini bozmaz
 
 | Belirti | Sebep |
 |---|---|
-| Su siksam da ates hic azalmiyor | `TrappedFire`'da **Box Collider 2D** yok |
+| Su siksam da ates hic azalmiyor | `TrappedFire`'in **Layer**'i `Enemy` degil (en sik sebep), veya **Box Collider 2D** yok |
 | Ates sonuyor ama kopek takip etmiyor | **Dog** alani yanlis objeyi gosteriyor, veya `Karabas` ile `TrappedFire` ayni ebeveyn altinda degil |
 | Kopek hemen atesle beraber yuruyor | `Delay Before Follow` cok kucuk — kurtarma anina nefes payi birakin |
 
@@ -501,9 +507,12 @@ asset gerektirmiyor (kutu/daire sprite'lar + renk).
    mantigi `EndingSequence` tarafindan yonetiliyor, WallMonster'a gerek yok)
 3. **Scale**: mevcut degerin 4 kati (orn. WallMonster X=1,Y=1.4 ise → X=4,Y=5.6)
 4. Sprite Renderer → **Color** → koyu kirmizi
-5. **Add Component → Boss Core**
-6. Baslangicta **devre disi birakin**
-7. `Boss`'a sag tik → **Create Empty** · adi **`BossFirePoint`** — atesin
+5. **Layer → Enemy** olduğunu dogrulayin (WallMonster'dan devralmis olmali).
+   Degilse `WaterGun` bossa su sikildigini fark etmez, oyuncu "olduremiyorum"
+   yerine "oyun bozuk" hisseder.
+6. **Add Component → Boss Core**
+7. Baslangicta **devre disi birakin**
+8. `Boss`'a sag tik → **Create Empty** · adi **`BossFirePoint`** — atesin
    cikacagi nokta
 
 ## 8.4 Hayalet gorseli
