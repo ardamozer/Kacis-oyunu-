@@ -199,6 +199,11 @@ public static class AlevLevelBuilder
 
         Fire("Antre_Alev1", 30f, 1f, 1.8f, 2.6f);
         Fire("Antre_Alev2", 2f, 6.5f, 1.3f, 1.9f);
+
+        // Kalorifer peteginden sizan su. Denetim "susuz bolge" dedi:
+        // oyuncu sonda buraya boss icin geri duşuyor, susuz kalmamali.
+        Tap("Antre_Kalorifer", 31f, 1.2f, WaterSource.SourceType.Infinite, 25f,
+            new Color(0.25f, 0.60f, 0.95f), 1f, 2.2f);
     }
 
     // ==================================================================
@@ -377,9 +382,23 @@ public static class AlevLevelBuilder
         // Olumden ONCE dolsun — kacis yolu susuz kalmasin
         Tap("TavanB_Musluk", 210f, 17.4f, WaterSource.SourceType.Infinite, 30f,
             new Color(0.25f, 0.60f, 0.95f), 1.2f, 1.8f);
-        // Yalniz bolumde tek kullanimlik acil dolum
+        // Yalniz bolumde tek kullanimlik hizli dolum
         Tap("TavanD_Bidon", 108f, 17.2f, WaterSource.SourceType.OneShot, 50f,
             new Color(0.20f, 0.70f, 0.85f), 1.4f, 1.6f);
+
+        // ---- PATLAK BORULAR — yalniz bolumun kilitlenme sigortasi ----
+        // Denetim TavanD ve TavanAntre'yi "susuz bolge" olarak isaretledi.
+        // Buyumus yer atesi artik sadece suyla soniyor, yani sonsuz kaynak
+        // olmadan oyuncu gercekten sikisabilir.
+        //
+        // Ama bu bolumun gerilimi de bozulmamali. Cozum: SONSUZ ama YAVAS
+        // (saniyede 15, muslugun yarisi). Doldurmak icin beklemek zorundasiniz
+        // ve o sirada atesler buyuyor. Kilitlenme yok, baski duruyor.
+        Tap("TavanD_PatlakBoru", 122f, 17.4f, WaterSource.SourceType.Infinite, 15f,
+            new Color(0.22f, 0.52f, 0.85f), 0.8f, 2f);
+
+        Tap("TavanAntre_PatlakBoru", 17f, 17.4f, WaterSource.SourceType.Infinite, 15f,
+            new Color(0.22f, 0.52f, 0.85f), 0.8f, 2f);
 
         Beam(1,  56f, 14.0f, "Salon - ILK KARSILASMA, genis ve guvenli");
         Beam(2, 132f, 14.6f, "Mutfak");
