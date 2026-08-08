@@ -53,6 +53,17 @@ public class EndingSequence : MonoBehaviour
     public float impactShakeDuration = 0.4f;
     public float impactShakeMagnitude = 0.55f;
 
+    [Header("Olum — ses")]
+    [Tooltip("Tahta yere carpinca calar. Bos birakilabilir.")]
+    public AudioClip crashClip;
+    [Range(0f, 1f)] public float crashVolume = 1f;
+    [Tooltip("Carpma sesi duyulduktan sonra sessizlige gecise kadar bekleme.\n" +
+             "Cok kisa olursa carpma kesilir, cok uzun olursa sessizlik gec gelir.")]
+    public float silenceStartDelay = 0.45f;
+    [Tooltip("Karabas'in hayaleti gecerken calar. Bos birakilabilir.")]
+    public AudioClip ghostClip;
+    [Range(0f, 1f)] public float ghostVolume = 0.8f;
+
     [Header("Boss")]
     [Tooltip("BossCore tasiyan dev alev objesi. Sahnede devre disi baslamali.")]
     public GameObject bossObject;
@@ -139,8 +150,12 @@ public class EndingSequence : MonoBehaviour
     {
         SetPlayerControl(false);
 
+        // ⚠️ SES BURADA KESILMIYOR — carpmadan SONRA kesiliyor.
+        // PLAN.md "3 saniye tum sesler kesilir" diyor; o sessizlik carpmanin
+        // ARDINDAN gelen bosluk. Bastan kisarsak tahtanin dusmesi sessiz olur
+        // ve sahnenin en sert ani kaybolur. Gurultulu carpma -> ani mutlak
+        // sessizlik, tersinden cok daha guclu.
         float previousVolume = AudioListener.volume;
-        AudioListener.volume = 0f; // PLAN.md: "3 saniye, tum sesler kesilir"
 
         // ⚠️ SAHNENIN TAMAMI BU NOKTA UZERINE KURULU.
         // Tahta, oyuncunun TAM DURDUGU yere duser. Karabas oraya kosar,
@@ -182,10 +197,16 @@ public class EndingSequence : MonoBehaviour
 
             yield return new WaitForSeconds(debrisImpactDelay);
 
+            if (crashClip != null)
+                AudioSource.PlayClipAtPoint(crashClip, impactPoint, crashVolume);
+
             // Carpma anini bedene hissettir. FallingDebris kendi sarsintisini
             // zaten yapiyor; bu onun ustune binen, daha agir ve kisa bir vurus.
             if (CameraShake.Instance != null)
                 CameraShake.Instance.Shake(impactShakeDuration, impactShakeMagnitude);
+
+            // Carpma duyuldu — SIMDI sessizlik. Bu bosluk sahnenin kendisi.
+            yield return new WaitForSeconds(silenceStartDelay);
         }
         else if (bigFlameVisual != null)
         {
@@ -195,6 +216,9 @@ public class EndingSequence : MonoBehaviour
             bigFlameVisual.SetActive(true);
             yield return ScaleRoutine(bigFlameVisual.transform, Vector3.zero, bigFlameBaseScale, flameRiseDuration);
         }
+
+        // Carpma sesi duyuldu, simdi mutlak sessizlik (PLAN.md: 3 saniye).
+        AudioListener.volume = 0f;
 
         // Kopek gorunmez olur — kanli/grafik degil, sessiz ve yumusak (PLAN.md).
         // Tahta indikten SONRA gizleniyor ki carpma gorunur olsun.
@@ -338,6 +362,9 @@ public class EndingSequence : MonoBehaviour
         {
             ghostVisual.SetActive(true);
             ghostVisual.transform.position = ghostStart.position;
+
+            if (ghostClip != null)
+                AudioSource.PlayClipAtPoint(ghostClip, ghostStart.position, ghostVolume);
 
             SpriteRenderer ghostSprite = ghostVisual.GetComponentInChildren<SpriteRenderer>();
             float ghostAlpha = ghostSprite != null ? ghostSprite.color.a : 1f;

@@ -25,6 +25,9 @@ public class TrappedFireCover : MonoBehaviour, IWaterDamageable
     public float maxHealth = 18f;
     public Color hitFlashColor = Color.white;
     public float extinguishDuration = 0.3f;
+    [Tooltip("Sonerken calar. Bos birakilabilir.")]
+    public AudioClip extinguishClip;
+    [Range(0f, 1f)] public float extinguishVolume = 0.8f;
 
     [Header("Kurtarma sirasi")]
     [Tooltip("Ates sonup OnRescued cagrildiktan sonra, StartFollowing'e kadar bekleme.")]
@@ -80,6 +83,11 @@ public class TrappedFireCover : MonoBehaviour, IWaterDamageable
     {
         isExtinguished = true;
         if (bodyCollider != null) bodyCollider.enabled = false;
+
+        // Obje sonunda SetActive(false) oluyor; kendi AudioSource'u sesi
+        // ortasinda keserdi. PlayClipAtPoint gecici bir obje yaratir.
+        if (extinguishClip != null)
+            AudioSource.PlayClipAtPoint(extinguishClip, transform.position, extinguishVolume);
 
         Vector3 startScale = transform.localScale;
         Color startColor = sprite != null ? sprite.color : Color.white;

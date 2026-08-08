@@ -51,6 +51,14 @@ public class WallMonster : MonoBehaviour, IWaterDamageable
     public Color hitFlashColor = Color.white;
     public float deathDuration = 0.35f;
 
+    [Header("Ses (hepsi opsiyonel)")]
+    [Tooltip("Alev firlatirken calar.")]
+    public AudioClip shootClip;
+    [Range(0f, 1f)] public float shootVolume = 0.5f;
+    [Tooltip("Sonup olurken calar.")]
+    public AudioClip deathClip;
+    [Range(0f, 1f)] public float deathVolume = 0.7f;
+
     // ---- Ic durum ----
     Vector3 hiddenPos;      // duvarin icindeki baslangic konumu
     Vector3 shownPos;       // tamamen cikmis konum
@@ -159,6 +167,9 @@ public class WallMonster : MonoBehaviour, IWaterDamageable
 
         GameObject flame = Instantiate(flamePrefab, transform.position + offset, Quaternion.identity);
 
+        if (shootClip != null)
+            AudioSource.PlayClipAtPoint(shootClip, transform.position, shootVolume);
+
         // Alev kendi yonunu bilmiyor — biz veriyoruz.
         FlameProjectile projectile = flame.GetComponent<FlameProjectile>();
         if (projectile != null) projectile.Launch(new Vector2(dir, 0f));
@@ -189,6 +200,10 @@ public class WallMonster : MonoBehaviour, IWaterDamageable
     {
         isDead = true;
         if (bodyCollider != null) bodyCollider.enabled = false;
+
+        // Obje Destroy edilecek — kendi AudioSource'u sesi keserdi.
+        if (deathClip != null)
+            AudioSource.PlayClipAtPoint(deathClip, transform.position, deathVolume);
 
         // Sonme animasyonu: kucul + saydamlas. Yeni asset gerektirmez.
         Vector3 startScale = transform.localScale;

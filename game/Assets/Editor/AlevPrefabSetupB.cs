@@ -35,12 +35,24 @@ public static class AlevPrefabSetupB
     const int SpriteSize = 16;
     const int PixelsPerUnit = 16;
 
+    const string AudioFolder = "Assets/Audio/Generated";
+
+    /// <summary>
+    /// Ses varsa dondurur, yoksa null. Sesler henuz uretilmemisse
+    /// prefablar sessiz kurulur — kod null kontrolu yapiyor, hata olmaz.
+    /// Uretmek icin: ALEV → Kisi B — Sesleri Uret
+    /// </summary>
+    static AudioClip Clip(string name)
+    {
+        return AssetDatabase.LoadAssetAtPath<AudioClip>(AudioFolder + "/" + name + ".wav");
+    }
+
     // ==================================================================
     //  1) PREFABLAR
     // ==================================================================
 
     [MenuItem("ALEV/Kisi B — Prefablari Kur", false, 20)]
-    public static void BuildPrefabs()
+    public static void BuildPrefabsMenu()
     {
         if (!EditorUtility.DisplayDialog(
                 "Kisi B prefablarini kur",
@@ -55,6 +67,12 @@ public static class AlevPrefabSetupB
             return;
         }
 
+        BuildPrefabs();
+    }
+
+    /// <summary>Diyalogsuz surum — tazeleme komutu bunu cagirir.</summary>
+    public static void BuildPrefabs()
+    {
         if (!CheckLayersAndTags()) return;
 
         EnsureFolder(PrefabRoot);
@@ -167,6 +185,8 @@ public static class AlevPrefabSetupB
         wm.maxHealth = 40f;
         wm.flamePrefab = flamePrefab;                  // ASSET prefabi, sahne objesi degil
         wm.firePoint = firePoint.transform;
+        wm.shootClip = Clip("FlameWhoosh");
+        wm.deathClip = Clip("FireExtinguish");
 
         SavePrefab(go, EnemyPrefabFolder + "/WallMonster.prefab");
         Object.DestroyImmediate(go);
@@ -213,10 +233,27 @@ public static class AlevPrefabSetupB
         ff.damageInterval = 1f;
         ff.maxHealth = 25f;
         ff.fillBar = fillBar.transform;                // BarFill degil, FillBar capasi
+        ff.extinguishClip = Clip("FireExtinguish");
 
         // Titreme buyume ve sonme animasyonlarini ezmez — taban olcek
         // disaridan degisince kendini yeniden hizalar.
         go.AddComponent<FireFlicker>();
+
+        // Surekli citirti. 3D ses: oyuncu yaklastikca yukselir, uzaklasinca
+        // kesilir — sahnede 20 ates varsa hepsi ayni anda calmaz.
+        AudioClip crackle = Clip("FireCrackle");
+        if (crackle != null)
+        {
+            AudioSource loop = go.AddComponent<AudioSource>();
+            loop.clip = crackle;
+            loop.loop = true;
+            loop.playOnAwake = true;
+            loop.volume = 0.35f;
+            loop.spatialBlend = 1f;                    // tamamen 3D
+            loop.rolloffMode = AudioRolloffMode.Linear;
+            loop.minDistance = 1.5f;
+            loop.maxDistance = 9f;
+        }
 
         SavePrefab(go, EnemyPrefabFolder + "/FloorFire.prefab");
         Object.DestroyImmediate(go);
@@ -238,12 +275,8 @@ public static class AlevPrefabSetupB
         AudioSource audio = go.AddComponent<AudioSource>();
         audio.playOnAwake = false;
 
-        // Sesler varsa bagla. Yoksa bos kalir — DogCompanion null kontrolu
-        // yapiyor, sessizce calisir. Uretmek icin: ALEV → Kisi B — Sesleri Uret
-        AudioClip whine = AssetDatabase.LoadAssetAtPath<AudioClip>(
-            "Assets/Audio/Generated/DogWhine.wav");
-        AudioClip bark = AssetDatabase.LoadAssetAtPath<AudioClip>(
-            "Assets/Audio/Generated/DogBark.wav");
+        AudioClip whine = Clip("DogWhine");
+        AudioClip bark = Clip("DogBark");
 
         DogCompanion dog = go.AddComponent<DogCompanion>();
         dog.followDistance = 1.5f;
@@ -286,6 +319,7 @@ public static class AlevPrefabSetupB
         cover.maxHealth = 18f;
         cover.delayBeforeFollow = 1.2f;
         cover.dog = dog;                               // ayni prefab icinde, referans korunur
+        cover.extinguishClip = Clip("FireExtinguish");
 
         // Test yardimcisi: E / R / T tuslariyla elle tetikleme.
         go.AddComponent<TestDogTrigger>().interactRange = 3f;
@@ -299,7 +333,7 @@ public static class AlevPrefabSetupB
     // ==================================================================
 
     [MenuItem("ALEV/Kisi B — Finali Sahneye Kur", false, 21)]
-    public static void BuildEnding()
+    public static void BuildEndingMenu()
     {
         if (!EditorUtility.DisplayDialog(
                 "Finali sahneye kur",
@@ -312,6 +346,12 @@ public static class AlevPrefabSetupB
             return;
         }
 
+        BuildEnding();
+    }
+
+    /// <summary>Diyalogsuz surum — tazeleme komutu bunu cagirir.</summary>
+    public static void BuildEnding()
+    {
         if (!CheckLayersAndTags()) return;
 
         Sprite square = GetOrCreateSprite(SquarePath, Shape.Square);
@@ -401,6 +441,8 @@ public static class AlevPrefabSetupB
         ending.bigFlameVisual = bigFlame;      // yedek yol (tahta yoksa)
         ending.deathDebris = fd;               // tercih edilen yol
         ending.debrisImpactDelay = 0.55f;
+        ending.crashClip = Clip("DebrisCrash");
+        ending.ghostClip = Clip("GhostWhoosh");
         ending.pushDistance = 2f;
         ending.collarPickup = collar;
         ending.silenceDuration = 3f;

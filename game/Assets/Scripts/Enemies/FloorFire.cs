@@ -53,6 +53,9 @@ public class FloorFire : MonoBehaviour, IStompable, IWaterDamageable
 
     [Header("Sonme")]
     public float extinguishDuration = 0.25f;
+    [Tooltip("Sonerken calar. Bos birakilabilir.")]
+    public AudioClip extinguishClip;
+    [Range(0f, 1f)] public float extinguishVolume = 0.7f;
 
     /// <summary>Bar doldu mu? Karabas ve UI okuyabilir.</summary>
     public bool IsGrown { get; private set; }
@@ -145,6 +148,12 @@ public class FloorFire : MonoBehaviour, IStompable, IWaterDamageable
     IEnumerator ExtinguishRoutine()
     {
         IsExtinguished = true;
+
+        // PlayClipAtPoint kullaniyoruz, kendi AudioSource'umuzu degil:
+        // bu obje birazdan Destroy ediliyor ve yok olan objenin
+        // AudioSource'u sesi ortasinda kesiyor.
+        if (extinguishClip != null)
+            AudioSource.PlayClipAtPoint(extinguishClip, transform.position, extinguishVolume);
         if (bodyCollider != null) bodyCollider.enabled = false;
         if (fillBar != null) fillBar.gameObject.SetActive(false);
 
