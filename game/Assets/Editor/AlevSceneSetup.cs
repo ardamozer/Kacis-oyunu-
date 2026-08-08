@@ -134,6 +134,11 @@ public static class AlevSceneSetup
         rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
         rb.interpolation = RigidbodyInterpolation2D.Interpolate;   // titremeyi onler
 
+        // ⚠️ Hareketsiz kalan Rigidbody2D "uyur" ve uyuyan cisim icin
+        // OnTriggerStay2D cagrilmaz — musluk onunde DURUNCA su dolmamasinin
+        // sebebi buydu. Oyuncu asla uyumasin.
+        rb.sleepMode = RigidbodySleepMode2D.NeverSleep;
+
         player.AddComponent<BoxCollider2D>();
 
         // Zemin kontrol noktasi. Local -0.52, parent scale 1.6 →
