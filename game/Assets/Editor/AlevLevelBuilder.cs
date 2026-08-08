@@ -39,12 +39,12 @@ public static class AlevLevelBuilder
     static readonly Color CFloor   = new Color(0.19f, 0.15f, 0.13f);
     static readonly Color CPlat    = new Color(0.44f, 0.32f, 0.21f);   // ACIK — basilir
     static readonly Color CPlatTop = new Color(0.68f, 0.50f, 0.30f);   // ust kenar parlak
-    static readonly Color CProp    = new Color(0.135f, 0.110f, 0.105f);  // KOYU — dekor
-    static readonly Color CProp2   = new Color(0.165f, 0.130f, 0.120f);  // dekor, biraz acik
+    static readonly Color CProp    = new Color(0.16f, 0.13f, 0.12f);   // KOYU — dekor
+    static readonly Color CProp2   = new Color(0.21f, 0.16f, 0.14f);   // dekor, biraz acik
     static readonly Color CDoor    = new Color(0.36f, 0.22f, 0.14f);
     static readonly Color CBack    = new Color(0.135f, 0.105f, 0.10f);
-    static readonly Color CTrim    = new Color(0.19f, 0.145f, 0.125f);   // supurgelik
-    static readonly Color CGlass   = new Color(0.105f, 0.125f, 0.155f);  // pencere cami
+    static readonly Color CTrim    = new Color(0.26f, 0.19f, 0.16f);   // supurgelik
+    static readonly Color CGlass   = new Color(0.13f, 0.16f, 0.20f);   // pencere cami
 
     // ---- ODALAR: hepsi yan yana, y=0 zemininde. Yukseklikler serbest. ----
     //
@@ -278,7 +278,7 @@ public static class AlevLevelBuilder
         Prop("Mutfak_Fayans", 127f, 5.5f, 46f, 5f, new Color(0.155f, 0.16f, 0.155f), -16);
         for (int i = 0; i < 10; i++)
             Prop($"Mutfak_FayansCizgi{i}", 105f + i * 4.6f, 5.5f, 0.14f, 5f,
-                 new Color(0.155f, 0.163f, 0.155f), -15);
+                 new Color(0.20f, 0.21f, 0.20f), -15);
 
         Prop("Mutfak_Buzdolabi", 106f, 3.4f, 4.2f, 6.8f, CProp2, -6);
         Prop("Mutfak_BuzdolabiKapi", 106f, 3.4f, 0.2f, 6.6f, CProp, -5);
@@ -320,9 +320,9 @@ public static class AlevLevelBuilder
     static void Koridor()
     {
         // Koridor = duvarinda SIRA SIRA fotograf olan yer. Kimligi bu.
-        Frame("Koridor_Foto0", 158f, 4.8f, 1.6f, 2.0f, new Color(0.145f, 0.125f, 0.115f));
-        Frame("Koridor_Foto1", 164f, 4.4f, 2.2f, 1.6f, new Color(0.145f, 0.125f, 0.115f));
-        Frame("Koridor_Foto2", 181f, 4.7f, 1.4f, 1.8f, new Color(0.145f, 0.125f, 0.115f));
+        for (int i = 0; i < 6; i++)
+            Frame($"Koridor_Foto{i}", 157f + i * 5.2f, 4.6f, 1.8f, 2.2f,
+                  new Color(0.19f, 0.16f, 0.14f));
 
         // Duvar aplikleri
         for (int i = 0; i < 3; i++)
@@ -354,9 +354,9 @@ public static class AlevLevelBuilder
     {
         // Cocuk odasi: cizimler, oyuncaklar, boy cizgileri. Bu odanin
         // isini duygu yapiyor — oyuncu burada birinin yasadigini anlamali.
-        Frame("Cocuk_Cizim0", 202f, 8.6f, 1.8f, 2.2f, new Color(0.24f, 0.21f, 0.155f));
-        Frame("Cocuk_Cizim1", 207f, 8.0f, 2.4f, 1.8f, new Color(0.24f, 0.21f, 0.155f));
-        Frame("Cocuk_Cizim2", 213f, 8.8f, 1.5f, 1.9f, new Color(0.24f, 0.21f, 0.155f));
+        for (int i = 0; i < 4; i++)
+            Frame($"Cocuk_Cizim{i}", 202f + i * 4.5f, 8.4f, 2.2f, 2.6f,
+                  new Color(0.34f, 0.30f, 0.22f));
 
         Window("Cocuk_Pencere", 220f, 8f, 3.6f, 3.4f);
 
@@ -710,17 +710,17 @@ public static class AlevLevelBuilder
     /// <summary>Duvara asili tablo/ayna — cercevesiyle, bosluga asilmasin diye.</summary>
     static void Frame(string name, float x, float y, float w, float h, Color inner)
     {
-        Prop(name + "_Cerceve", x, y, w + 0.3f, h + 0.3f, new Color(0.21f, 0.155f, 0.11f), -3);
+        Prop(name + "_Cerceve", x, y, w + 0.35f, h + 0.35f, new Color(0.30f, 0.22f, 0.14f), -3);
         Prop(name, x, y, w, h, inner, -2);
     }
 
     /// <summary>Pencere — cam + cercevesi + hac seklinde bolme.</summary>
     static void Window(string name, float x, float y, float w, float h)
     {
-        Prop(name + "_Cerceve", x, y, w + 0.5f, h + 0.5f, new Color(0.20f, 0.155f, 0.115f), -4);
+        Prop(name + "_Cerceve", x, y, w + 0.5f, h + 0.5f, new Color(0.28f, 0.21f, 0.15f), -4);
         Prop(name + "_Cam", x, y, w, h, CGlass, -3);
-        Prop(name + "_Dikey", x, y, 0.18f, h, new Color(0.20f, 0.155f, 0.115f), -2);
-        Prop(name + "_Yatay", x, y, w, 0.18f, new Color(0.20f, 0.155f, 0.115f), -2);
+        Prop(name + "_Dikey", x, y, 0.18f, h, new Color(0.28f, 0.21f, 0.15f), -2);
+        Prop(name + "_Yatay", x, y, w, 0.18f, new Color(0.28f, 0.21f, 0.15f), -2);
     }
 
     /// <summary>Raflari GORUNEN kitaplik — duz kahverengi dikdortgen yerine.</summary>
@@ -735,7 +735,7 @@ public static class AlevLevelBuilder
             for (int j = 0; j < 3; j++)
                 Prop($"{name}_Kitap{i}{j}", x - w * 0.3f + j * w * 0.3f,
                      yBottom + i * step + 0.75f, w * 0.22f, 1.1f,
-                     new Color(0.20f + j * 0.035f, 0.115f, 0.10f), -1);
+                     new Color(0.30f + j * 0.05f, 0.15f, 0.13f), -1);
     }
 
     /// <summary>
@@ -756,7 +756,7 @@ public static class AlevLevelBuilder
         {
             float sx = x0 + (i + 0.5f) * w / stripes;
             Prop($"Cizgi_{name}_{i}", sx, (h + 1f) * 0.5f, 0.16f, h - 2f,
-                 tint * 1.12f, -18);
+                 tint * 1.35f, -18);
         }
     }
 
