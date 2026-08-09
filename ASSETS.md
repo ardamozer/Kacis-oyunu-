@@ -202,8 +202,10 @@ olduğu için zaten tematik, ve stil farklılıklarını şaşırtıcı derecede
 
 ## 📋 itch.io sayfasına yazılacak kredi metni
 
-Jam sayfasında **Credits** başlığı altına bunu koyun. 2 dakika sürer,
-diskalifiye olmanızı engeller.
+> ⛔ **BU BLOK GEÇERSİZ — KULLANMAYIN.** Aşağıdaki paketlerin hiçbiri projeye
+> indirilmedi (tüm sprite'lar kodla üretiliyor) ve asıl **zorunlu** olan
+> Paulo_Gonçalves (CC BY 4.0 havlama) atfı burada YOK.
+> **Geçerli kredi metni: `ITCH_SAYFASI.md` → "Krediler".**
 
 ```
 Assets:

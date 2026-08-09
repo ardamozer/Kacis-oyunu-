@@ -91,7 +91,10 @@ Farklı sanatçıların çizimlerini tek bir bütün haline getirmek için:
 
 ## 📝 6. Hazır Itch.io Kredi Metni (Copy-Paste)
 
-İndirdiğiniz ev asset'ini itch.io sayfanıza şu şekilde ekleyebilirsiniz:
+> ⛔ **GEÇERSİZ — KULLANMAYIN.** Bu paketler indirilmedi; zorunlu olan
+> Paulo_Gonçalves (CC BY 4.0) atfı burada yok.
+> **Geçerli metin: `ITCH_SAYFASI.md` → "Krediler".**
+> (Aşağısı, asset'ler indirilirse diye duruyor.)
 
 ```markdown
 Credits & Assets:

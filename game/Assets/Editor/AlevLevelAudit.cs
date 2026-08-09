@@ -21,9 +21,17 @@ public static class AlevLevelAudit
     // jumpForce 15, gravityScale 4, Physics2D.gravity.y -9.81
     //   v^2 / (2 * g * scale) = 225 / (2 * 9.81 * 4) = 2.87
     const float MaxJump = 2.87f;
-    const float SafeRise = 2.1f;      // pratikte guvenli sinir
+    const float GroundStep = 2.25f;   // ZEMINDEN ilk basamak. DEVAM.md: "<= 2.2 olmali"
+    const float SafeRise = 2.4f;      // platformdan platforma guvenli yukselme
+    const float TightRise = 2.0f;     // bunun ustu calisir ama oyuncuyu zorlar
     const float PlayerW = 0.8f;
     const float PlayerH = 1.6f;
+
+    // Duvar tespiti: uzun ve ince olan sey platform degildir, ustune
+    // cikilmasi da beklenmez. Bunlari elemezsek denetim her duvari
+    // "ulasilamaz platform" diye bildiriyor ve rapor gurultuye bogluyor.
+    const float WallMinHeight = 4f;
+    const float WallMaxWidth = 2.5f;
 
     [MenuItem("ALEV/Seviyeyi Denetle", false, 2)]
     public static void Audit()
@@ -66,6 +74,12 @@ public static class AlevLevelAudit
                 if (h.isTrigger) continue;
                 if (h.GetComponentInParent<PlayerController>() != null) continue;
 
+                // ⚠️ Denetim EDIT MODE'da calisir — Start() hic calismamistir.
+                // Alev duvari sahnede yazildigi yerde, collider'i ACIK durur;
+                // oyunda ise FlameWallGate.Start() onu zeminin altina indirip
+                // collider'i kapatir. Elemezsek her seferinde sahte "tikali kapi".
+                if (h.GetComponentInParent<FlameWallGate>() != null) continue;
+
                 r.AppendLine($"❌ TIKALI KAPI: '{t.name}' (x={t.position.x:0.#}) " +
                              $"→ '{h.name}' engelliyor");
                 Debug.LogWarning($"Tikali kapi: {t.name} ← {h.name}", h.gameObject);
@@ -83,7 +97,7 @@ public static class AlevLevelAudit
 
     static int CheckPlatformReach(StringBuilder r)
     {
-        var solids = new List<(Transform t, float top, float left, float right)>();
+        var solids = new List<Solid>();
 
         foreach (var col in Object.FindObjectsByType<BoxCollider2D>(FindObjectsSortMode.None))
         {
@@ -91,19 +105,24 @@ public static class AlevLevelAudit
             if (col.gameObject.layer != LayerMask.NameToLayer("Ground")) continue;
 
             Bounds b = col.bounds;
-            solids.Add((col.transform, b.max.y, b.min.x, b.max.x));
+            solids.Add(new Solid(col.transform, b.max.y, b.min.x, b.max.x, b.min.y));
         }
 
         // ---- ZINCIR TAKIBI (flood fill) ----
         // Eski surum tek adim bakiyordu: "A'dan B'ye ziplanir mi?" Ama A'nin
         // kendisine ulasilamiyorsa B de ulasilamaz. Artik ZEMINDEN baslayip
         // ulasilabilir kumeyi buyutuyoruz — gercek durum bu.
-        var targets = solids.Where(s => s.right - s.left <= 14f && s.top >= 1.5f).ToList();
+        //
+        // ⚠️ Basilabilecek HER SEY zincire girmeli (duvarlar haric). Eski surum
+        // zincirin kendisini de "top >= 1.5" ile suzuyordu; alcak bir sandik
+        // basamak olarak kullanilamiyordu ve ustundeki platform sahte olarak
+        // "ulasilamaz" cikiyordu. Suzgec artik sadece RAPORLAMAYA uygulaniyor.
+        var targets = solids.Where(s => !s.IsWall).ToList();
         var reached = new HashSet<int>();
 
         // Zeminden dogrudan cikilabilenler
         for (int i = 0; i < targets.Count; i++)
-            if (targets[i].top <= SafeRise) reached.Add(i);
+            if (targets[i].top <= GroundStep) reached.Add(i);
 
         bool grew = true;
         while (grew)
@@ -128,22 +147,62 @@ public static class AlevLevelAudit
         {
             if (reached.Contains(i)) continue;
             var p = targets[i];
+
+            // Cok genis zeminler ve yerdeki alcak parcalar rapor disi:
+            // bunlarin "ulasilabilirligi" zaten sorulmuyor.
+            if (p.Width > 14f || p.top < 1.5f) continue;
+
             r.AppendLine($"⚠️ ULASILAMAZ: '{p.t.name}' (ust={p.top:0.##}) — " +
                          $"zeminden baslayan hicbir zincirle varilamiyor");
             Debug.LogWarning($"Ulasilamaz platform: {p.t.name}", p.t.gameObject);
             found++;
         }
 
+        // ---- SIKI ZIPLAMALAR ----
+        // Ulasilabilir olmasi "rahat" demek degil. Bir platforma ancak
+        // TightRise'in ustunde bir yukselmeyle varilabiliyorsa oyuncu
+        // orayi birkac denemede gecer — jam'de bu, oyunu birakma sebebi.
+        // Sustumak yerine ayrica listeliyoruz ki esigi yukseltmek gercek
+        // sikisikligi gizlemesin.
+        for (int i = 0; i < targets.Count; i++)
+        {
+            if (!reached.Contains(i)) continue;
+            var p = targets[i];
+            if (p.Width > 14f || p.top <= GroundStep) continue;
+
+            float best = float.MaxValue;
+            for (int j = 0; j < targets.Count; j++)
+            {
+                if (i == j || !reached.Contains(j)) continue;
+                if (!CanJump(targets[j], p)) continue;
+                best = Mathf.Min(best, p.top - targets[j].top);
+            }
+
+            if (best > TightRise && best < float.MaxValue)
+            {
+                r.AppendLine($"🔶 SIKI ZIPLAMA: '{p.t.name}' (ust={p.top:0.##}) — " +
+                             $"en kolay giris {best:0.##} yukselme gerektiriyor " +
+                             $"(rahat sinir {TightRise}, fiziksel tavan {MaxJump})");
+                Debug.LogWarning($"Siki ziplama: {p.t.name}", p.t.gameObject);
+                found++;
+            }
+        }
+
         // ---- DUSUNCE GERI CIKILAMAYAN YERLER ----
         // Bir tirmanisin en alt basamagi yerden zor cikiliyorsa, oyuncu
-        // duserse sikisir. Sinir 2.87 (fiziksel maksimum) degil 2.2 olmali:
-        // maksimuma yakin ziplama pratikte "cikilmiyor" demek.
+        // duserse sikisir. Sinir MaxJump (2.87, fiziksel tavan) degil
+        // GroundStep olmali: tavana yakin ziplama pratikte "cikilmiyor" demek.
         foreach (var p in targets)
         {
-            if (p.top <= 2.2f || p.top > SafeRise + 0.8f) continue;
+            if (p.Width > 14f) continue;
+            if (p.top <= GroundStep || p.top > GroundStep + 0.8f) continue;
 
+            // Basamak adayi ARTIK tum katilardan seciliyor. Eskiden 'targets'
+            // "top >= 1.5" ile suzuldugu icin piyano taburesi gibi alcak
+            // basamaklar hic gorunmuyor, piyano da "cikilamaz" sayiliyordu.
             bool hasLowStep = targets.Any(q =>
-                q.top <= 2.2f &&
+                q.t != p.t &&
+                q.top <= GroundStep &&
                 Mathf.Max(0f, Mathf.Max(q.left - p.right, p.left - q.right)) <= 6f);
 
             if (!hasLowStep)
@@ -158,8 +217,26 @@ public static class AlevLevelAudit
         return found;
     }
 
-    static bool CanJump((Transform t, float top, float left, float right) from,
-                        (Transform t, float top, float left, float right) to)
+    /// <summary>Zemin katmanindaki tek bir kati parca.</summary>
+    struct Solid
+    {
+        public readonly Transform t;
+        public readonly float top, left, right, bottom;
+
+        public Solid(Transform t, float top, float left, float right, float bottom)
+        {
+            this.t = t; this.top = top; this.left = left;
+            this.right = right; this.bottom = bottom;
+        }
+
+        public float Width => right - left;
+        public float Height => top - bottom;
+
+        /// <summary>Uzun ve ince: duvar. Platform olarak degerlendirilmez.</summary>
+        public bool IsWall => Height >= WallMinHeight && Width <= WallMaxWidth;
+    }
+
+    static bool CanJump(Solid from, Solid to)
     {
         float rise = to.top - from.top;
         if (rise > SafeRise) return false;

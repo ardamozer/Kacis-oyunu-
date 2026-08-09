@@ -54,7 +54,12 @@ Oynanabilirlik doğrulandıktan sonra: can, su tüketimi, düşman canları, ate
 
 ### 4. itch.io sayfası
 ⚠️ **Havlama sesi CC BY 4.0 — atıf ZORUNLU.** Hukuki gereklilik, nezaket değil.
-Kredi metni `ASSETS.md` sonunda hazır, kopyala-yapıştır.
+Kredi metni **`ITCH_SAYFASI.md` → "Krediler"** bölümünde. Sayfanın tamamı (başlık,
+açıklama, kontroller, tag'ler) da orada, kopyala-yapıştır.
+
+⚠️ `ASSETS.md` ve `EV_ASSETLERI.md` sonundaki kredi bloklarını **KULLANMAYIN** —
+indirilmemiş asset paketlerini listeliyorlar ve asıl zorunlu olan Paulo_Gonçalves
+atfı onlarda YOK.
 
 ---
 

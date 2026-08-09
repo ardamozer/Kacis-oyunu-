@@ -253,10 +253,15 @@ public static class AlevLevelBuilder
         ClimbStep("Salon_T1", 46f, 1.9f, 6f);
         ClimbStep("Salon_T2", 54f, 4.2f, 5f);
         ClimbStep("Salon_T3", 62f, 6.0f, 5f);
-        ClimbStep("Salon_T4", 54f, 7.8f, 4f);
-        ClimbStep("Salon_T5", 62f, 9.6f, 3.5f);
-        ClimbStep("Salon_T6", 53f, 11.4f, 5f);
-        ClimbStep("Salon_T7", 62f, 13.2f, 4f);
+        // ⚠️ Genislikler ve x'ler SERBEST DEGIL. Kule zigzag: tek basamaklar
+        // x=62, cift basamaklar x=54, hepsi 5 genis → her yatay bosluk 3.0.
+        // DEVAM.md kurali: yukselme 1.8 iken bosluk en fazla 3.5 olabilir.
+        // Eskiden T5 dar (3.5) ve T6 sola kaymisti (x=53); bosluklar
+        // 4.25 / 4.75 / 4.5 cikiyor, kule T4'ten sonra ASILMIYORDU.
+        ClimbStep("Salon_T4", 54f, 7.8f, 5f);
+        ClimbStep("Salon_T5", 62f, 9.6f, 5f);
+        ClimbStep("Salon_T6", 54f, 11.4f, 5f);
+        ClimbStep("Salon_T7", 62f, 13.2f, 5f);
         ClimbStep("Salon_T8", 54f, 15.0f, 5f);
         ClimbStep("Salon_T9", 62f, 16.8f, 5f);
 
