@@ -103,6 +103,7 @@ GameObject:
   - component: {fileID: 5382716743905809040}
   - component: {fileID: 3674865645237770340}
   - component: {fileID: 6146878225402071046}
+  - component: {fileID: 7708278376024490019}
   m_Layer: 0
   m_Name: Alev_Buyuk
   m_TagString: Untagged
@@ -120,7 +121,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 3, y: 3.5, z: 1}
+  m_LocalScale: {x: 3.6491477, y: 3.6491477, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4132404100044127287}
@@ -175,8 +176,8 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 2868101353237766674, guid: 8242c8e483377ed4cbe37bdf6a8f6366, type: 3}
-  m_Color: {r: 1, g: 0.55, b: 0.12, a: 0.95}
+  m_Sprite: {fileID: 1098286324429101383, guid: 1f2c0f801fb0a484f9ba8489ad2cadea, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -204,3 +205,23 @@ MonoBehaviour:
   glow: {fileID: 5057694432050739391}
   glowScaleJitter: 0.25
   glowBaseAlpha: 0.35
+--- !u!114 &7708278376024490019
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7627287825651474233}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1427656a9f8abf64bb55ba50b52054ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SimpleSpriteAnimator
+  frames:
+  - {fileID: 1098286324429101383, guid: 1f2c0f801fb0a484f9ba8489ad2cadea, type: 3}
+  - {fileID: 7419590508823533442, guid: 1f2c0f801fb0a484f9ba8489ad2cadea, type: 3}
+  - {fileID: 2333874723133794383, guid: 1f2c0f801fb0a484f9ba8489ad2cadea, type: 3}
+  - {fileID: 6211036013863027259, guid: 1f2c0f801fb0a484f9ba8489ad2cadea, type: 3}
+  fps: 10
+  loop: 1
+  randomizeStart: 1

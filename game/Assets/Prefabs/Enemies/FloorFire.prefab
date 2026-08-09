@@ -46,6 +46,7 @@ GameObject:
   - component: {fileID: 3069733974718319672}
   - component: {fileID: 6952095000810266909}
   - component: {fileID: 5328464314611073375}
+  - component: {fileID: 9004983009252384729}
   m_Layer: 8
   m_Name: FloorFire
   m_TagString: Enemy
@@ -63,7 +64,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.9, y: 0.5, z: 1}
+  m_LocalScale: {x: 0.5213068, y: 0.5213068, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6045882202768832220}
@@ -118,8 +119,8 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 1
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 2868101353237766674, guid: 8242c8e483377ed4cbe37bdf6a8f6366, type: 3}
-  m_Color: {r: 1, g: 0.75, b: 0.3, a: 1}
+  m_Sprite: {fileID: 1098286324429101383, guid: 1f2c0f801fb0a484f9ba8489ad2cadea, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -167,7 +168,7 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1, y: 1}
+    oldSize: {x: 0.6975477, y: 0.9591281}
     newSize: {x: 1, y: 1}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
@@ -313,6 +314,26 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &9004983009252384729
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3691621285808637918}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1427656a9f8abf64bb55ba50b52054ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SimpleSpriteAnimator
+  frames:
+  - {fileID: 1098286324429101383, guid: 1f2c0f801fb0a484f9ba8489ad2cadea, type: 3}
+  - {fileID: 7419590508823533442, guid: 1f2c0f801fb0a484f9ba8489ad2cadea, type: 3}
+  - {fileID: 2333874723133794383, guid: 1f2c0f801fb0a484f9ba8489ad2cadea, type: 3}
+  - {fileID: 6211036013863027259, guid: 1f2c0f801fb0a484f9ba8489ad2cadea, type: 3}
+  fps: 10
+  loop: 1
+  randomizeStart: 1
 --- !u!1 &4251988893567617666
 GameObject:
   m_ObjectHideFlags: 0

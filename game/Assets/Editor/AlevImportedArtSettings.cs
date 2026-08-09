@@ -56,6 +56,14 @@ public class AlevImportedArtSettings : AssetPostprocessor
     {
         ("Dog/",     32, -1f),    // sayfa halinde; pivotu dilimleyici koyuyor
         ("Fireman/", 16,  0f),    // tek kare dosyalar; alt bosluk 0 olculdu
+
+        // ⚠️ 367 keyfi degil, ESKI ALEVDEN hesaplandi.
+        // Eski Flame.png 64x96 @ PPU 100 → dogal boyut 0.64 x 0.96 birim.
+        // Sahnedeki 36 atesin localScale'i o dogal boyuta gore ayarlanmis.
+        // Yeni karenin icerigi 256x352 px; ayni dogal YUKSEKLIGI vermesi
+        // icin PPU = 352 / 0.96 = 367. Boylece butun ates olcekleri
+        // oldugu gibi calisiyor ve hicbir ates yeniden konumlandirilmiyor.
+        ("Fire/",   367, -1f),
     };
 
     void OnPreprocessTexture()

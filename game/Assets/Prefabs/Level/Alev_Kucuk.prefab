@@ -103,6 +103,7 @@ GameObject:
   - component: {fileID: 9119620642854090858}
   - component: {fileID: 8163852663093613425}
   - component: {fileID: 4318327747772663626}
+  - component: {fileID: 4112985258318097611}
   m_Layer: 0
   m_Name: Alev_Kucuk
   m_TagString: Untagged
@@ -120,7 +121,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.4, y: 2, z: 1}
+  m_LocalScale: {x: 2.0852273, y: 2.0852273, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6047989144326292149}
@@ -175,8 +176,8 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 5
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 2868101353237766674, guid: 8242c8e483377ed4cbe37bdf6a8f6366, type: 3}
-  m_Color: {r: 1, g: 0.55, b: 0.12, a: 0.95}
+  m_Sprite: {fileID: 1098286324429101383, guid: 1f2c0f801fb0a484f9ba8489ad2cadea, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -204,3 +205,23 @@ MonoBehaviour:
   glow: {fileID: 8241569664910637106}
   glowScaleJitter: 0.25
   glowBaseAlpha: 0.35
+--- !u!114 &4112985258318097611
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4147224227297040185}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1427656a9f8abf64bb55ba50b52054ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SimpleSpriteAnimator
+  frames:
+  - {fileID: 1098286324429101383, guid: 1f2c0f801fb0a484f9ba8489ad2cadea, type: 3}
+  - {fileID: 7419590508823533442, guid: 1f2c0f801fb0a484f9ba8489ad2cadea, type: 3}
+  - {fileID: 2333874723133794383, guid: 1f2c0f801fb0a484f9ba8489ad2cadea, type: 3}
+  - {fileID: 6211036013863027259, guid: 1f2c0f801fb0a484f9ba8489ad2cadea, type: 3}
+  fps: 10
+  loop: 1
+  randomizeStart: 1
