@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -358,6 +359,28 @@ public static class AlevPrefabSetupB
     static bool BuildEndingValidate() => !EditorApplication.isPlaying;
 
     [MenuItem("ALEV/Kisi B — Finali Sahneye Kur", false, 21)]
+    /// <summary>
+    /// Dilimlenmis kopek sayfasindaki kareleri SAYISAL sirayla dondurur.
+    /// Sayfa yoksa bos dizi — cagiran taraf eski silueti kullanir.
+    ///
+    /// ⚠️ Siralama sayisal olmali: alfabetikte "_10", "_2"den once gelir.
+    /// </summary>
+    static Sprite[] LoadDogFrames(string sheet)
+    {
+        string path = $"Assets/Art/Imported/Dog/{sheet}.png";
+        if (!File.Exists(path)) return new Sprite[0];
+
+        return AssetDatabase.LoadAllAssetsAtPath(path)
+            .OfType<Sprite>()
+            .OrderBy(s =>
+            {
+                int i = s.name.LastIndexOf('_');
+                return i >= 0 && int.TryParse(s.name.Substring(i + 1), out int n)
+                    ? n : int.MaxValue;
+            })
+            .ToArray();
+    }
+
     public static void BuildEndingMenu()
     {
         if (!EditorUtility.DisplayDialog(
@@ -462,11 +485,32 @@ public static class AlevPrefabSetupB
         Vector3 ghostTo = bossPos + Vector3.left * 4f + Vector3.up * 0.8f;
 
         // PLAN.md: "kopek sprite'i mavi/beyaz tint + %50 saydam".
-        // Kare bir hayalet Karabas gibi okunmuyor — ayni silueti kullaniyoruz,
-        // oyuncu onu tanimali.
-        GameObject ghost = MakeSprite("DogGhost", GetOrCreateSprite(DogPath, Shape.Dog),
+        // Hayaletin Karabas olarak TANINMASI sart — oyunun tum duygusal
+        // yuku o tanimanin uzerinde. Artik gercek sprite'lar var, kodla
+        // uretilen siluet yerine onlari kullaniyoruz.
+        // Kosma karesi secildi: hayalet bossun uzerinden gecerek ilerliyor,
+        // duran bir poz "sureklenen bir sey" gibi okunmuyor.
+        Sprite[] ghostFrames = LoadDogFrames("Saint-Bernard-run");
+        Sprite ghostSprite = ghostFrames.Length > 0
+            ? ghostFrames[0]
+            : GetOrCreateSprite(DogPath, Shape.Dog);   // sprite yoksa eski siluet
+
+        GameObject ghost = MakeSprite("DogGhost", ghostSprite,
             new Color(0.6f, 0.85f, 1f, 0.5f), new Vector3(1.1f, 1.1f, 1f),
             ghostFrom, 6);
+
+        // Sagdan sola gidiyor; sprite'lar varsayilan olarak saga bakiyor.
+        var ghostSR = ghost.GetComponent<SpriteRenderer>();
+        if (ghostSR != null && ghostFrames.Length > 0) ghostSR.flipX = true;
+
+        if (ghostFrames.Length > 1)
+        {
+            var ga = ghost.AddComponent<SimpleSpriteAnimator>();
+            ga.frames = ghostFrames;
+            ga.fps = 10f;      // canli kopekten biraz yavas — agir, ruya gibi
+            ga.loop = true;
+        }
+
         ghost.SetActive(false);
 
         GameObject ghostStart = new GameObject("GhostStart");
