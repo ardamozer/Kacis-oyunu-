@@ -190,6 +190,7 @@ GameObject:
   - component: {fileID: 859303257762125793}
   - component: {fileID: 5562137070943230380}
   - component: {fileID: 4379093775505846960}
+  - component: {fileID: 1093758843142020504}
   m_Layer: 0
   m_Name: Karabas
   m_TagString: Dog
@@ -207,7 +208,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.1, y: 1.1, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 395176830973551318}
@@ -262,7 +263,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: -1
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -6886545688207089887, guid: 56f187a076b924c468e2690d158ce3b1, type: 3}
+  m_Sprite: {fileID: 2451198110937319868, guid: 3ea427e61f2770c478c291cda7c21f30, type: 3}
   m_Color: {r: 0.35, g: 0.22, b: 0.15, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -416,6 +417,7 @@ MonoBehaviour:
   breathSpeed: 3
   petSquashAmount: 0.22
   petSquashDuration: 0.4
+  groundOffsetOverride: 0
 --- !u!114 &4379093775505846960
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -429,3 +431,91 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TestDogTrigger
   interactRange: 3
+--- !u!114 &1093758843142020504
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6135783156078921799}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 463c357e356147144bac8ddcd11cccf4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DogAnimator
+  idle:
+    frames:
+    - {fileID: 2451198110937319868, guid: 3ea427e61f2770c478c291cda7c21f30, type: 3}
+    - {fileID: 8013323800121217430, guid: 3ea427e61f2770c478c291cda7c21f30, type: 3}
+    - {fileID: 7867686219062029652, guid: 3ea427e61f2770c478c291cda7c21f30, type: 3}
+    - {fileID: -373290615114747833, guid: 3ea427e61f2770c478c291cda7c21f30, type: 3}
+    - {fileID: -1433039506752436269, guid: 3ea427e61f2770c478c291cda7c21f30, type: 3}
+    - {fileID: -4952852161384974872, guid: 3ea427e61f2770c478c291cda7c21f30, type: 3}
+    - {fileID: 5181349762142305342, guid: 3ea427e61f2770c478c291cda7c21f30, type: 3}
+    - {fileID: 6121779682167099036, guid: 3ea427e61f2770c478c291cda7c21f30, type: 3}
+    - {fileID: -8827406099216380451, guid: 3ea427e61f2770c478c291cda7c21f30, type: 3}
+    - {fileID: -3354131104357326981, guid: 3ea427e61f2770c478c291cda7c21f30, type: 3}
+    fps: 8
+    loop: 1
+  walk:
+    frames:
+    - {fileID: -2388776416423924332, guid: 481f5127771924a4b816407de97eab99, type: 3}
+    - {fileID: -3508583154116603998, guid: 481f5127771924a4b816407de97eab99, type: 3}
+    - {fileID: -211649165693831151, guid: 481f5127771924a4b816407de97eab99, type: 3}
+    - {fileID: 1500749210841914530, guid: 481f5127771924a4b816407de97eab99, type: 3}
+    - {fileID: -18229685333801815, guid: 481f5127771924a4b816407de97eab99, type: 3}
+    - {fileID: -7034742359799519333, guid: 481f5127771924a4b816407de97eab99, type: 3}
+    - {fileID: -9148790218789591051, guid: 481f5127771924a4b816407de97eab99, type: 3}
+    - {fileID: 5514360757303548261, guid: 481f5127771924a4b816407de97eab99, type: 3}
+    fps: 10
+    loop: 1
+  run:
+    frames:
+    - {fileID: -7794145418952469967, guid: 837d7312a932daa4ca2d264ff41eea2d, type: 3}
+    - {fileID: 276555310819369277, guid: 837d7312a932daa4ca2d264ff41eea2d, type: 3}
+    - {fileID: 7592041321084539424, guid: 837d7312a932daa4ca2d264ff41eea2d, type: 3}
+    - {fileID: -8660985693577083206, guid: 837d7312a932daa4ca2d264ff41eea2d, type: 3}
+    - {fileID: 2139162094806191530, guid: 837d7312a932daa4ca2d264ff41eea2d, type: 3}
+    - {fileID: 5444296167641942346, guid: 837d7312a932daa4ca2d264ff41eea2d, type: 3}
+    - {fileID: -3999012736829203044, guid: 837d7312a932daa4ca2d264ff41eea2d, type: 3}
+    - {fileID: -5796546941176399087, guid: 837d7312a932daa4ca2d264ff41eea2d, type: 3}
+    fps: 14
+    loop: 1
+  bark:
+    frames:
+    - {fileID: -1443366994248951583, guid: 2006c706e4a1f52488f78bb5139fd096, type: 3}
+    - {fileID: -8333295056930988959, guid: 2006c706e4a1f52488f78bb5139fd096, type: 3}
+    - {fileID: 5181742146581227306, guid: 2006c706e4a1f52488f78bb5139fd096, type: 3}
+    fps: 8
+    loop: 1
+  lyingDown:
+    frames:
+    - {fileID: 2083014318598209960, guid: 595ebf7338f633d48932e0754270f54f, type: 3}
+    - {fileID: 2671957230492484531, guid: 595ebf7338f633d48932e0754270f54f, type: 3}
+    - {fileID: -4660445416596139353, guid: 595ebf7338f633d48932e0754270f54f, type: 3}
+    - {fileID: -4245034039848576741, guid: 595ebf7338f633d48932e0754270f54f, type: 3}
+    - {fileID: -7512265869971311008, guid: 595ebf7338f633d48932e0754270f54f, type: 3}
+    - {fileID: -388574519825067060, guid: 595ebf7338f633d48932e0754270f54f, type: 3}
+    - {fileID: 1481473554546010770, guid: 595ebf7338f633d48932e0754270f54f, type: 3}
+    fps: 6
+    loop: 1
+  sitting:
+    frames:
+    - {fileID: 3107830224798967363, guid: 80aec86a54092bf44a7f0bd670e3f598, type: 3}
+    fps: 0
+    loop: 0
+  licking:
+    frames:
+    - {fileID: 6668011255698567911, guid: 19cfee07aaa73534a9e6dbd426e8b8fc, type: 3}
+    - {fileID: -2876787952010471597, guid: 19cfee07aaa73534a9e6dbd426e8b8fc, type: 3}
+    - {fileID: 8337616029797335036, guid: 19cfee07aaa73534a9e6dbd426e8b8fc, type: 3}
+    - {fileID: 3287929173110993240, guid: 19cfee07aaa73534a9e6dbd426e8b8fc, type: 3}
+    fps: 10
+    loop: 1
+  dead:
+    frames:
+    - {fileID: -6198191035923165869, guid: b32232bf290040a48b2875fdc5766219, type: 3}
+    fps: 0
+    loop: 0
+  walkThreshold: 0.4
+  runThreshold: 4.5

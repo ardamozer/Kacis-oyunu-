@@ -75,8 +75,15 @@ public static class AlevAtmosphereSetup
         AmbientAtmosphere aa = canvas.gameObject.GetComponent<AmbientAtmosphere>() ?? canvas.gameObject.AddComponent<AmbientAtmosphere>();
         aa.overlayImage = overlayImage;
         aa.vignetteImage = vignetteImage;
-        aa.overlayColor = new Color(1f, 0.45f, 0.08f, 0.25f);
-        aa.vignetteColor = new Color(0.08f, 0.03f, 0.01f, 0.60f);
+        // ⚠️ OPAKLIKLAR DUSURULDU (eskiden 0.25 / 0.60).
+        // Bu katman ekranin TAMAMINI boyuyor. Duz renkli dikdortgenler
+        // varken guclu tint onlari birlestiriyordu ve ise yariyordu.
+        // Gercek pixel art geldiginde ayni tint sprite'in KENDI paletini
+        // eziyor — playtest'te "kopek atmosferden cok etkileniyor".
+        // Asset karistirmayi gizleme isini artik sprite'larin kendisi
+        // yapiyor; katmanin isi sadece sicaklik hissi vermek.
+        aa.overlayColor = new Color(1f, 0.45f, 0.08f, 0.10f);
+        aa.vignetteColor = new Color(0.08f, 0.03f, 0.01f, 0.40f);
         aa.EnsureAtmosphere();
 
         EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());

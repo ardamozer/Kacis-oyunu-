@@ -14,12 +14,15 @@ using UnityEngine.UI;
 public class AmbientAtmosphere : MonoBehaviour
 {
     [Header("1. Kehribar / Turuncu Atmosfer Glow")]
-    [Tooltip("Yanan evin akkor turuncu tonu. Opakligi artirarak etkiyi belirginlestirebilirsiniz.")]
-    public Color overlayColor = new Color(1f, 0.45f, 0.08f, 0.25f);
+    [Tooltip("Yanan evin akkor turuncu tonu.\n\n" +
+             "⚠️ %10'un cok ustune cikmayin. Bu katman EKRANIN TAMAMINI\n" +
+             "boyuyor; gercek pixel art'in kendi paletini eziyor.")]
+    public Color overlayColor = new Color(1f, 0.45f, 0.08f, 0.10f);
 
     [Header("2. Vinyet Karartma Maskesi")]
-    [Tooltip("Ekran kenarlarini karartan vinyet maskesinin rengi ve kule donusme opakligi.")]
-    public Color vignetteColor = new Color(0.08f, 0.03f, 0.01f, 0.60f);
+    [Tooltip("Ekran kenarlarini karartan vinyet maskesi.\n\n" +
+             "Cok yuksek olursa kenarlardaki dusman ve platformlar okunmaz olur.")]
+    public Color vignetteColor = new Color(0.08f, 0.03f, 0.01f, 0.40f);
 
     [Header("3. Canlilik (Ateş Nefesi)")]
     [Tooltip("Ateslerin hafif akkor gibi nefes alip vermesi. 0 = kapali.")]

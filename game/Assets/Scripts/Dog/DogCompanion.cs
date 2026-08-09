@@ -142,8 +142,29 @@ public class DogCompanion : MonoBehaviour
     /// <summary>Kopek oldu mu? EndingSequence Die() ile set eder.</summary>
     public bool IsDead => isDead;
 
+    /// <summary>
+    /// Onunde canli bir canavar var mi — durup havliyor mu.
+    /// Salt okunur; DogAnimator havlama karelerine gecmek icin kullaniyor.
+    /// </summary>
+    public bool IsBlocked => wasBlocked;
+
+    /// <summary>
+    /// Sevilme tepkisinin bitecegi zaman (Time.time cinsinden).
+    /// DogAnimator bu ana kadar yalanma karelerini oynatiyor.
+    /// </summary>
+    public float PetReactionUntil => petSquashUntil;
+
     SpriteRenderer sprite;
     Vector3 baseScale;
+
+    [Header("Zemin hizasi")]
+    [Tooltip("Sprite'in pivotu AYAKLARDAYSA 0 verin.\n\n" +
+             "Negatif birakilirsa otomatik hesaplanir: sprite.bounds.extents.y.\n" +
+             "O hesap sprite'in karesini TAMAMEN doldurdugunu varsayar.\n" +
+             "Indirilen sayfalarda kare 100x100 ama kopek ~29 piksel ve\n" +
+             "altinda 35 piksel saydam bosluk var; otomatik hesap o boslugu\n" +
+             "da sayar ve kopek havada durur.")]
+    public float groundOffsetOverride = -1f;
 
     // Govdenin yariyuksekligi — zemine otururken merkezi bu kadar yukari koyariz,
     // yoksa kopek zeminin icine gomulur.
@@ -154,7 +175,8 @@ public class DogCompanion : MonoBehaviour
         sprite = GetComponentInChildren<SpriteRenderer>();
         baseScale = transform.localScale;
 
-        if (sprite != null) groundOffset = sprite.bounds.extents.y;
+        if (groundOffsetOverride >= 0f) groundOffset = groundOffsetOverride;
+        else if (sprite != null) groundOffset = sprite.bounds.extents.y;
 
         if (audioSource == null) audioSource = GetComponent<AudioSource>();
     }
