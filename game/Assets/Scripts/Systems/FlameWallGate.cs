@@ -3,8 +3,11 @@ using UnityEngine;
 /// <summary>
 /// GERI DONUS KAPANIR — Karabas kurtulunca girisin onunde alev duvari yukselir.
 ///
-/// PLAN.md: "Artik geri donemezsin hissi soylenmemeli, GOSTERILMELI."
+/// PLAN.MD: "Artik geri donemezsin hissi soylenmemeli, GOSTERILMELI."
 /// Oyuncu bu ani gormeli: kamera sarsilir, cokme sesi gelir, alev yukselir.
+///
+/// YENİ: Duvar yükseldikten sonra ILERLER — oyuncuyu kovalar!
+/// Temas ederse hasar verir. "Acele et, arkandan ateş geliyor!"
 ///
 /// ⚠️ Kisi B'nin DogCompanion API'sine BAGLANMIYOR. Kopegin baslangic
 /// noktasindan uzaklasmasini izliyor — kurtulup pesinize takildiginin
@@ -23,6 +26,21 @@ public class FlameWallGate : MonoBehaviour
     public float riseHeight = 5f;
     public float riseDuration = 1.2f;
 
+    [Header("Kovalama (Yukseldikten sonra)")]
+    [Tooltip("Duvar yukseldikten sonra saga dogru ilerleme hizi (birim/saniye). " +
+             "0 = ilerlemez, sadece yükselir.")]
+    public float chaseSpeed = 1.5f;
+
+    [Tooltip("Duvarin ilerlerken durma noktasi (x). Boss triggerine kadar " +
+             "kovalamali, sonra durmali. 0 = sinir yok.")]
+    public float maxChaseX = 300f;
+
+    [Header("Hasar (Temas)")]
+    [Tooltip("Oyuncu atese dokunursa alinan hasar.")]
+    public int chaseDamage = 2;
+    [Tooltip("Hasar alma araligi (saniye).")]
+    public float damageInterval = 0.8f;
+
     [Header("Etki")]
     public float shakeDuration = 0.6f;
     public float shakeMagnitude = 0.45f;
@@ -31,7 +49,9 @@ public class FlameWallGate : MonoBehaviour
     Vector3 dogStart;
     Vector3 hiddenPos, shownPos;
     bool triggered;
+    bool riseComplete;
     float t;
+    float nextDamageTime;
 
     Collider2D blockerCollider;
     Renderer[] childRenderers;
@@ -111,15 +131,51 @@ public class FlameWallGate : MonoBehaviour
                 CameraShake.Instance.Shake(shakeDuration, shakeMagnitude);
             if (collapseSound != null) collapseSound.Play();
 
-            Debug.Log("[FlameWallGate] Karabas kurtarildi, geri donus kapandi.");
+            Debug.Log("[FlameWallGate] Karabas kurtarildi, geri donus kapandi. " +
+                      "Ates duvari kovalamaya basliyor!");
             return;
         }
 
-        if (t >= riseDuration) return;
+        // ---- Yukselme fazı ----
+        if (!riseComplete)
+        {
+            if (t >= riseDuration)
+            {
+                riseComplete = true;
+                transform.position = shownPos;
+                return;
+            }
 
-        t += Time.deltaTime;
-        float k = Mathf.Clamp01(t / riseDuration);
-        k = k * k * (3f - 2f * k);
-        transform.position = Vector3.Lerp(hiddenPos, shownPos, k);
+            t += Time.deltaTime;
+            float k = Mathf.Clamp01(t / riseDuration);
+            k = k * k * (3f - 2f * k);
+            transform.position = Vector3.Lerp(hiddenPos, shownPos, k);
+            return;
+        }
+
+        // ---- Kovalama fazı: saga dogru ilerle ----
+        if (chaseSpeed > 0f)
+        {
+            if (maxChaseX > 0f && transform.position.x >= maxChaseX) return;
+
+            transform.position += Vector3.right * chaseSpeed * Time.deltaTime;
+        }
+    }
+
+    // ---- Temas hasarı ----
+    void OnTriggerStay2D(Collider2D other)
+    {
+        if (!triggered || !riseComplete) return;
+        if (!other.CompareTag("Player")) return;
+        if (Time.time < nextDamageTime) return;
+
+        nextDamageTime = Time.time + damageInterval;
+
+        // PlayerHealth doğrudan erişim yerine SendMessage kullanıyoruz
+        // böylece Kisi A'nin koduna derleme bağımlılığı kurmuyoruz.
+        other.SendMessageUpwards("TakeDamage", chaseDamage,
+            SendMessageOptions.DontRequireReceiver);
+
+        Debug.Log("[FlameWallGate] Oyuncuya ates duvari hasari verildi!");
     }
 }

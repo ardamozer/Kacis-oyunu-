@@ -31,13 +31,26 @@ public class TestEndingTrigger : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
             ending.TriggerDogDeath();
+            MarkTriggerZoneAsFired(EndingTriggerZone.What.DogDeath);
             Debug.Log("[TEST] TriggerDogDeath() cagrildi.");
         }
 
         if (Input.GetKeyDown(KeyCode.Alpha2))
         {
             ending.TriggerBossScene();
+            MarkTriggerZoneAsFired(EndingTriggerZone.What.BossScene);
             Debug.Log("[TEST] TriggerBossScene() cagrildi.");
+        }
+    }
+
+    void MarkTriggerZoneAsFired(EndingTriggerZone.What what)
+    {
+        foreach (var zone in FindObjectsByType<EndingTriggerZone>(FindObjectsSortMode.None))
+        {
+            if (zone.trigger == what)
+            {
+                zone.MarkAsFired();
+            }
         }
     }
 }

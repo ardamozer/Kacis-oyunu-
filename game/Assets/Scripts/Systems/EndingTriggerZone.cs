@@ -64,8 +64,8 @@ public class EndingTriggerZone : MonoBehaviour
         // Sessizce gecmek, oyunu yanlis sirada kirmaktan iyidir.
         if (requires != null && !requires.HasFired)
         {
-            Debug.Log($"[EndingTriggerZone] {name}: onkosul saglanmadi " +
-                      $"({requires.name} henuz tetiklenmedi), atlandi.");
+            Debug.LogWarning($"[EndingTriggerZone] {name}: onkosul saglanmadi " +
+                             $"({requires.name} henuz tetiklenmedi), atlandi.");
             return;
         }
 
@@ -74,8 +74,10 @@ public class EndingTriggerZone : MonoBehaviour
             var inv = other.GetComponentInParent<KeyInventory>();
             if (inv == null || inv.Count < requiredKeyCount)
             {
-                Debug.Log($"[EndingTriggerZone] {name}: yeterli anahtar yok " +
-                          $"({inv?.Count ?? 0}/{requiredKeyCount}), atlandi.");
+                Debug.LogWarning($"[EndingTriggerZone] {name}: YETERLI ANAHTAR YOK! " +
+                                 $"Oyuncuda {inv?.Count ?? 0} anahtar var ama {requiredKeyCount} lazim. " +
+                                 "Hile/test sirasinda anahtarlari almadan buraya geldiyseniz " +
+                                 "olum ve boss sahneleri DEVREYE GIRMEZ (siradisilik korumasi).");
                 return;
             }
         }
@@ -101,6 +103,13 @@ public class EndingTriggerZone : MonoBehaviour
                 ending.TriggerBossScene();
                 break;
         }
+    }
+
+    /// <summary>Eger test tuslari (or. '1' veya '2') ile sahne manuel tetiklenirse,
+    /// bu bolgenin de tetiklenmis sayilmasini saglar, boylece zincir (requires) kopmaz.</summary>
+    public void MarkAsFired()
+    {
+        fired = true;
     }
 
     void OnDrawGizmos()
