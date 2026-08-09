@@ -139,10 +139,15 @@ public class DogCompanion : MonoBehaviour
     public bool IsDead => isDead;
 
     /// <summary>
-    /// Onunde canli bir canavar var mi — durup havliyor mu.
-    /// Salt okunur; DogAnimator havlama karelerine gecmek icin kullaniyor.
+    /// Su an bir yer atesinin ustune atliyor mu.
+    /// Salt okunur; DogAnimator havlama/atilma karelerine gecmek icin kullaniyor.
+    ///
+    /// ⚠️ Eskiden burada IsBlocked vardi ve "onunu canavar kesti" durumunu
+    /// bildiriyordu. O ozellik (stopAtMonsters / wasBlocked) kaldirildi —
+    /// kopek artik canavarlara dokunmuyor, yer atesi avliyor. Animasyonun
+    /// vurgulayacagi an da bu oldu.
     /// </summary>
-    public bool IsBlocked => wasBlocked;
+    public bool IsStomping => isStomping;
 
     /// <summary>
     /// Sevilme tepkisinin bitecegi zaman (Time.time cinsinden).

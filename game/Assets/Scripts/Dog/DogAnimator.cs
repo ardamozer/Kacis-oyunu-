@@ -137,9 +137,9 @@ public class DogAnimator : MonoBehaviour
         // Henuz kurtarilmadi — atesin altinda yatiyor.
         if (!dog.IsRescued) return Pick(lyingDown, sitting, idle);
 
-        // Onunu canavar kesti: durup havliyor. Oyuncunun "sondurmem lazim"
-        // dedigi an bu; animasyon bunu acikca gostermeli.
-        if (dog.IsBlocked) return Pick(bark, idle);
+        // Yer atesinin ustune atliyor — oyunun "kopek sana yardim ediyor"
+        // dedigi tek an. Havlama kareleri atilma hissini veriyor.
+        if (dog.IsStomping) return Pick(bark, run, idle);
 
         // Sevildi — mekanik islevi yok ama PLAN'da "en cok konusulacak
         // detay" olmasi bekleniyor. Karsiliginda bir sey gorunmeli.
