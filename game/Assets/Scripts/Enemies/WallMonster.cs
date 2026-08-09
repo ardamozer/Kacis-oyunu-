@@ -67,6 +67,12 @@ public class WallMonster : MonoBehaviour, IWaterDamageable
     float flashUntil;
     bool isDead;
 
+    /// <summary>Canavar tamamen duvardan cikti mi? Yari cikmis/gizli iken false.</summary>
+    public bool IsFullyEmerged => !isDead && (transform.position - shownPos).sqrMagnitude < 0.0025f;
+
+    /// <summary>Canavar oldu mu? Disaridan okunabilir (DogCompanion kullanir).</summary>
+    public bool IsDead => isDead;
+
     SpriteRenderer sprite;
     Color originalColor;
     Collider2D bodyCollider;
