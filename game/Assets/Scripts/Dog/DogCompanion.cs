@@ -104,6 +104,12 @@ public class DogCompanion : MonoBehaviour
              "0 = kapali.")]
     public float pitchVariation = 0.08f;
 
+    [Header("Kurtarilma repligi")]
+    [Tooltip("Kurtarildigi anda Karabas'in ustunde beliren yazi.\n" +
+             "BOSALTIRSANIZ yazi hic cikmaz.")]
+    public string rescueLine = "Geleceğini biliyordum.";
+    public float rescueLineDuration = 2.6f;
+
     [Header("Sevme (OnPetted)")]
     [Tooltip("Opsiyonel. Bos birakilirsa sadece ses calar, kalp cikmaz.")]
     public GameObject heartParticlePrefab;
@@ -539,6 +545,12 @@ public class DogCompanion : MonoBehaviour
 
         if (audioSource != null && happyBarkClip != null)
             PlayVaried(happyBarkClip);
+
+        // Iliskinin ilk sozu. Bu andan sonra oyuncu kopegi "kurtardigi sey"
+        // olarak degil "birlikte oldugu biri" olarak tasiyor — sondaki
+        // karsilikliligi kuran ilk halka bu.
+        SpeechBubble.Say(transform, rescueLine, rescueLineDuration,
+                         new Color(0.65f, 0.85f, 1f));
     }
 
     /// <summary>Kurtarma animasyonu bitince Kisi A takibi baslatmak icin bunu cagirir.</summary>

@@ -358,7 +358,6 @@ public static class AlevPrefabSetupB
     [MenuItem("ALEV/Kisi B — Finali Sahneye Kur", true)]
     static bool BuildEndingValidate() => !EditorApplication.isPlaying;
 
-    [MenuItem("ALEV/Kisi B — Finali Sahneye Kur", false, 21)]
     /// <summary>
     /// Dilimlenmis kopek sayfasindaki kareleri SAYISAL sirayla dondurur.
     /// Sayfa yoksa bos dizi — cagiran taraf eski silueti kullanir.
@@ -381,6 +380,10 @@ public static class AlevPrefabSetupB
             .ToArray();
     }
 
+    // ⚠️ Bu attribute bir ara LoadDogFrames'in uzerine kaymisti (araya yeni
+    // metot eklenirken). Unity o imzayi kabul etmeyip menuyu HIC olusturmuyordu:
+    // "Finali Sahneye Kur" komutu menuden sessizce kaybolmustu.
+    [MenuItem("ALEV/Kisi B — Finali Sahneye Kur", false, 21)]
     public static void BuildEndingMenu()
     {
         if (!EditorUtility.DisplayDialog(
