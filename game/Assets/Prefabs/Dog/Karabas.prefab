@@ -383,7 +383,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DogCompanion
   followDistance: 1.5
-  followSpeed: 4
+  followSpeed: 8
   player: {fileID: 0}
   groundLayer:
     serializedVersion: 2
@@ -391,7 +391,7 @@ MonoBehaviour:
   groundProbeUp: 1.5
   groundProbeDown: 8
   verticalSpeed: 14
-  warpDistance: 14
+  warpDistance: 20
   fireDetectRange: 1
   stompHopHeight: 0.3
   stompHopDuration: 0.3
