@@ -35,15 +35,47 @@ public class AlevImportedArtSettings : AssetPostprocessor
 
     const string Root = "Assets/Art/Imported/";
 
+    /// <summary>
+    /// Klasor basina PPU ve (tek kare sprite'lar icin) pivot Y.
+    /// pivotY &lt; 0 → pivota dokunma (sayfalar dilimleyicide ayarlaniyor).
+    ///
+    /// ⚠️ NEDEN KOPEK 32, ITFAIYECI 16:
+    /// Iki paket FARKLI cozunurlukte cizilmis. Ikisinin de gorunen govdesi
+    /// 29 piksel — ama biri kopek, digeri insan. Ayni PPU verilirse kopek
+    /// adamla AYNI BOYDA olur ve kurgu aninda cokuyor.
+    ///   itfaiyeci 29px / 16 = 1.81 birim  (collider 1.60, dogru)
+    ///   kopek     29px / 32 = 0.91 birim  (adamin yarisi, Saint Bernard icin dogru)
+    ///
+    /// Bedeli: kopegin pikselleri itfaiyecininkinin yarisi boyutunda.
+    /// Kaynak sanat farkli yogunlukta oldugu icin DOGRU ORAN ile AYNI
+    /// PIKSEL BOYUTU ayni anda elde edilemez; oran secildi. Bir kopegin
+    /// adam boyunda olmasi, piksel boyutu farkindan cok daha goze batar.
+    /// Ev/platformlar zaten dokusuz dikdortgen, onlarla catisma yok.
+    /// </summary>
+    static readonly (string folder, int ppu, float pivotY)[] PerFolder =
+    {
+        ("Dog/",     32, -1f),    // sayfa halinde; pivotu dilimleyici koyuyor
+        ("Fireman/", 16,  0f),    // tek kare dosyalar; alt bosluk 0 olculdu
+    };
+
     void OnPreprocessTexture()
     {
         string path = assetPath.Replace('\\', '/');
         if (!path.StartsWith(Root)) return;
 
+        string rest = path.Substring(Root.Length);
+        int ppu = PixelsPerUnit;
+        float pivotY = -1f;
+
+        foreach (var (folder, p, pv) in PerFolder)
+        {
+            if (rest.StartsWith(folder)) { ppu = p; pivotY = pv; break; }
+        }
+
         var imp = (TextureImporter)assetImporter;
 
         imp.textureType         = TextureImporterType.Sprite;
-        imp.spritePixelsPerUnit = PixelsPerUnit;
+        imp.spritePixelsPerUnit = ppu;
         imp.filterMode          = FilterMode.Point;              // bulaniklik olmasin
         imp.textureCompression  = TextureImporterCompression.Uncompressed;
         imp.mipmapEnabled       = false;                         // 2D'de mipmap bulandirir
@@ -51,8 +83,26 @@ public class AlevImportedArtSettings : AssetPostprocessor
         imp.wrapMode            = TextureWrapMode.Clamp;         // kenar sizmasi olmasin
         imp.npotScale           = TextureImporterNPOTScale.None;  // sayfa boyutu bozulmasin
 
-        // ⚠️ spriteImportMode'a KASITLI OLARAK DOKUNULMUYOR.
-        // Elle dilimlenmis (Sprite Editor → Slice) bir sayfa her
-        // yeniden iceri alinista Single'a donerse tum dilimler gider.
+        // pivotY < 0 → SAYFA klasoru (Dog gibi). spriteImportMode'a
+        // dokunmuyoruz: elle dilimlenmis bir sayfa her yeniden iceri
+        // alinista Single'a donerse tum dilimler gider.
+        //
+        // pivotY >= 0 → TEK KARE dosyalar (Fireman gibi). Burada Single
+        // ZORLANIR.
+        // ⚠️ Onceki surum sadece "zaten Single ise" pivot yaziyordu ve
+        // dosyalar Multiple modunda geldigi icin pivot hic uygulanmadi:
+        // merkez pivotla sprite'in ortasi collider tabanina oturdu,
+        // itfaiyecinin alt yarisi zemine gomuldu.
+        if (pivotY >= 0f)
+        {
+            var s = new TextureImporterSettings();
+            imp.ReadTextureSettings(s);
+
+            s.spriteMode      = (int)SpriteImportMode.Single;
+            s.spriteAlignment = (int)SpriteAlignment.Custom;
+            s.spritePivot     = new Vector2(0.5f, pivotY);
+
+            imp.SetTextureSettings(s);
+        }
     }
 }
