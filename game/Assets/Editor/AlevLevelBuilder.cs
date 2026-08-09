@@ -172,8 +172,14 @@ public static class AlevLevelBuilder
             WallDetail(name, x0, x1, h, tints[i]);
         }
 
-        // Koridor'un ALCAK TAVANI — oynanabilir yukseklik 6.5, bogucu
-        Solid(geo, "Koridor_AlcakTavan", 170f, 8.75f, 36f, 4.5f, CWall);
+        // ⚠️ KORIDOR'UN ALCAK TAVANI KALDIRILDI (eskiden: 170, 8.75, 36x4.5).
+        // Oynanabilir yuksekligi 6.5'e indiriyordu ve "bogucu koridor"
+        // atmosferi icin konmustu. Ama Koridor_Raf'in ustu 4.45; oyuncu
+        // 1.6 boyunda, yani rafta kafasiyla tavan arasi 0.45 birim kaliyor
+        // ve ORADA ZIPLAYAMIYORDU. Playtest'te oyuncu parkurda sikisti.
+        // Atmosfer, oynanabilirlikten once gelemez.
+        // Geri koyacaksan once rafi asagi al ya da tavani sadece parkurun
+        // OLMADIGI x araliginda birak.
 
         // Odalar arasi duvarlar + kapi bosluklari
         for (int i = 1; i < RoomDefs.Length; i++)
