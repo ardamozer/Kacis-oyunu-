@@ -57,6 +57,20 @@ public class FlameWallGate : MonoBehaviour
     Renderer[] childRenderers;
     MonoBehaviour[] childScripts;
 
+    PlayerController playerController;
+
+    /// <summary>
+    /// Bir ara sahne oynuyor mu? Ara sahnelerde oyuncunun kontrolu aliniyor
+    /// (`CanControl = false`), yani KACAMIYOR.
+    ///
+    /// Kopegin olumu ~4.35 saniye suruyor. Duvar bu sirada durmazsa 1.5 b/sn
+    /// ile 6.5 birim ilerler ve 0.8 saniyede bir 2 hasar verir; oyuncunun cani
+    /// 3. Yani oyunun duygusal zirvesinde, oyuncu tusa basamazken oldururdu.
+    ///
+    /// Tek bayrak butun ara sahneleri kapsiyor: olum, boss, hayalet.
+    /// </summary>
+    bool CutsceneActive => playerController != null && !playerController.CanControl;
+
     void Awake()
     {
         blockerCollider = GetComponent<Collider2D>();
@@ -73,6 +87,9 @@ public class FlameWallGate : MonoBehaviour
         }
 
         if (dog != null) dogStart = dog.position;
+
+        GameObject playerGO = GameObject.FindGameObjectWithTag("Player");
+        if (playerGO != null) playerController = playerGO.GetComponent<PlayerController>();
 
         // Alev duvari zeminin ALTINDA bekler, tetiklenince yukselir.
         shownPos = transform.position;
@@ -154,6 +171,9 @@ public class FlameWallGate : MonoBehaviour
         }
 
         // ---- Kovalama fazı: saga dogru ilerle ----
+        // Ara sahnede DUR. Oyuncu kacamazken yaklasmaya devam etmesi haksizlik.
+        if (CutsceneActive) return;
+
         if (chaseSpeed > 0f)
         {
             if (maxChaseX > 0f && transform.position.x >= maxChaseX) return;
@@ -167,6 +187,11 @@ public class FlameWallGate : MonoBehaviour
     {
         if (!triggered || !riseComplete) return;
         if (!other.CompareTag("Player")) return;
+
+        // Ara sahnede hasar da YOK — durmus bir duvarin icinde kalmis olsa bile
+        // oyuncu kacamiyor. Sahne bitip kontrol geri gelince tehdit geri doner.
+        if (CutsceneActive) return;
+
         if (Time.time < nextDamageTime) return;
 
         nextDamageTime = Time.time + damageInterval;

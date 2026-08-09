@@ -104,6 +104,18 @@ public class EndingSequence : MonoBehaviour
             if (found != null) player = found.transform;
         }
 
+        // Kopek sahneye `Finali Sahneye Kur`dan SONRA konduysa alan bos kalir.
+        // Sahnede su an dolu, ama bos kalmasi sessizce olumu iptal ettigi
+        // (ve bunu ancak oynarken fark ettigimiz) icin garantiye aliyoruz.
+        if (dog == null)
+        {
+            dog = FindFirstObjectByType<DogCompanion>(FindObjectsInactive.Include);
+            if (dog != null)
+                Debug.LogWarning("[Final] `dog` alani bostu, sahnedeki Karabas otomatik baglandi.");
+            else
+                Debug.LogError("[Final] Sahnede DogCompanion YOK — olum sahnesi kopegi gizleyemez!");
+        }
+
         if (bossObject != null) bossObject.SetActive(false);
 
         if (bigFlameVisual != null)
@@ -148,6 +160,10 @@ public class EndingSequence : MonoBehaviour
 
     IEnumerator DogDeathRoutine()
     {
+        // Faz loglari: sahne "tetiklendi ama olmadi" diye bildirildiginde
+        // hangi adimda koptugunu tek oyun turunda gosterirler.
+        Debug.Log("[Final] Olum 1/5 — basladi, kontrol alindi.");
+
         SetPlayerControl(false);
 
         // ⚠️ SES BURADA KESILMIYOR — carpmadan SONRA kesiliyor.
@@ -181,6 +197,8 @@ public class EndingSequence : MonoBehaviour
 
         yield return PushPlayerAside(pushDir);
         if (lunge != null) yield return lunge;
+
+        Debug.Log("[Final] Olum 2/5 — kopek oyuncunun yerine gecti, oyuncu savruldu.");
 
         if (deathDebris != null)
         {
@@ -217,6 +235,8 @@ public class EndingSequence : MonoBehaviour
             yield return ScaleRoutine(bigFlameVisual.transform, Vector3.zero, bigFlameBaseScale, flameRiseDuration);
         }
 
+        Debug.Log("[Final] Olum 3/5 — tahta dustu, carpma duyuldu.");
+
         // Carpma sesi duyuldu, simdi mutlak sessizlik (PLAN.md: 3 saniye).
         AudioListener.volume = 0f;
 
@@ -227,6 +247,11 @@ public class EndingSequence : MonoBehaviour
         {
             dog.Die();
             dog.gameObject.SetActive(false);
+            Debug.Log("[Final] Olum 4/5 — Karabas gizlendi.");
+        }
+        else
+        {
+            Debug.LogError("[Final] Olum 4/5 ATLANDI — `dog` bos, kopek ekranda kaldi!");
         }
 
         yield return new WaitForSeconds(silenceDuration);
@@ -253,6 +278,8 @@ public class EndingSequence : MonoBehaviour
 
         AudioListener.volume = previousVolume;
         SetPlayerControl(true);
+
+        Debug.Log("[Final] Olum 5/5 — tasma birakildi, kontrol geri verildi.");
     }
 
     /// <summary>

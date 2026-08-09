@@ -82,6 +82,19 @@ public class PlayerHealth : MonoBehaviour
     public void TakeDamage(int amount)
     {
         if (dead || amount <= 0) return;
+
+        // ARA SAHNEDE HASAR YOK.
+        //
+        // Kontrol alinmisken (`CanControl == false`) oyuncu kacamiyor. Kopegin
+        // olum sahnesi ~4.35 saniye suruyor; bu sirada ates duvari ya da bir
+        // canavar oyuncuyu oldururse Die() -> ReloadScene() calisiyor ve
+        // checkpoint yoksa SAHNENIN TAMAMI yeniden yukleniyor: sahne yarida
+        // kesiliyor, Karabas canli olarak geri geliyor. Playtest'te gorulen
+        // "olum tetiklendi ama kopek olmedi" tam olarak buydu.
+        //
+        // Tek bayrak butun ara sahneleri koruyor: olum, boss, hayalet.
+        if (controller != null && !controller.CanControl) return;
+
         if (Time.time < invulnerableUntil) return;
 
         currentHealth = Mathf.Max(0, currentHealth - amount);

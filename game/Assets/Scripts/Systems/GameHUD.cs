@@ -34,6 +34,59 @@ public class GameHUD : MonoBehaviour
     public Image damageVignette;
     public Color vignetteColor = new Color(1f, 0.35f, 0.05f);
 
+    void Awake()
+    {
+        // Bu HUD, anahtar gostergesi eklenmeden ONCE kurulmus bir sahnede de
+        // duruyor olabilir: MainScene'de `inventory` bos ve `keyIcons` bostu,
+        // yani anahtar alinca ekranda gosterecek hicbir sey yoktu. Sahneyi
+        // `Test Sahnesini Kur` ile bastan kurmak kamerayi ortho 6'ya cekip
+        // oda tasarimini bozdugu icin eksigi burada, calisma aninda kapatiyoruz.
+        SelfHeal();
+    }
+
+    void SelfHeal()
+    {
+        GameObject playerGO = GameObject.FindGameObjectWithTag("Player");
+
+        if (playerGO != null)
+        {
+            if (inventory == null) inventory = playerGO.GetComponent<KeyInventory>();
+            if (tank == null) tank = playerGO.GetComponent<WaterTank>();
+            if (health == null) health = playerGO.GetComponent<PlayerHealth>();
+        }
+
+        if (keyIcons == null || keyIcons.Length == 0) BuildKeyIcons();
+    }
+
+    /// <summary>
+    /// Uc anahtar ikonunu calisma aninda uretir — konumlari
+    /// AlevSceneSetup.CreateHUD ile birebir ayni (46 + i*46, -160, 34x34).
+    /// Sprite vermiyoruz: sprite'siz Image duz bir kare cizer, zaten istedigimiz bu.
+    /// </summary>
+    void BuildKeyIcons()
+    {
+        keyIcons = new Image[3];
+
+        for (int i = 0; i < 3; i++)
+        {
+            var go = new GameObject($"Key{i}", typeof(RectTransform));
+            go.transform.SetParent(transform, false);
+
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0f, 1f);
+            rt.anchorMax = new Vector2(0f, 1f);
+            rt.pivot = new Vector2(0f, 1f);
+            rt.anchoredPosition = new Vector2(46f + i * 46f, -160f);
+            rt.sizeDelta = new Vector2(34f, 34f);
+
+            var img = go.AddComponent<Image>();
+            img.raycastTarget = false;
+            keyIcons[i] = img;
+        }
+
+        Debug.Log("[GameHUD] Anahtar ikonlari sahnede yoktu, calisma aninda uretildi.");
+    }
+
     void Update()
     {
         UpdateWater();
