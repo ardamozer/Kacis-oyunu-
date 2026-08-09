@@ -38,20 +38,50 @@ public class EscapeTrigger : MonoBehaviour
         }
     }
 
-    void OnTriggerEnter2D(Collider2D other)
+    void OnTriggerEnter2D(Collider2D other) => TryEscape(other);
+
+    /// <summary>
+    /// Kapiya dayandigi surece denemeye devam etsin. Boss burada dogdugu icin
+    /// oyuncu zaten kapinin dibinde; sahne bitince tekrar cikip girmesini
+    /// beklemek anlamsiz olurdu.
+    /// </summary>
+    void OnTriggerStay2D(Collider2D other) => TryEscape(other);
+
+    void TryEscape(Collider2D other)
     {
+        if (finished) return;
         if (!other.CompareTag("Player")) return;
 
-        if (requireBossResolved && ending != null &&
-            ending.bossObject != null && ending.bossObject.activeSelf)
+        if (requireBossResolved && ending != null && !ending.BossResolved)
         {
-            Debug.Log("[EscapeTrigger] Boss hala aktif — cikis henuz acilmadi.");
+            // ⭐ BOSS BURADA DOGAR.
+            //
+            // Eskiden boss bir x cizgisini gecince (x=300) kendiliginden
+            // cikiyordu; oyuncu "yururken oldu" hissi aliyordu. Sonra "odayi
+            // temizleyince" denendi ve ulasilamayan bir canavar yuzunden oyun
+            // kilitlendi.
+            //
+            // Simdi tetik oyuncunun NIYETI: cikmaya calisiyor. Kapiya uzaniyor,
+            // dev alev onu kesiyor. Sebep-sonuc oyuncunun kendi hamlesinden
+            // dogdugu icin sahne "basima geldi" degil "yaptim" gibi okunuyor.
+            if (!ending.BossActive)
+            {
+                Debug.Log("[EscapeTrigger] Oyuncu cikmaya calisti — BOSS BELIRIYOR.");
+                ending.TriggerBossScene();
+            }
+            else
+            {
+                Debug.Log("[EscapeTrigger] Boss hala ayakta — cikis kapali.");
+            }
             return;
         }
 
+        finished = true;
         Debug.Log("[EscapeTrigger] Oyuncu evden cikti. Final basliyor.");
         gameEnding.Finish();
     }
+
+    bool finished;
 
     void OnDrawGizmos()
     {
