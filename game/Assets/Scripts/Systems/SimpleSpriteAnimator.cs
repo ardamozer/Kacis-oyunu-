@@ -18,6 +18,14 @@ public class SimpleSpriteAnimator : MonoBehaviour
     public float fps = 10f;
     public bool loop = true;
 
+    [Tooltip("Rastgele bir kareden basla.\n\n" +
+             "⚠️ Ayni anda ekranda 19 dekoratif ates var. Hepsi 0. kareden\n" +
+             "baslarsa ayni anda ayni sekli alirlar ve ates gibi degil\n" +
+             "metronom gibi gorunur. Ates icin ACIK olmali.\n" +
+             "Hayalet gibi tek ve senaryolu seylerde KAPALI kalmali —\n" +
+             "orada animasyonun bastan baslamasi isteniyor.")]
+    public bool randomizeStart;
+
     SpriteRenderer sr;
     int frame;
     float timer;
@@ -26,8 +34,17 @@ public class SimpleSpriteAnimator : MonoBehaviour
 
     void OnEnable()
     {
-        frame = 0;
-        timer = 0f;
+        if (randomizeStart && frames != null && frames.Length > 0)
+        {
+            frame = Random.Range(0, frames.Length);
+            timer = Random.Range(0f, fps > 0f ? 1f / fps : 0f);
+        }
+        else
+        {
+            frame = 0;
+            timer = 0f;
+        }
+
         Apply();
     }
 
