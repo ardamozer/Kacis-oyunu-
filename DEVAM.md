@@ -1,7 +1,10 @@
 # ALEV — Devir Notu
 
 > Yeni sohbete geçerken **önce bu dosyayı**, sonra `TEST_LISTESI.md`'yi okut.
-> Güncelleme: jam 2. gün, ~07:50 · **jam saati ~32.5 / 43** (bitiş 9 Ağustos ~18:00)
+> Güncelleme: jam 2. gün · ⏰ **BİTİŞ: 9 Ağustos 15:00**
+>
+> ⚠️ Daha önce burada "bitiş ~18:00" yazıyordu, **yanlıştı** — 3 saat fazla
+> sanıyorduk. Plan yaparken 15:00'e göre hesaplayın.
 
 ---
 
@@ -156,7 +159,33 @@ anahtar istiyordu; sağlanmayınca köpek ölümü olmuyor, boss da onun
   sonsuz su yoksa perde koymaz)
 - **Basamak yardımı:** `PlayerController.maxStepHeight = 0.55`
 - **Sesler:** havlama + inleme freesound, diğerleri kodla sentez
-- **Sprite'lar:** hepsi kodla üretiliyor (köpek silueti dahil)
+- **Sprite'lar:** ev/platform/ateş hâlâ kodla üretiliyor. **Karabaş artık
+  gerçek pixel art** — LuizMelo Pet Dogs Pack (CC0), Saint Bernard,
+  11 sayfa / 54 kare, 8 animasyon. İtfaiyeci hâlâ dikdörtgen.
+
+### İndirilen asset boru hattı (Karabaş'ta kuruldu, itfaiyeci için aynısı)
+
+| Adım | Nasıl |
+|---|---|
+| Klasör | `Assets/Art/Imported/<konu>/` — PNG'yi oraya bırak, başka bir şey yapma |
+| Import ayarı | Otomatik: `AlevImportedArtSettings` (PPU 32, Point, sıkıştırmasız, mipmapsız) |
+| Dilimleme | `ALEV → Kopek Sayfalarini Dilimle` — 100×100 ızgara, pivot **(0.5, 0.35)** |
+| Bağlama | `ALEV → Kopek Animasyonlarini Bagla` — 54 kareyi `DogAnimator`'a dağıtır |
+
+⚠️ **PPU 32, kodla üretilenlerin 16'sı değil.** Klasöre bağlı olmasının sebebi:
+`Art/Generated/` içindeki `Flame`, `Glow`, `Vignette` bilerek **PPU 100**;
+onlara 16 dayatılsaydı alevler ve vinyet 6 kat büyürdü. Neden 32: kareler
+100×100 ama görünen gövde ~29 piksel → 16'da 1.81 birim (oyuncu 1.60, köpek
+adamdan uzun), 32'de 0.91 birim.
+
+⚠️ **Pivot ayaklarda olmalı.** `DogCompanion.groundOffset`'i
+`sprite.bounds.extents.y`'den hesaplıyor ve o hesap karenin dolu olduğunu
+varsayıyor; 35 piksellik saydam alt boşluk yüzünden köpek 1.56 birim havada
+duruyordu. Pivot ayaklara alınıp `groundOffsetOverride = 0` verildi.
+Ek fayda: sevme animasyonundaki ezilme artık ayakları yerde tutuyor.
+
+⚠️ **Kare sıralaması sayısal olmalı.** Alt-asset adları `..._0` … `_9`;
+alfabetikte `_10`, `_2`'den önce gelir ve 10 kareli `Idle` tökezleyerek oynar.
 
 ---
 
@@ -175,6 +204,9 @@ anahtar istiyordu; sağlanmayınca köpek ölümü olmuyor, boss da onun
 | `Seviyeyi Denetle` | Ulaşılamaz platform / tıkalı kapı / susuz bölge |
 | `Sahne Raporu Cikar` | `SahneRaporu.txt` — koordinat dökümü, AI'a okutmak için |
 | `Kisi B — Sahneyi Tazele (F5)` | Prefabları tazeler, konumları korur |
+| `Atmosfer Katmanini Kur` | Sıcak turuncu katman + vinyet. Mevcut objeleri yeniden kullanır, silmez |
+| `Kopek Sayfalarini Dilimle` | `Art/Imported/Dog/` altını 100×100 diler, pivot ayaklara |
+| `Kopek Animasyonlarini Bagla` | 54 kareyi `Karabas.prefab`'daki `DogAnimator`'a dağıtır |
 
 **Tam kurulum sırası:**
 `Evi Kur` → `Prefablari Isaretlere Yerlestir` → `Finali Sahneye Kur` →
@@ -210,24 +242,102 @@ Acı çekilerek bulundu:
    yeniden yükleyip ara sahneyi yarıda kesiyor ve Karabaş canlı geri geliyor.
    Kaldırırsanız ölüm sahnesi rastgele kırılmaya başlar.
 
+9. **Salon kulesi: T4–T7 hepsi 5 genişlikte, x = 54/62 zigzagı.**
+   Boşlukları 3.0'a getiriyor. Eskiden T5 dardı (3.5) ve T6 sola kaymıştı
+   (x=53); boşluklar 4.25 / 4.75 / 4.5 çıkıyor, kule T4'ten sonra
+   **aşılamıyordu** ve kule ana yolda olduğu için oyun orada kilitleniyordu.
+   `Salon_T1` de kaldırıldı: üstü 2.15'ti, `Salon_Koltuk` ise 2.20 — koltuk
+   daha yüksek olduğu için T1'e hiç basılamıyordu. Kulenin ilk basamağı
+   artık koltuğun kendisi.
+
+10. **Koridor'un alçak tavanı kaldırıldı, `Basamak1` silindi.**
+    Tavan oynanabilir yüksekliği 6.5'e indiriyordu; `Koridor_Raf`ın üstü
+    4.45, oyuncu 1.6 → rafta kafayla tavan arası 0.45 kalıyor ve **orada
+    zıplanamıyordu**. `DevrikDolap` (üst 1.80) ile `Basamak1` (üst 1.75)
+    yan yanaydı ve ikincisi daha alçaktı: oyuncu tırmandığını sanıp
+    aşağı iniyordu. Dolap 166 → 168.55'e kaydırıldı.
+    Atmosfer, oynanabilirlikten önce gelemez.
+
+11. **Çocuk odasında sonsuz su var (`Cocuk_Radyator`, x=191).**
+    Onsuz Mutfak küvetinden (146) Arka koridor musluğuna (240) kadar
+    94 birim kurak kalıyor — hem haritanın en uzun kurak şeridi, hem
+    Karabaş'ın kurtarıldığı yer, hem de x=188'de geri dönüş kapanıyor.
+    Bu su kaynağı ayrıca Çocuk odası alev perdesinin yerleşmesini sağlıyor
+    (perde komutu, önünde su yoksa perde koymuyor).
+
+12. **Atmosfer katmanı: turuncu %10, vinyet %40.** Eskiden %25 / %60'tı.
+    O değerler düz renkli dikdörtgenler varken doğruydu — 4 farklı asset
+    paketini birleştirmek için konmuştu. Gerçek pixel art gelince aynı tint
+    sprite'ın **kendi paletini eziyor**. Vinyet düşüşünün ayrı faydası:
+    %60'ta ekran kenarları çok kararıp kenardan gelen canavarlar geç fark
+    ediliyordu. **%20'nin üstüne çıkmayın.**
+
+### `Seviyeyi Denetle` artık güvenilir — çıktısını ciddiye alın
+
+Araç bir dönem 23 uyarının 18'ini uyduruyordu ve gerçek kopukluğu gizliyordu.
+Üç hata düzeltildi:
+- **Edit Mode körlüğü:** `Start()` çalışmadığı için alev duvarı sahnedeki
+  yerinde, collider'ı açık duruyor ve sahte "TIKALI KAPI" veriyordu.
+  Artık `FlameWallGate` taşıyan collider'lar atlanıyor.
+- **Tek sabit iki iş yapıyordu:** `SafeRise` hem "zeminden ilk basamak" hem
+  "platformdan platforma" için kullanılıyordu. Ayrıldı:
+  `GroundStep 2.25` / `SafeRise 2.4` / `TightRise 2.0`.
+- **Süzgeç yanlış yerdeydi:** yükseklik eşiği zincirin kendisine
+  uygulanıyordu, alçak basamaklar görünmüyordu. Artık sadece raporlamaya.
+  Duvarlar (uzun + ince) platform taramasından çıkarıldı.
+
+Yeni `🔶 SIKI ZIPLAMA` satırı **bilgi**, hata değil: 2.0'ın üstünde yükselme
+gerektiren girişleri bildirir (fiziksel tavan 2.87).
+
 ---
 
 ## SIRADAKİ İŞLER (öncelik sırası)
 
-1. **Dört düzeltmeyi oynayarak doğrula** — kod hazır, kanıt yok. Tek turda:
-   - Mavi anahtarı al → HUD'da su barının altında üç kare; alınan **parlıyor**,
-     alınmayanlar sönük duruyor
-   - x≈248 → köpek sebepsiz durmuyor, `Canavar yolu kesti` log'u **hiç düşmüyor**
-   - x≈264 → Console'da `[Final] Olum 1/5` … `5/5` sırayla akıyor, köpek
-     gizleniyor, yerde tasma kalıyor
+**Kritik eşik: 3. madde bitince jam kaybedilemez hale gelir** — çalışan oyun,
+eksiksiz ve yasal bir sayfa. Sonrası kâr. 4'e, 3 bitmeden başlamayın.
+
+1. **Tam tur — hiçbiri oynanarak doğrulanmadı.** Tek turda:
+   - Mavi anahtarı al → HUD'da üç kare; alınan **parlıyor**, diğerleri sönük
+   - x≈264 → Console'da `[Final] Olum 1/5` … `5/5` akıyor, köpek gizleniyor,
+     yerde tasma kalıyor
    - Ölüm sahnesi boyunca ateş duvarı **duruyor** ve can eksilmiyor
-2. **Yeni build al ve itch.io'ya yükle** — mevcut zip eski.
-   ⚠️ `Builds/` klasörü diskte YOK (gitignore'lu), sıfırdan build gerekiyor (~8 dk).
-   Zip'i PowerShell `Compress-Archive` ile yapmayın — ters slash yazıyor,
-   itch.io dosyaları bulamıyor. Sağ tık → "Sıkıştırılmış klasöre gönder".
-3. Baştan sona tam tur, denge ayarı (can, su, düşman canları)
-4. itch.io sayfası — metin `ITCH_SAYFASI.md`'de hazır
-   ⚠️ **Havlama sesi CC BY 4.0 — atıf ZORUNLU**, künye `ASSETS.md`'de
+   - Karabaş: yürürken yürüyor, ateşe atlarken havlıyor, kurtulunca oturuyor
+   - **Kaçış bölümü** — duvar kovalarken checkpoint'e ölmeden varılıyor mu
+2. Turda çıkanları düzelt
+3. **Build + yükle + krediler + 3 ekran görüntüsü**
+4. İtfaiyeci sprite'ı — sadece ≥2.5 saat kaldıysa
+5. **Son 1 saat: kod değiştirme.** Son build, yükle, teslim et.
+
+### Build ve zip
+
+`Builds/WebGL/` diskte **var**, `.gitignore`'lu. Build ~8 dk.
+
+⚠️ Zip'i `Compress-Archive` ile **yapmayın** — PowerShell 5.1 girdi adlarını
+ters slash'la yazıyor, itch.io dosyaları bulamıyor. Bir kez yaşandı.
+Doğrusu: girdi adlarını elle `/` ile normalleştiren bir betik (bu jam'de
+yazıldı) ya da sağ tık → "Sıkıştırılmış klasöre gönder".
+
+Yüklemeden sonra **"This file will be played in the browser"** kutusunu
+işaretlemeyi unutmayın — her yeni dosyada sıfırlanıyor. Viewport 960×600.
+
+⚠️ **Build almadan önce çıktının tarihini kontrol edin.** Bir kez eski build
+klasöründen zip yapılıp yüklendi; sayfada 3 saat eski sürüm durdu.
+
+### itch.io sayfası
+
+Bütün metinler **`ITCH_SAYFASI.md`**'de hazır: başlık, tagline, açıklama,
+kontroller, tag'ler, krediler.
+
+⚠️ **Havlama sesi CC BY 4.0 — atıf ZORUNLU** (Paulo_Gonçalves).
+⛔ `ASSETS.md` ve `EV_ASSETLERI.md` sonundaki kredi bloklarını **kullanmayın** —
+indirilmemiş asset paketlerini listeliyorlar ve zorunlu atıf onlarda yok.
+Karabaş için LuizMelo satırı da eklendi (CC0, zorunlu değil ama doğrusu).
+
+### Product Name hâlâ "game"
+
+Yükleme ekranında ve tarayıcı sekmesinde "ALEV" değil "game" yazıyor.
+Player Settings → Product Name. Bir sonraki build'den **önce** yapın,
+tek başına build almaya değmez.
 
 ---
 
