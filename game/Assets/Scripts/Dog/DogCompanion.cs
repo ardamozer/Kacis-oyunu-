@@ -25,7 +25,14 @@ public class DogCompanion : MonoBehaviour
     [Header("Takip")]
     [Tooltip("Oyuncudan bu kadar uzaga kadar yaklasir, sonra durur.")]
     public float followDistance = 1.5f;
-    public float followSpeed = 4f;
+    [Tooltip("⚠️ OYUNCUDAN HIZLI OLMALI. PlayerController.moveSpeed = 7.\n\n" +
+             "Onceden 4'tu ve kopek oyuncuya ASLA yetisemiyordu: escort boyunca\n" +
+             "arada 14 birimlik fark ~4.7 saniyede aciliyor, kopek isinlaniyordu.\n" +
+             "Isinlandigi yer genelde canavarin OTESI oluyordu, yani 'kopek durup\n" +
+             "havlar, oyuncu canavari sondurur' ani hic yasanmiyordu.\n\n" +
+             "Refakatci karakterler oyuncudan biraz HIZLI olur — geride kalinca\n" +
+             "yetisebilsin diye.")]
+    public float followSpeed = 8f;
     [Tooltip("Bos birakin — sahnedeki Tag='Player' objesini kendi bulur.")]
     public Transform player;
 
@@ -46,7 +53,7 @@ public class DogCompanion : MonoBehaviour
              "Kat plani iki katli (y=0 ve y=9); kopek merdiveni tirmanamaz,\n" +
              "bu olmadan asagida kalir ve final sahnesine hic gelemez.\n" +
              "0 = kapali.")]
-    public float warpDistance = 14f;
+    public float warpDistance = 20f;
 
     [Header("Koruma ani — onunde canavar varsa durur")]
     [Tooltip("Karabas onunde CANLI bir duvar canavari varsa durur ve havlar.\n" +
@@ -129,6 +136,7 @@ public class DogCompanion : MonoBehaviour
     bool isStomping;
     float petSquashUntil;
     float blockedBarkTimer;
+    bool wasBlocked;
 
     SpriteRenderer sprite;
     Vector3 baseScale;
@@ -281,9 +289,24 @@ public class DogCompanion : MonoBehaviour
         // Onunde canlı bir canavar varsa gecmiyor — oyuncunun sondurmesi lazim.
         if (stopAtMonsters && IsBlockedByMonster())
         {
+            // Durumu bir kez bildir: "kopek neden durdu / neden durmadi"
+            // sorusunu tahminle degil Console'dan cevaplayalim.
+            if (!wasBlocked)
+            {
+                wasBlocked = true;
+                Debug.Log($"[Karabas] Canavar yolu kesti (x={transform.position.x:0.#}), " +
+                          "oyuncunun sondurmesini bekliyor.");
+            }
+
             UpdateBlockedBark();
             SnapToGround(false);
             return;
+        }
+
+        if (wasBlocked)
+        {
+            wasBlocked = false;
+            Debug.Log("[Karabas] Yol acildi, devam ediyor.");
         }
 
         float dist = Mathf.Abs(player.position.x - transform.position.x);

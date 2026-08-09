@@ -289,7 +289,7 @@ public static class AlevPrefabSetupB
 
         DogCompanion dog = go.AddComponent<DogCompanion>();
         dog.followDistance = 1.5f;
-        dog.followSpeed = 4f;
+        dog.followSpeed = 8f;   // oyuncu 7 — kopek yetisebilmeli
         dog.fireDetectRange = 1f;
         dog.audioSource = audio;
         dog.whineClip = whine;
@@ -309,7 +309,7 @@ public static class AlevPrefabSetupB
         // Bunlar olmadan kopek dikeyde hic hareket etmez: platforma cikan
         // oyuncunun altinda kalir, kat degisince de bir daha bulamaz.
         dog.groundLayer = LayerMask.GetMask("Ground");
-        dog.warpDistance = 14f;
+        dog.warpDistance = 20f;
         // PLAN.md: sevme tusunun mekanik islevi yok ama "en cok konusulacak
         // detay" olmasi bekleniyor. Karsiliginda hicbir sey gorunmezse
         // o detay yok demektir.
