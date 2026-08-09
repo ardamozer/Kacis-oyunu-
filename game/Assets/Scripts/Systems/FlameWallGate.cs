@@ -6,8 +6,9 @@ using UnityEngine;
 /// PLAN.MD: "Artik geri donemezsin hissi soylenmemeli, GOSTERILMELI."
 /// Oyuncu bu ani gormeli: kamera sarsilir, cokme sesi gelir, alev yukselir.
 ///
-/// YENİ: Duvar yükseldikten sonra ILERLER — oyuncuyu kovalar!
-/// Temas ederse hasar verir. "Acele et, arkandan ateş geliyor!"
+/// ⛔ KALDIRILDI (playtest karari): duvar artik hic gorunmuyor.
+/// `wallEnabled` kapali oldugu icin obje Start'ta kendini kapatiyor.
+/// Kovalayan alev kacis bolumunu bir kosu yarisina ceviriyordu.
 ///
 /// ⚠️ Kisi B'nin DogCompanion API'sine BAGLANMIYOR. Kopegin baslangic
 /// noktasindan uzaklasmasini izliyor — kurtulup pesinize takildiginin
@@ -15,6 +16,13 @@ using UnityEngine;
 /// </summary>
 public class FlameWallGate : MonoBehaviour
 {
+    [Header("KAPALI — playtest karari")]
+    [Tooltip("Alev duvari tamamen devre disi. Geri istemek icin isaretleyin.\n\n" +
+             "Kaldirildi cunku kacis bolumunu bir kosu yarisina ceviriyordu: " +
+             "oyuncu suyunu yonetmek ve odayi okumak yerine sadece saga kosuyordu. " +
+             "Geri donebilmek ayrica su ekonomisini rahatlatiyor (musluga donus).")]
+    public bool wallEnabled;
+
     [Header("Ne zaman yukselsin")]
     [Tooltip("Izlenecek kopek. Bos birakilirsa sahnedeki DogCompanion'i bulur.")]
     public Transform dog;
@@ -80,6 +88,14 @@ public class FlameWallGate : MonoBehaviour
 
     void Start()
     {
+        if (!wallEnabled)
+        {
+            // Objeyi tamamen kapat: collider da gorsel de gitsin. Sahneden
+            // silmiyoruz ki geri acmak tek kutu isaretlemek olsun.
+            gameObject.SetActive(false);
+            return;
+        }
+
         if (dog == null)
         {
             foreach (var mb in FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))

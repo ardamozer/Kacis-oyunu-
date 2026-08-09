@@ -53,6 +53,48 @@ public class EndingSequence : MonoBehaviour
     public float impactShakeDuration = 0.4f;
     public float impactShakeMagnitude = 0.55f;
 
+    [Header("Olum — sinematik okunabilirlik")]
+    [Tooltip("Playtest: 'kopegin beni ittigi ve altinda kaldigi anlasilmiyor'.\n" +
+             "Kapatirsaniz eski (hizli, duz) sahne oynar.")]
+    public bool cinematicDeath = true;
+
+    [Tooltip("Sinematik moddaki atilis suresi. Serilestirilmis dogLungeDuration " +
+             "(0.25) cok kisa kaliyor — goz yakalamadan bitiyor.")]
+    public float cinematicLungeDuration = 0.45f;
+
+    [Tooltip("Agir cekim carpani. 1 = kapali. Atilistan carpmaya kadar surer, " +
+             "sonra normale doner. Sessizlik NORMAL hizda yasanir.")]
+    [Range(0.15f, 1f)] public float slowMotionScale = 0.35f;
+
+    [Tooltip("Tahta dustukten sonra kopegin ALTINDA GORUNUR kaldigi sure " +
+             "(gercek saniye). Kayip goruldukten sonra gizlenmeli.")]
+    public float dogPinnedDuration = 0.8f;
+
+    [Tooltip("Tahta uzerine dusunce kopegin dikey ezilme orani. Kanli degil, " +
+             "sadece 'altinda kaldi' okunsun diye.")]
+    [Range(0.2f, 1f)] public float dogSquashY = 0.45f;
+
+    [Header("Olum — tehdidin gosterilmesi")]
+    [Tooltip("Kiris, dusmeden hemen once oyuncunun TAM USTUNDE titreyip parlar.\n\n" +
+             "⚠️ Bu bir UYARI DEGIL, bir ACIKLAMA. Kontrol coktan alinmis durumda " +
+             "(CanControl = false), yani oyuncu kacamaz ve 'kacabilirdim' diyemez. " +
+             "KAT_PLANI'nin yasakladigi sey oyuncu HALA OYNARKEN uyari vermek; " +
+             "burada amac 'bu sana geliyordu' cumlesini kurmak, ki kopegin araya " +
+             "girmesi anlam kazansin. Unlem/yer isareti KULLANMIYORUZ — onlar " +
+             "oyunun 'kac' dili, burada kacis yok.")]
+    public bool revealThreat = true;
+
+    [Tooltip("Tehdidin gosterildigi sure (gercek saniye).")]
+    public float threatRevealDuration = 0.5f;
+
+    public Color threatGlowColor = new Color(1f, 0.75f, 0.35f);
+    public float threatShakeMagnitude = 0.14f;
+
+    [Tooltip("Kiris gorundukten sonra Karabas bir kez havlar — tek uyari, ve " +
+             "zaten gec. Oyunun ondan duyulan son sesi bu.")]
+    public bool barkBeforeLunge = true;
+    [Range(0f, 1f)] public float deathBarkVolume = 1f;
+
     [Header("Olum — ses")]
     [Tooltip("Tahta yere carpinca calar. Bos birakilabilir.")]
     public AudioClip crashClip;
@@ -87,7 +129,22 @@ public class EndingSequence : MonoBehaviour
     bool dogDeathTriggered;
     bool bossActive;
     bool bossSceneEnding;
+    bool bossResolved;
     float bossFireTimer;
+
+    /// <summary>Boss su an ayakta mi? (Cikis kapisi bunu okuyor.)</summary>
+    public bool BossActive => bossActive;
+
+    /// <summary>
+    /// Boss sahnesi bitti mi (hayalet gecti, alev sondu)? `bossObject.activeSelf`
+    /// bunu ayirt edemiyor: hem "henuz cagrilmadi" hem "coktan bitti" durumunda
+    /// kapali. Cikis kapisinin ikisini karistirmamasi lazim.
+    /// </summary>
+    public bool BossResolved => bossResolved;
+
+    // Boss sirasinda can okumasinin izi — "hayalet neden gelmedi" sorusu icin.
+    int lastBossHealth = -1;
+    bool bossHealthUnreadable;
 
     // Alevin sahnede ayarladiginiz gercek boyutu. Sabit Vector3.one KULLANMIYORUZ:
     // Inspector'da alevi buyutup kucultmekte ozgur olmalisiniz, kod onu ezmesin.
@@ -186,6 +243,22 @@ public class EndingSequence : MonoBehaviour
         if (dog != null && player != null)
             pushDir = player.position.x >= dog.transform.position.x ? 1f : -1f;
 
+        // AGIR CEKIM burada basliyor — kopek hareket etmeden hemen once.
+        // Sahnenin tamamini yavaslatmiyoruz: sadece "itilis + tahtanin dusmesi"
+        // penceresi. Sessizlik normal hizda yasanmali, yoksa 3 saniye 8 saniye
+        // olur ve an dagilir. Kamera sabit (KAT_PLANI: zoom/kesme yok).
+        if (cinematicDeath) StartSlowMotion();
+
+        // 1) TEHDIT GORUNUR OLUR — kiris oyuncunun tam ustunde titrer ve akkor
+        //    olur. Oyuncu "bu bana geliyor" der ama tusa basamaz; kacis yok,
+        //    dolayisiyla suclanacak bir hata da yok.
+        if (cinematicDeath && revealThreat && deathDebris != null)
+            yield return RevealThreatRoutine(impactPoint);
+
+        // 2) KARABAS HAVLAR — tek, keskin, ve zaten gec.
+        //    Uyariyi CEVRE degil KOPEK veriyor: "senin fark etmedigini o fark etti."
+        if (cinematicDeath && barkBeforeLunge) BarkOnce();
+
         // Kopek ve oyuncu AYNI ANDA hareket etmeli. Sirayla yaparsak
         // "itti" degil, "once kopek yurudu, sonra oyuncu kaydi" gorunur.
         Coroutine lunge = null;
@@ -223,6 +296,22 @@ public class EndingSequence : MonoBehaviour
             if (CameraShake.Instance != null)
                 CameraShake.Instance.Shake(impactShakeDuration, impactShakeMagnitude);
 
+            // ⭐ KOPEK TAHTANIN ALTINDA — VE BU GORULMELI.
+            //
+            // Kopek zaten ~1 saniye ekranda kaliyordu, ama tahtayla ayni
+            // duzlemde duruyordu: "altinda mi kaldi, yaninda mi duruyor" belli
+            // olmuyordu. Iki dokunus netlestiriyor:
+            //   1. Tahtanin sprite'i kopegin ONUNE aliniyor (sorting order)
+            //   2. Kopek dikeyde eziliyor — kan yok, sadece okunabilirlik
+            if (cinematicDeath && dog != null)
+            {
+                PinDogUnderDebris();
+                yield return new WaitForSecondsRealtime(dogPinnedDuration);
+            }
+
+            // Agir cekim BITIYOR — sessizlik normal hizda yasansin.
+            if (cinematicDeath) StopSlowMotion();
+
             // Carpma duyuldu — SIMDI sessizlik. Bu bosluk sahnenin kendisi.
             yield return new WaitForSeconds(silenceStartDelay);
         }
@@ -234,6 +323,10 @@ public class EndingSequence : MonoBehaviour
             bigFlameVisual.SetActive(true);
             yield return ScaleRoutine(bigFlameVisual.transform, Vector3.zero, bigFlameBaseScale, flameRiseDuration);
         }
+
+        // Iki daldan biri de calismamis olabilir (ne tahta ne alev bagli).
+        // Zaman olcegi ASLA acik kalmamali — oyun kalici olarak yavaslar.
+        if (cinematicDeath) StopSlowMotion();
 
         Debug.Log("[Final] Olum 3/5 — tahta dustu, carpma duyuldu.");
 
@@ -306,11 +399,15 @@ public class EndingSequence : MonoBehaviour
         SpriteRenderer sr = dog.GetComponentInChildren<SpriteRenderer>();
         if (sr != null) sr.flipX = to.x < from.x;
 
+        // Sinematik modda daha uzun: serilestirilmis 0.25 sn goz yakalamadan
+        // bitiyordu ve "kopek onume gecti" cumlesi hic kurulmuyordu.
+        float duration = cinematicDeath ? cinematicLungeDuration : dogLungeDuration;
+
         float e = 0f;
-        while (e < dogLungeDuration)
+        while (e < duration)
         {
             e += Time.deltaTime;
-            float k = Mathf.Clamp01(e / dogLungeDuration);
+            float k = Mathf.Clamp01(e / duration);
             k = k * k * (3f - 2f * k);          // SmoothStep — atilis hissi
             t.position = Vector3.Lerp(from, to, k);
             yield return null;
@@ -318,6 +415,115 @@ public class EndingSequence : MonoBehaviour
 
         t.position = to;
         dogLastPosition = to;                   // tasma buraya dusecek
+    }
+
+    // ============================================================
+    //  Sinematik yardimcilari
+    // ============================================================
+
+    float defaultFixedDelta = 0.02f;
+    bool slowMotionActive;
+
+    void StartSlowMotion()
+    {
+        if (slowMotionActive || slowMotionScale >= 1f) return;
+
+        slowMotionActive = true;
+        defaultFixedDelta = Time.fixedDeltaTime;
+        Time.timeScale = slowMotionScale;
+
+        // Fizik adimi da olceklenmeli, yoksa agir cekimde hareket kekeliyor.
+        Time.fixedDeltaTime = defaultFixedDelta * slowMotionScale;
+    }
+
+    void StopSlowMotion()
+    {
+        if (!slowMotionActive) return;
+
+        slowMotionActive = false;
+        Time.timeScale = 1f;
+        Time.fixedDeltaTime = defaultFixedDelta;
+    }
+
+    /// <summary>
+    /// ⚠️ GUVENLIK AGI. Coroutine yarida kesilirse (sahne degisimi, obje
+    /// kapanmasi, hata) zaman olcegi 0.35'te kalir ve oyunun TAMAMI kalici
+    /// olarak agir cekime duser. Bu, sahneyi kirmaktan cok daha beter.
+    /// </summary>
+    void OnDisable() => StopSlowMotion();
+
+    /// <summary>
+    /// Kiris, dusecegi noktanin — yani oyuncunun basinin — ustunde titreyip
+    /// akkor hale gelir. Amac tehdidi ACIKLAMAK, uyarmak degil: kontrol zaten
+    /// alinmis durumda. Unlem ve yer isareti bilerek kullanilmiyor, onlar
+    /// oyunun "kac" dili ve burada kacis yok.
+    /// </summary>
+    IEnumerator RevealThreatRoutine(Vector3 impactPoint)
+    {
+        // Kirisi oyuncunun tam ustune al — dusecegi yer burasi.
+        Vector3 d = deathDebris.transform.position;
+        Vector3 basePos = new Vector3(impactPoint.x, d.y, d.z);
+        deathDebris.transform.position = basePos;
+
+        SpriteRenderer sr = deathDebris.GetComponentInChildren<SpriteRenderer>();
+        Color baseColor = sr != null ? sr.color : Color.white;
+
+        // Tavandan gelen boguk bir titresim — oyuncuyu yukari baktirir.
+        if (CameraShake.Instance != null)
+            CameraShake.Instance.Shake(threatRevealDuration, threatShakeMagnitude);
+
+        float e = 0f;
+        while (e < threatRevealDuration)
+        {
+            // Agir cekim acik; gercek zaman kullaniyoruz ki bu beat timeScale
+            // ne olursa olsun ayni uzunlukta kalsin.
+            e += Time.unscaledDeltaTime;
+            float k = Mathf.Clamp01(e / threatRevealDuration);
+
+            // Titreme sona dogru siddetlenir: "kopmak uzere".
+            float amp = 0.05f + 0.12f * k;
+            deathDebris.transform.position = basePos +
+                new Vector3(Mathf.Sin(e * 55f) * amp, 0f, 0f);
+
+            if (sr != null)
+                sr.color = Color.Lerp(baseColor, threatGlowColor,
+                                      Mathf.PingPong(e * 6f, 1f) * 0.85f);
+
+            yield return null;
+        }
+
+        deathDebris.transform.position = basePos;
+        if (sr != null) sr.color = baseColor;
+    }
+
+    /// <summary>Karabas'in son sesi: tek, keskin havlama.</summary>
+    void BarkOnce()
+    {
+        if (dog == null || dog.audioSource == null || dog.happyBarkClip == null) return;
+
+        // Normalden biraz pes: sevinc degil alarm.
+        dog.audioSource.pitch = 0.85f;
+        dog.audioSource.PlayOneShot(dog.happyBarkClip, deathBarkVolume);
+    }
+
+    /// <summary>
+    /// Kopegi tahtanin ALTINDA gosterir: tahta sprite'i one alinir, kopek
+    /// dikeyde ezilir. Kan yok — sadece mekanik okunabilirlik.
+    /// </summary>
+    void PinDogUnderDebris()
+    {
+        SpriteRenderer dogSprite = dog.GetComponentInChildren<SpriteRenderer>();
+        if (dogSprite == null) return;
+
+        if (deathDebris != null)
+        {
+            SpriteRenderer debrisSprite = deathDebris.GetComponentInChildren<SpriteRenderer>();
+            if (debrisSprite != null && debrisSprite.sortingLayerID == dogSprite.sortingLayerID)
+                debrisSprite.sortingOrder = dogSprite.sortingOrder + 1;
+        }
+
+        Vector3 s = dog.transform.localScale;
+        dog.transform.localScale = new Vector3(s.x, s.y * dogSquashY, s.z);
     }
 
     IEnumerator PushPlayerAside(float dir)
@@ -362,11 +568,32 @@ public class EndingSequence : MonoBehaviour
             bossFireTimer = bossFireInterval;
         }
 
-        // Can hic azalmaz (boss tarafinda) — ama oyuncunun kendi cani azalir.
-        // 1 kalbe dusunce sahne kendiliginden tetiklenir (PLAN.md madde 4).
-        if (TryGetPlayerHealth(out int current) && current <= 1)
+        // Oyuncunun cani 1 kalbe dusunce hayalet sahnesi kendiliginden
+        // tetiklenir (PLAN.md madde 4).
+        //
+        // Playtest'te can 1'e dustu ama hayalet gelmedi ve oyuncu oldu; sebep
+        // log'dan cikmiyordu cunku bu blok sessizdi. Artik konusuyor.
+        if (!TryGetPlayerHealth(out int current))
+        {
+            if (!bossHealthUnreadable)
+            {
+                bossHealthUnreadable = true;
+                Debug.LogError("[Final] Boss: oyuncunun cani OKUNAMIYOR (player veya " +
+                               "PlayerHealth bulunamadi) — hayalet sahnesi ASLA tetiklenemez.");
+            }
+            return;
+        }
+
+        if (current != lastBossHealth)
+        {
+            lastBossHealth = current;
+            Debug.Log($"[Final] Boss: oyuncu cani {current} (hayalet esigi <= 1).");
+        }
+
+        if (current <= 1)
         {
             bossSceneEnding = true;
+            Debug.Log("[Final] Hayalet 1/2 — esik asildi, sahne basliyor.");
             StartCoroutine(GhostRoutine());
         }
     }
@@ -387,6 +614,14 @@ public class EndingSequence : MonoBehaviour
     IEnumerator GhostRoutine()
     {
         SetPlayerControl(false);
+
+        // Boss artik direnmeyi biraksin: yenilenmesi dursun ve olcegi serbest
+        // kalsin. Yoksa BossCore ile FadeOutBoss ayni localScale'i cekistirir.
+        if (bossObject != null)
+        {
+            BossCore core = bossObject.GetComponentInChildren<BossCore>();
+            if (core != null) core.Defeat();
+        }
 
         if (collarPickup != null) yield return CollarGlowRoutine();
 
@@ -444,6 +679,9 @@ public class EndingSequence : MonoBehaviour
         if (exitDoor != null) exitDoor.SetActive(false); // kapi acilir
 
         SetPlayerControl(true);
+        bossResolved = true;
+
+        Debug.Log("[Final] Hayalet 2/2 — boss sondu, cikis acildi.");
     }
 
     /// <summary>
