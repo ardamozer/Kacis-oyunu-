@@ -49,6 +49,27 @@ public class EndingSequence : MonoBehaviour
     [Tooltip("Kopegin oyuncunun yerine atilma suresi. Itmeyle ayni anda calisir.\n" +
              "Itmeden KISA olsun — once kopek carpsin, sonra oyuncu savrulsun.")]
     public float dogLungeDuration = 0.25f;
+
+    [Tooltip("Kopek carpmadan ONCE oyuncunun bu kadar yanina gelir.\n" +
+             "0 yaparsaniz kopek dogrudan oyuncunun UZERINE lerp'lenir ve iki " +
+             "sprite ust uste biner — 'itti' degil 'icine girdi' gorunur. " +
+             "Playtest'te bildirilen sorun buydu.")]
+    public float dogContactGap = 0.95f;
+
+    [Tooltip("Yaklasma suresi. Kisa olmali: kopek kosarak geliyor, yuruyerek degil.")]
+    public float dogApproachDuration = 0.28f;
+
+    [Tooltip("Carpma aninda kopegin sicrama yuksekligi. 0 = kaymali (kotu).\n" +
+             "Kavis, hareketi 'yurudu' degil 'atildi' yapan sey.")]
+    public float lungeHopHeight = 0.5f;
+
+    [Tooltip("Ziplamadan onceki comelme suresi. Hareketi 'gercek' yapan sey " +
+             "havadaki kare degil, bu hazirlik ani.")]
+    public float lungeCrouchDuration = 0.1f;
+
+    [Tooltip("Yere inisteki ezilme suresi. Agirligin yere aktarilmasi buradan " +
+             "okunuyor; olmadan ziplama havada bitiyormus gibi duruyor.")]
+    public float lungeLandDuration = 0.14f;
     [Tooltip("Tahta carpinca kameranin sarsilmasi. 0 = kapali.")]
     public float impactShakeDuration = 0.4f;
     public float impactShakeMagnitude = 0.55f;
@@ -95,6 +116,58 @@ public class EndingSequence : MonoBehaviour
     public bool barkBeforeLunge = true;
     [Range(0f, 1f)] public float deathBarkVolume = 1f;
 
+    [Header("Replikler")]
+    [Tooltip("Duygusal anlarda karakterlerin ustunde beliren yazilar.\n" +
+             "Bir repligi BOSALTIRSANIZ o an sessiz gecer — sistemi tamamen " +
+             "kapatmak icin hepsini bosaltin.")]
+    public bool useSpeech = true;
+
+    [Tooltip("Karabas atilirken — tek uyari, ve zaten gec.")]
+    public string lineDogWarn = "DİKKAT ET!";
+
+    [Tooltip("Carpmadan HEMEN sonra, oyuncunun ustunde. Ham tepki — daha " +
+             "anlamlandiramadi, sadece sok. Kederi bundan sonra geliyor.")]
+    public string linePlayerShock = "NAAPTIN SEN?!";
+
+    [Tooltip("Sessizlikten sonra, oyuncunun ustunde. Tasma yerde kalirken.")]
+    public string lineAfterDeath = "Beni kurtarmak için kendini feda ettin...";
+
+    [Tooltip("Ev sarsildiktan sonra — oyuncu kacmasi gerektigini anlar.")]
+    public string lineMustEscape = "Ev çöküyor... çıkmalıyım.";
+
+    [Tooltip("Hayalet tam caresiz anda belirdiginde.")]
+    public string lineGhostArrive = "Merak etme, yetiştim.";
+
+    [Tooltip("Hayalet giderken — vedasi.")]
+    public string lineGhostFarewell = "Cennette görüşürüz, dostum.";
+
+    [Tooltip("Boss sonduktan sonra, oyuncunun ustunde.")]
+    public string lineFinalThanks = "Yaptığın iyiliği asla unutmayacağım.";
+
+    [Tooltip("Bir repligin ekranda kalma suresi (gercek saniye).")]
+    public float lineDuration = 2.4f;
+
+    [Header("Olumden sonra — ev sarsilir")]
+    [Tooltip("Kopek oldukten sonra ev sarsilir: 'burada kalamazsin'. " +
+             "0 = kapali.")]
+    public float houseTremorDuration = 1.7f;
+    public float houseTremorMagnitude = 0.5f;
+
+    public Color dogLineColor = new Color(0.65f, 0.85f, 1f);
+    public Color playerLineColor = Color.white;
+
+    [Header("Sinema bantlari")]
+    [Tooltip("Ara sahnelerde ust/alttan siyah paravanlar kapanir. Oyuncu " +
+             "kontrolun kasten alindigini anlar — 'tuşlar tutmuyor' degil " +
+             "'sahne oynuyor'. Olum ve hayalet sahnelerinde calisir.")]
+    public bool useCinematicBars = true;
+
+    [Tooltip("Bant yuksekligi, ekran yuksekliginin orani. 0.12 = %12 ust + %12 alt.")]
+    [Range(0.05f, 0.25f)] public float barHeightFraction = 0.12f;
+
+    [Tooltip("Bantlarin kapanma/acilma suresi (gercek saniye).")]
+    public float barFadeDuration = 0.35f;
+
     [Header("Olum — ses")]
     [Tooltip("Tahta yere carpinca calar. Bos birakilabilir.")]
     public AudioClip crashClip;
@@ -122,9 +195,48 @@ public class EndingSequence : MonoBehaviour
     public Transform ghostStart;
     public Transform ghostEnd;
     public float ghostCrossDuration = 2.5f;
+
+    [Tooltip("Hayalet yolun bu noktasinda durup konusur (0-1). 0.5 = ortada, " +
+             "yani oyuncunun hizasinda.")]
+    [Range(0.2f, 0.8f)] public float ghostPauseAt = 0.5f;
+
+    [Tooltip("Durup konustugu sure (gercek saniye). Repliklerin ikisi de " +
+             "bu surenin icine sigar.")]
+    public float ghostPauseDuration = 3.4f;
+
+    [Header("Hayalet — girisi")]
+    [Tooltip("Boss sahnesinde can 1'e dusunce oyuncunun teslimiyeti.")]
+    public string lineGiveUp = "Aahh... sanırım buraya kadardı.";
+
+    [Tooltip("Perdelerin KAPANMA yuksekligi (ekran oraninin yarisi = tam kapali).\n" +
+             "0.46 = neredeyse kapali, ince bir seride kaliyor. 0.5 yaparsaniz " +
+             "ekran tamamen kararir ve oyuncu 'oldum, sahne bitti' der — " +
+             "kurtarilma bir devam degil yeni bir sahne gibi baslar.")]
+    [Range(0.25f, 0.49f)] public float closingBarHeight = 0.46f;
+
+    [Tooltip("Perdelerin kapanma suresi. Yavas olmali: oyuncu kapandigini " +
+             "izleyip 'bitiyor' demeye vakit bulmali.")]
+    public float closingDuration = 1.8f;
+
+    [Tooltip("Havlamadan sonra hayalet gorunene kadar gecen sure. Once SES, " +
+             "sonra goruntu — oyuncu kim geldigini gormeden anlasin.")]
+    public float ghostBarkLead = 0.55f;
+
+    [Tooltip("Hayaletin havlamasi. Bos birakilirsa Karabas'in havlamasi kullanilir.")]
+    public AudioClip ghostBarkClip;
+    [Range(0f, 1f)] public float ghostBarkVolume = 1f;
     public Color collarGlowColor = new Color(1f, 1f, 0.6f);
     [Tooltip("Boss'un sonme suresi. Aniden yok olmasi 'bug' gibi duruyor.")]
     public float bossFadeDuration = 1.2f;
+
+    [Header("Hayalet — boss'a carpma")]
+    [Tooltip("Hayalet yolun bu noktasinda boss'a carpar (0-1). Vedadan SONRA " +
+             "olmali, yani ghostPauseAt'ten buyuk.")]
+    [Range(0.3f, 0.95f)] public float bossStrikeAt = 0.72f;
+
+    public float bossStrikeFlashDuration = 0.28f;
+    public float bossStrikeShakeDuration = 0.6f;
+    public float bossStrikeShakeMagnitude = 0.6f;
 
     bool dogDeathTriggered;
     bool bossActive;
@@ -243,6 +355,10 @@ public class EndingSequence : MonoBehaviour
         if (dog != null && player != null)
             pushDir = player.position.x >= dog.transform.position.x ? 1f : -1f;
 
+        // Bantlar ONCE kapansin: sahne "basliyor" sinyali agir cekimden once
+        // gelmeli, yoksa oyuncu once yavasligi fark edip "takildi mi?" diyor.
+        if (useCinematicBars) CinematicBars.Show(barHeightFraction, barFadeDuration);
+
         // AGIR CEKIM burada basliyor — kopek hareket etmeden hemen once.
         // Sahnenin tamamini yavaslatmiyoruz: sadece "itilis + tahtanin dusmesi"
         // penceresi. Sessizlik normal hizda yasanmali, yoksa 3 saniye 8 saniye
@@ -259,14 +375,29 @@ public class EndingSequence : MonoBehaviour
         //    Uyariyi CEVRE degil KOPEK veriyor: "senin fark etmedigini o fark etti."
         if (cinematicDeath && barkBeforeLunge) BarkOnce();
 
-        // Kopek ve oyuncu AYNI ANDA hareket etmeli. Sirayla yaparsak
-        // "itti" degil, "once kopek yurudu, sonra oyuncu kaydi" gorunur.
-        Coroutine lunge = null;
+        // Havlamayla ayni anda: "DIKKAT ET!". Uyariyi cevre degil kopek veriyor.
+        if (useSpeech && dog != null)
+            SpeechBubble.Say(dog.transform, lineDogWarn, lineDuration, dogLineColor);
+
         if (dog != null)
         {
-            dog.enabled = false;   // kendi takip mantigi hamleyle yarismasin
-            lunge = StartCoroutine(DogLungeRoutine(impactPoint));
+            dog.enabled = false;                 // takip mantigi hamleyle yarismasin
+            PutDogInFrontOfPlayer();             // ust uste binerse "onunde" okunsun
         }
+
+        // ---- A) YAKLASMA ----
+        // Kopek once oyuncunun YANINA gelir, uzerine degil. Bu faz olmadan
+        // kopek dogrudan oyuncunun durdugu noktaya lerp'leniyordu ve iki sprite
+        // birkac kare ic ice giriyordu: "itti" degil "icine girdi" gorunuyordu.
+        if (cinematicDeath && dog != null)
+            yield return DogApproachRoutine(impactPoint, pushDir);
+
+        // ---- B) CARPMA ----
+        // Kopek sicrayarak oyuncunun yerine girer, oyuncu AYNI ANDA savrulur.
+        // Ikisi es zamanli olmali ("once kopek yurudu, sonra oyuncu kaydi"
+        // gorunmesin), ama kopek artik YANDAN basladigi icin oyuncu bosalttikca
+        // yerine geciyor — hicbir karede ust uste binmiyorlar.
+        Coroutine lunge = (dog != null) ? StartCoroutine(DogLungeRoutine(impactPoint)) : null;
 
         yield return PushPlayerAside(pushDir);
         if (lunge != null) yield return lunge;
@@ -306,6 +437,13 @@ public class EndingSequence : MonoBehaviour
             if (cinematicDeath && dog != null)
             {
                 PinDogUnderDebris();
+
+                // Ham tepki, carpmanin hemen ustune. Oyuncu daha ne oldugunu
+                // anlamadi — once sok, keder sonra. Sirayi ters kurarsak
+                // sahne "aciklama" gibi okunuyor, "yasanan sey" gibi degil.
+                if (useSpeech && player != null)
+                    SpeechBubble.Say(player, linePlayerShock, lineDuration, playerLineColor);
+
                 yield return new WaitForSecondsRealtime(dogPinnedDuration);
             }
 
@@ -370,6 +508,31 @@ public class EndingSequence : MonoBehaviour
         }
 
         AudioListener.volume = previousVolume;
+
+        // Oyuncunun ustunde: kaybin dile gelmesi. Ses geri geldikten SONRA —
+        // sessizligin icine yazi koymak o bosluğu bozardi.
+        if (useSpeech && player != null)
+        {
+            SpeechBubble.Say(player, lineAfterDeath, lineDuration, playerLineColor);
+            yield return new WaitForSecondsRealtime(lineDuration * 0.6f);
+        }
+
+        // ---- EV SARSILIR: "burada kalamazsin" ----
+        //
+        // Kederi bir eyleme baglamak lazim, yoksa oyuncu tasmanin basinda
+        // durup ne yapacagini bilemiyor. Ev sarsiliyor, tavandan toz iniyor:
+        // soylenmeden anlasiliyor — kos.
+        if (houseTremorDuration > 0f && CameraShake.Instance != null)
+        {
+            CameraShake.Instance.Shake(houseTremorDuration, houseTremorMagnitude);
+
+            if (useSpeech && player != null)
+                SpeechBubble.Say(player, lineMustEscape, lineDuration, playerLineColor);
+
+            yield return new WaitForSecondsRealtime(houseTremorDuration * 0.8f);
+        }
+
+        if (useCinematicBars) CinematicBars.Hide(barFadeDuration);
         SetPlayerControl(true);
 
         Debug.Log("[Final] Olum 5/5 — tasma birakildi, kontrol geri verildi.");
@@ -387,14 +550,86 @@ public class EndingSequence : MonoBehaviour
     /// DogCompanion'i kapatiyoruz cunku kendi takip mantigi ayni transform'u
     /// oynatiyor ve hamleyle yarisip kopegi titretiyor.
     /// </summary>
+    /// <summary>
+    /// Kopegin atlayacagi yukseklik.
+    ///
+    /// Oyuncu ZEMINDEYSE onun yuksekligine cikar (engelin/platformun ustune).
+    /// HAVADAYSA kopek kendi zemininde kalir — yoksa ucar gibi gorunur ve
+    /// tahtanin dustugu yerle iliskisi kopar.
+    /// </summary>
+    float ResolveLungeY(float dogY, float playerY)
+    {
+        if (player == null) return playerY;
+
+        PlayerController pc = player.GetComponent<PlayerController>();
+        bool grounded = pc == null || pc.IsGrounded;
+
+        return grounded ? playerY : dogY;
+    }
+
+    /// <summary>
+    /// A FAZI — kopek oyuncunun YANINA kosar, uzerine degil.
+    /// `dogContactGap` kadar beride durur; temas ancak B fazinda olur.
+    /// </summary>
+    IEnumerator DogApproachRoutine(Vector3 impactPoint, float pushDir)
+    {
+        Transform t = dog.transform;
+        Vector3 from = t.position;
+
+        // Oyuncunun itilecegi yonun TERSINDE dur — yani kopek arkada kalsin,
+        // itis yonu dogal gorunsun.
+        Vector3 to = new Vector3(impactPoint.x - pushDir * dogContactGap, from.y, from.z);
+
+        SpriteRenderer sr = dog.GetComponentInChildren<SpriteRenderer>();
+        if (sr != null) sr.flipX = to.x < from.x;
+
+        float e = 0f;
+        while (e < dogApproachDuration)
+        {
+            e += Time.deltaTime;
+            float k = Mathf.Clamp01(e / dogApproachDuration);
+            k = 1f - (1f - k) * (1f - k);        // EaseOut — hizli cikis, yumusak varis
+            t.position = Vector3.Lerp(from, to, k);
+            yield return null;
+        }
+
+        t.position = to;
+    }
+
+    /// <summary>
+    /// Kopegi oyuncunun ONUNE cizdirir. Iki sprite bir kare bile ust uste
+    /// binerse "icine girdi" gibi okunuyordu; onde olmasi "carpti" yapiyor.
+    /// </summary>
+    void PutDogInFrontOfPlayer()
+    {
+        SpriteRenderer dogSprite = dog.GetComponentInChildren<SpriteRenderer>();
+        if (dogSprite == null || player == null) return;
+
+        SpriteRenderer playerSprite = player.GetComponentInChildren<SpriteRenderer>();
+        if (playerSprite == null) return;
+
+        if (dogSprite.sortingLayerID == playerSprite.sortingLayerID)
+            dogSprite.sortingOrder = playerSprite.sortingOrder + 1;
+    }
+
     IEnumerator DogLungeRoutine(Vector3 impactPoint)
     {
         if (dog == null) yield break;
 
         Transform t = dog.transform;
         Vector3 from = t.position;
-        // Sadece X: kopek zemininde kalsin, oyuncu havadaysa ucmasin.
-        Vector3 to = new Vector3(impactPoint.x, from.y, from.z);
+
+        // ⭐ KOPEK OYUNCUNUN EKSENINE GELMELI — X'ine DE Y'sine DE.
+        //
+        // Eskiden sadece X aliniyordu ("kopek kendi zemininde kalsin" diye).
+        // Ama oyuncu bir engelin/platformun ustunde duruyorsa kopek onun
+        // ALTINDA kaliyordu: "engelin ustune cikip beni kurtarmiyor" sikayeti
+        // tam olarak buydu. Tahta da oyuncunun durdugu yere dusuyor, yani
+        // kopek yanlis yukseklikte oluyordu.
+        //
+        // Tek istisna oyuncunun HAVADA olmasi: o zaman kopek ucar gibi gorunur.
+        // Zemindeyse (ki sahne oyle tasarlandi) tam ustune ciksin.
+        Vector3 to = new Vector3(impactPoint.x, ResolveLungeY(from.y, impactPoint.y), from.z);
 
         SpriteRenderer sr = dog.GetComponentInChildren<SpriteRenderer>();
         if (sr != null) sr.flipX = to.x < from.x;
@@ -403,17 +638,83 @@ public class EndingSequence : MonoBehaviour
         // bitiyordu ve "kopek onume gecti" cumlesi hic kurulmuyordu.
         float duration = cinematicDeath ? cinematicLungeDuration : dogLungeDuration;
 
+        Vector3 dogBaseScale = t.localScale;
+
+        // ---- ANTICIPATION — ziplamadan once comelme ----
+        // Animasyonun "gercek" hissettirmesi ucuncu bir kareden degil, bu
+        // hazirlik anindan geliyor: kopek once cokuyor, sonra firliyor.
+        // Olmadan hareket "kaydi" gibi duruyordu.
+        if (cinematicDeath)
+        {
+            float a = 0f;
+            while (a < lungeCrouchDuration)
+            {
+                a += Time.deltaTime;
+                float ak = Mathf.Clamp01(a / lungeCrouchDuration);
+                t.localScale = Vector3.Lerp(dogBaseScale,
+                    new Vector3(dogBaseScale.x * 1.18f, dogBaseScale.y * 0.78f, dogBaseScale.z), ak);
+                yield return null;
+            }
+        }
+
         float e = 0f;
         while (e < duration)
         {
             e += Time.deltaTime;
             float k = Mathf.Clamp01(e / duration);
             k = k * k * (3f - 2f * k);          // SmoothStep — atilis hissi
-            t.position = Vector3.Lerp(from, to, k);
+
+            // ---- STRETCH — havadayken uzama ----
+            // Yukselirken ince-uzun, inerken toparlanir. Klasik squash&stretch;
+            // tek basina hareketi "ziplayan bir canli" yapan sey bu.
+            if (cinematicDeath)
+            {
+                float air = Mathf.Sin(k * Mathf.PI);          // 0 -> 1 -> 0
+                t.localScale = new Vector3(
+                    dogBaseScale.x * Mathf.Lerp(1f, 0.88f, air),
+                    dogBaseScale.y * Mathf.Lerp(1f, 1.18f, air),
+                    dogBaseScale.z);
+            }
+
+            Vector3 p = Vector3.Lerp(from, to, k);
+
+            // SICRAMA KAVISI. Duz kaymak "yurudu" gibi okunuyordu; kavis
+            // hareketi "atildi" yapiyor ve kopegin oyuncunun uzerinden degil
+            // USTUNDEN gelip onu ittigi anlasiliyor.
+            if (cinematicDeath)
+                p.y += Mathf.Sin(k * Mathf.PI) * lungeHopHeight;
+
+            t.position = p;
             yield return null;
         }
 
         t.position = to;
+
+        // ---- LANDING SQUASH — yere carpma ----
+        // Varista ezilip toparlanir. Bu olmadan ziplama havada bitiyormus
+        // gibi duruyor; agirligin yere aktarilmasi buradan okunuyor.
+        if (cinematicDeath)
+        {
+            float l = 0f;
+            while (l < lungeLandDuration)
+            {
+                l += Time.deltaTime;
+                float lk = Mathf.Clamp01(l / lungeLandDuration);
+
+                // Once sert ezilme, sonra normale donus.
+                float squash = Mathf.Sin(lk * Mathf.PI);
+                t.localScale = new Vector3(
+                    dogBaseScale.x * Mathf.Lerp(1f, 1.22f, squash),
+                    dogBaseScale.y * Mathf.Lerp(1f, 0.76f, squash),
+                    dogBaseScale.z);
+                yield return null;
+            }
+        }
+
+        // ⚠️ Olcegi TABANA dondur: PinDogUnderDebris birazdan bunun uzerine
+        // ezme carpani uyguluyor. Bozuk olcekle carpilirsa kopek garip donuyor.
+        t.localScale = dogBaseScale;
+
         dogLastPosition = to;                   // tasma buraya dusecek
     }
 
@@ -450,7 +751,14 @@ public class EndingSequence : MonoBehaviour
     /// kapanmasi, hata) zaman olcegi 0.35'te kalir ve oyunun TAMAMI kalici
     /// olarak agir cekime duser. Bu, sahneyi kirmaktan cok daha beter.
     /// </summary>
-    void OnDisable() => StopSlowMotion();
+    void OnDisable()
+    {
+        StopSlowMotion();
+
+        // Bantlar da acik kalmasin — ekranin ustu altı siyah kalmis bir oyun
+        // "bozuldu" gibi gorunur.
+        CinematicBars.HideImmediate();
+    }
 
     /// <summary>
     /// Kiris, dusecegi noktanin — yani oyuncunun basinin — ustunde titreyip
@@ -494,6 +802,63 @@ public class EndingSequence : MonoBehaviour
 
         deathDebris.transform.position = basePos;
         if (sr != null) sr.color = baseColor;
+    }
+
+    /// <summary>
+    /// HAYALET BOSS'A CARPAR — sahnenin odemesi.
+    ///
+    /// Oyuncu bu alevi soldurmaya calisti ve olduremedi; alev her seferinde
+    /// geri buyudu. Simdi ayni alev TEK vurusla cokuyor. Fark oyuncunun
+    /// yetersizligi degil, kopegin borcunu odemesi — o yuzden vurusun
+    /// gorulmesi sart, yoksa "gecti ve boss bitti" gibi duruyor.
+    /// </summary>
+    IEnumerator StrikeBossRoutine()
+    {
+        if (bossObject == null) yield break;
+
+        Debug.Log("[Final] Hayalet boss'a carpti.");
+
+        SpriteRenderer bossSprite = bossObject.GetComponentInChildren<SpriteRenderer>();
+        Color baseColor = bossSprite != null ? bossSprite.color : Color.white;
+        Vector3 baseScale = bossObject.transform.localScale;
+
+        if (CameraShake.Instance != null)
+            CameraShake.Instance.Shake(bossStrikeShakeDuration, bossStrikeShakeMagnitude);
+
+        // 1) BEYAZ PATLAMA — alev bir an icin akkor olur.
+        float e = 0f;
+        while (e < bossStrikeFlashDuration)
+        {
+            e += Time.unscaledDeltaTime;
+            float k = Mathf.Clamp01(e / bossStrikeFlashDuration);
+
+            if (bossSprite != null)
+                bossSprite.color = Color.Lerp(Color.white, baseColor, k);
+
+            // Vurus aninda sisip geri cekilir — darbenin bedende karsiligi.
+            float punch = Mathf.Sin(k * Mathf.PI);
+            bossObject.transform.localScale = baseScale * Mathf.Lerp(1f, 1.22f, punch);
+
+            yield return null;
+        }
+
+        if (bossSprite != null) bossSprite.color = baseColor;
+        bossObject.transform.localScale = baseScale;
+    }
+
+    /// <summary>
+    /// Hayaletin havlamasi. Kopek o sirada SetActive(false) — yani kendi
+    /// AudioSource'u calamaz. Bu yuzden PlayClipAtPoint kullaniyoruz;
+    /// klip referansi kapali objede de gecerli kaliyor.
+    /// </summary>
+    void PlayGhostBark()
+    {
+        AudioClip clip = ghostBarkClip;
+        if (clip == null && dog != null) clip = dog.happyBarkClip;
+        if (clip == null) return;
+
+        Vector3 at = player != null ? player.position : transform.position;
+        AudioSource.PlayClipAtPoint(clip, at, ghostBarkVolume);
     }
 
     /// <summary>Karabas'in son sesi: tek, keskin havlama.</summary>
@@ -615,6 +980,22 @@ public class EndingSequence : MonoBehaviour
     {
         SetPlayerControl(false);
 
+        // ---- "SANIRIM BURAYA KADARDI" ----
+        // Once teslimiyet dile gelir. Oyuncu kaybettigini KENDI agzindan
+        // duyunca umut gercekten bitiyor; sonrasindaki kurtaris o kadar
+        // beklenmedik oluyor.
+        if (useSpeech && player != null)
+        {
+            SpeechBubble.Say(player, lineGiveUp, lineDuration, playerLineColor);
+            yield return new WaitForSecondsRealtime(lineDuration * 0.75f);
+        }
+
+        // ---- PERDELER KAPANIR ----
+        // Sinema bandi degil: ekrani KAPATAN bir perde. Yavas yavas
+        // kararir — "oyun bitiyor" gibi. Bu, oyuncunun oldugunu sandigi an.
+        if (useCinematicBars)
+            CinematicBars.Show(closingBarHeight, closingDuration);
+
         // Boss artik direnmeyi biraksin: yenilenmesi dursun ve olcegi serbest
         // kalsin. Yoksa BossCore ile FadeOutBoss ayni localScale'i cekistirir.
         if (bossObject != null)
@@ -622,6 +1003,37 @@ public class EndingSequence : MonoBehaviour
             BossCore core = bossObject.GetComponentInChildren<BossCore>();
             if (core != null) core.Defeat();
         }
+
+        // ---- "HER SEY BITTI" ANI ----
+        //
+        // Bantlar kapandi, oyuncunun cani 1, boss hala ayakta. Burada HICBIR
+        // SEY olmuyor: ne muzik, ne hareket. Oyuncu kaybettigini saniyor.
+        //
+        // Bu bosluk kurtarilmanin bedeli. Hayalet dogrudan gelirse "sahne
+        // devam etti" olur; once umut tamamen bitmeli ki gelisi bir sey ifade
+        // etsin. Bosluk ne kadar rahatsiz edici olursa havlama o kadar guclu.
+        // Perdeler neredeyse kapanana kadar bekle — ama TAM kapanmadan.
+        // Ekran tamamen kararirsa oyuncu "oldum, sahne bitti" der ve
+        // kurtarilma bir devam degil, yeni bir sahne gibi baslar.
+        float previousVolume = AudioListener.volume;
+        AudioListener.volume = 0f;
+        yield return new WaitForSecondsRealtime(closingDuration * 0.9f);
+
+        // ---- HAVLAMA — PERDELER KAPANMAYA AZ KALA ----
+        // Sessizligi yirtan tek ses. Oyuncu daha hicbir sey gormeden, sadece
+        // duyarak kim geldigini anliyor — goruntuden once TANIMA geliyor.
+        AudioListener.volume = previousVolume;
+        PlayGhostBark();
+
+        if (CameraShake.Instance != null)
+            CameraShake.Instance.Shake(0.45f, 0.35f);
+
+        // Perdeler GERI ACILIR — havlamayla birlikte. Kapanan ekranin geri
+        // acilmasi "hayir, bitmedi" cumlesini gorsel olarak kuruyor.
+        if (useCinematicBars)
+            CinematicBars.Show(barHeightFraction, barFadeDuration);
+
+        yield return new WaitForSecondsRealtime(ghostBarkLead);
 
         if (collarPickup != null) yield return CollarGlowRoutine();
 
@@ -636,6 +1048,12 @@ public class EndingSequence : MonoBehaviour
             SpriteRenderer ghostSprite = ghostVisual.GetComponentInChildren<SpriteRenderer>();
             float ghostAlpha = ghostSprite != null ? ghostSprite.color.a : 1f;
 
+            // Hayalet artik gecip GITMIYOR: yolun ortasinda duruyor, konusuyor,
+            // sonra veda edip gidiyor. Oyuncunun en caresiz aninda gelip tek
+            // kelime etmeden kaybolmasi "olay" gibi okunuyordu; durup konusmasi
+            // onu bir KARSILASMA yapiyor.
+            bool spokeArrive = false;
+            bool struckBoss = false;
             float t = 0f;
             while (t < ghostCrossDuration)
             {
@@ -644,6 +1062,38 @@ public class EndingSequence : MonoBehaviour
 
                 ghostVisual.transform.position =
                     Vector3.Lerp(ghostStart.position, ghostEnd.position, k);
+
+                // ---- HAYALET BOSS'A CARPAR ----
+                // Eskiden hayalet sadece ekrani geciyor, boss ayri bir islem
+                // olarak soluyordu — arada NEDEN-SONUC yoktu, "gecti ve boss
+                // bitti" gibi duruyordu. Artik carpma ani var: beyaz patlama,
+                // sarsinti, ve boss o andan itibaren cokuyor.
+                if (!struckBoss && k >= bossStrikeAt)
+                {
+                    struckBoss = true;
+                    yield return StrikeBossRoutine();
+                }
+
+                // Yolun ortasinda dur ve konus.
+                if (!spokeArrive && k >= ghostPauseAt)
+                {
+                    spokeArrive = true;
+
+                    if (useSpeech)
+                    {
+                        SpeechBubble.Say(ghostVisual.transform, lineGhostArrive,
+                                         lineDuration, dogLineColor);
+                        yield return new WaitForSecondsRealtime(ghostPauseDuration * 0.55f);
+
+                        SpeechBubble.Say(ghostVisual.transform, lineGhostFarewell,
+                                         lineDuration, dogLineColor);
+                        yield return new WaitForSecondsRealtime(ghostPauseDuration * 0.45f);
+                    }
+                    else
+                    {
+                        yield return new WaitForSecondsRealtime(ghostPauseDuration);
+                    }
+                }
 
                 // Hayalet aniden belirip aniden kaybolmasin: iki ucta da
                 // suzulerek girsin ciksin. Bir hayaletin "beliriyor" olmasi
@@ -678,6 +1128,14 @@ public class EndingSequence : MonoBehaviour
 
         if (exitDoor != null) exitDoor.SetActive(false); // kapi acilir
 
+        // Boss sondu, cikis acildi — son soz oyuncunun.
+        if (useSpeech && player != null)
+        {
+            SpeechBubble.Say(player, lineFinalThanks, lineDuration, playerLineColor);
+            yield return new WaitForSecondsRealtime(lineDuration * 0.7f);
+        }
+
+        if (useCinematicBars) CinematicBars.Hide(barFadeDuration);
         SetPlayerControl(true);
         bossResolved = true;
 

@@ -96,6 +96,12 @@ public class DogCompanion : MonoBehaviour
              "inleyen sey canli degil metronom gibi duyuluyor.")]
     public float whineIntervalJitter = 2.5f;
 
+    [Tooltip("En UZAKTAN duyulan inleme sesi (0-1).\n\n" +
+             "Mesafeye gore duz oranti kullanildiginda Koridor'da ~%20 cikiyor " +
+             "ve yangin citirtisinin altinda kayboluyordu. Taban deger oyuncunun " +
+             "kopegi duymasini garantiliyor; yaklastikca yine %100'e gidiyor.")]
+    [Range(0f, 1f)] public float whineMinVolume = 0.35f;
+
     [Header("Ses — mutlu havlama (Freed / Petted)")]
     public AudioClip happyBarkClip;
     [Tooltip("Her calista perde bu kadar rastgele sapar (0.08 = ±%8).\n" +
@@ -103,6 +109,12 @@ public class DogCompanion : MonoBehaviour
              "gibi geliyor — ozellikle sevme tusu arka arkaya basiliyor.\n" +
              "0 = kapali.")]
     public float pitchVariation = 0.08f;
+
+    [Header("Kurtarilma repligi")]
+    [Tooltip("Kurtarildigi anda Karabas'in ustunde beliren yazi.\n" +
+             "BOSALTIRSANIZ yazi hic cikmaz.")]
+    public string rescueLine = "Geleceğini biliyordum.";
+    public float rescueLineDuration = 2.6f;
 
     [Header("Sevme (OnPetted)")]
     [Tooltip("Opsiyonel. Bos birakilirsa sadece ses calar, kalp cikmaz.")]
@@ -283,7 +295,15 @@ public class DogCompanion : MonoBehaviour
         // Neredeyse duyulmayacak kadar kisiksa hic calma — sesi bosa harcama.
         if (t < 0.05f) return;
 
-        PlayVaried(whineClip, t);
+        // TABAN SES.
+        //
+        // Duz `t` kullanmak teoride dogru (uzaktan kisik) ama pratikte
+        // duyulmuyordu: Koridor'da t ~0.2 cikiyor ve inleme yangin citirtisinin
+        // altinda kayboluyor. Oyuncunun kopegi DUYMASI gerekiyor — PLAN.md'nin
+        // "kopegi gormeden once ara" akisi buna bagli.
+        //
+        // Taban 0.35: en uzaktan bile fark ediliyor, yakinlastikca yine yukseliyor.
+        PlayVaried(whineClip, Mathf.Lerp(whineMinVolume, 1f, t));
     }
 
     /// <summary>
@@ -539,6 +559,12 @@ public class DogCompanion : MonoBehaviour
 
         if (audioSource != null && happyBarkClip != null)
             PlayVaried(happyBarkClip);
+
+        // Iliskinin ilk sozu. Bu andan sonra oyuncu kopegi "kurtardigi sey"
+        // olarak degil "birlikte oldugu biri" olarak tasiyor — sondaki
+        // karsilikliligi kuran ilk halka bu.
+        SpeechBubble.Say(transform, rescueLine, rescueLineDuration,
+                         new Color(0.65f, 0.85f, 1f));
     }
 
     /// <summary>Kurtarma animasyonu bitince Kisi A takibi baslatmak icin bunu cagirir.</summary>
