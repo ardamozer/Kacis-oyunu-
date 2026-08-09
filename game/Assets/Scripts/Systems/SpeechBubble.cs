@@ -29,8 +29,6 @@ public class SpeechBubble : MonoBehaviour
     Text label;
     Outline outline;
     Outline backOutline;
-    RectTransform plate;
-    Image plateImage;
     float worldYOffset;
 
     // ------------------------------------------------------------------
@@ -43,8 +41,8 @@ public class SpeechBubble : MonoBehaviour
     /// bosaltarak butun sistemi kapatabilirsiniz.
     /// </summary>
     public static SpeechBubble Say(Transform target, string text, float duration,
-                                   Color? color = null, float yOffset = 1.9f,
-                                   int fontSize = 34)
+                                   Color? color = null, float yOffset = 1.5f,
+                                   int fontSize = 20)
     {
         if (target == null || string.IsNullOrWhiteSpace(text)) return null;
 
@@ -94,21 +92,13 @@ public class SpeechBubble : MonoBehaviour
         rect.anchorMin = Vector2.zero;      // sol-alt: anchoredPosition = ekran pikseli
         rect.anchorMax = Vector2.zero;
         rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.sizeDelta = new Vector2(760f, 76f);
+        rect.sizeDelta = new Vector2(460f, 46f);
 
-        // ARKA PLAKA — yaziyi yangindan ayiran koyu zemin.
+        // PLAKA YOK — sadece harfler.
         //
-        // Proje font iceremiyor (TMP Essentials import edilmemis), o yuzden
-        // yazinin "guzel" gorunmesi tipografiden degil KONTRASTTAN geliyor:
-        // koyu plaka + cift kontur, ayni fontu bambaska gosteriyor.
-        //
-        // ⚠️ Plaka KOK objede, yazi COCUKTA. Unity UI cocuklari sonra ciziyor;
-        // ters kurarsak plaka yazinin ustune biner ve yaziyi tamamen orter.
-        plateImage = gameObject.AddComponent<Image>();
-        plateImage.color = new Color(0f, 0f, 0f, 0f);
-        plateImage.raycastTarget = false;
-        plate = rect;
-
+        // Denendi ve kaldirildi: koyu plaka okunakliligi artiriyordu ama
+        // ekranda bir "kutu" olarak duruyordu ve karakterin ustunde arayuz
+        // gibi gorunuyordu. Okunakliligi artik sadece kontur tasiyor.
         var labelGO = new GameObject("Label", typeof(RectTransform));
         labelGO.transform.SetParent(transform, false);
 
@@ -132,13 +122,14 @@ public class SpeechBubble : MonoBehaviour
         // Yangin ekraninda duz yazi kayboluyor: kalin siyah kontur sart.
         outline = labelGO.AddComponent<Outline>();
         outline.effectColor = new Color(0f, 0f, 0f, 0f);
-        outline.effectDistance = new Vector2(3f, -3f);
+        outline.effectDistance = new Vector2(1.6f, -1.6f);
 
         // Ikinci kontur ters yonde: tek yonlu kontur yaziyi "kaymis" gosteriyor,
-        // ikisi birlikte her kenari sariyor ve dokme harf gibi duruyor.
+        // ikisi birlikte her kenari sariyor. Plaka kalktigi icin okunakliligin
+        // tamami buna bagli.
         backOutline = labelGO.AddComponent<Outline>();
         backOutline.effectColor = new Color(0f, 0f, 0f, 0f);
-        backOutline.effectDistance = new Vector2(-3f, 3f);
+        backOutline.effectDistance = new Vector2(-1.6f, 1.6f);
 
         UpdatePosition();
     }
@@ -165,8 +156,11 @@ public class SpeechBubble : MonoBehaviour
 
     IEnumerator LifeRoutine(float duration)
     {
-        const float fadeIn = 0.18f;
-        const float fadeOut = 0.35f;
+        // Neredeyse aninda belirsin: "sadece harfler ciksin, animasyonu olmasin".
+        // Tamamen ani yapmiyoruz cunku bir karede beliren yazi goz kirpmasi
+        // gibi duruyor; 0.08 sn fark edilmeden yumusatiyor.
+        const float fadeIn = 0.08f;
+        const float fadeOut = 0.2f;
 
         yield return Fade(0f, 1f, fadeIn);
 
@@ -199,8 +193,7 @@ public class SpeechBubble : MonoBehaviour
         Color c = label.color;
         label.color = new Color(c.r, c.g, c.b, a);
 
-        outline.effectColor = new Color(0f, 0f, 0f, a * 0.95f);
-        if (backOutline != null) backOutline.effectColor = new Color(0f, 0f, 0f, a * 0.95f);
-        if (plateImage != null) plateImage.color = new Color(0f, 0f, 0f, a * 0.42f);
+        outline.effectColor = new Color(0f, 0f, 0f, a);
+        if (backOutline != null) backOutline.effectColor = new Color(0f, 0f, 0f, a);
     }
 }

@@ -62,6 +62,14 @@ public class EndingSequence : MonoBehaviour
     [Tooltip("Carpma aninda kopegin sicrama yuksekligi. 0 = kaymali (kotu).\n" +
              "Kavis, hareketi 'yurudu' degil 'atildi' yapan sey.")]
     public float lungeHopHeight = 0.5f;
+
+    [Tooltip("Ziplamadan onceki comelme suresi. Hareketi 'gercek' yapan sey " +
+             "havadaki kare degil, bu hazirlik ani.")]
+    public float lungeCrouchDuration = 0.1f;
+
+    [Tooltip("Yere inisteki ezilme suresi. Agirligin yere aktarilmasi buradan " +
+             "okunuyor; olmadan ziplama havada bitiyormus gibi duruyor.")]
+    public float lungeLandDuration = 0.14f;
     [Tooltip("Tahta carpinca kameranin sarsilmasi. 0 = kapali.")]
     public float impactShakeDuration = 0.4f;
     public float impactShakeMagnitude = 0.55f;
@@ -197,11 +205,18 @@ public class EndingSequence : MonoBehaviour
     public float ghostPauseDuration = 3.4f;
 
     [Header("Hayalet — girisi")]
-    [Tooltip("Hayalet gelmeden onceki MUTLAK SESSIZLIK (gercek saniye).\n" +
-             "Oyuncu bu boslukta kaybettigini saniyor. Kisaltirsaniz havlama " +
-             "'sahnenin devami' gibi duyulur, uzatirsaniz oyuncu oyunun " +
-             "donduğunu saniyor. 1.2-1.8 arasi dogru bolge.")]
-    public float despairSilenceDuration = 1.4f;
+    [Tooltip("Boss sahnesinde can 1'e dusunce oyuncunun teslimiyeti.")]
+    public string lineGiveUp = "Aahh... sanırım buraya kadardı.";
+
+    [Tooltip("Perdelerin KAPANMA yuksekligi (ekran oraninin yarisi = tam kapali).\n" +
+             "0.46 = neredeyse kapali, ince bir seride kaliyor. 0.5 yaparsaniz " +
+             "ekran tamamen kararir ve oyuncu 'oldum, sahne bitti' der — " +
+             "kurtarilma bir devam degil yeni bir sahne gibi baslar.")]
+    [Range(0.25f, 0.49f)] public float closingBarHeight = 0.46f;
+
+    [Tooltip("Perdelerin kapanma suresi. Yavas olmali: oyuncu kapandigini " +
+             "izleyip 'bitiyor' demeye vakit bulmali.")]
+    public float closingDuration = 1.8f;
 
     [Tooltip("Havlamadan sonra hayalet gorunene kadar gecen sure. Once SES, " +
              "sonra goruntu — oyuncu kim geldigini gormeden anlasin.")]
@@ -213,6 +228,15 @@ public class EndingSequence : MonoBehaviour
     public Color collarGlowColor = new Color(1f, 1f, 0.6f);
     [Tooltip("Boss'un sonme suresi. Aniden yok olmasi 'bug' gibi duruyor.")]
     public float bossFadeDuration = 1.2f;
+
+    [Header("Hayalet — boss'a carpma")]
+    [Tooltip("Hayalet yolun bu noktasinda boss'a carpar (0-1). Vedadan SONRA " +
+             "olmali, yani ghostPauseAt'ten buyuk.")]
+    [Range(0.3f, 0.95f)] public float bossStrikeAt = 0.72f;
+
+    public float bossStrikeFlashDuration = 0.28f;
+    public float bossStrikeShakeDuration = 0.6f;
+    public float bossStrikeShakeMagnitude = 0.6f;
 
     bool dogDeathTriggered;
     bool bossActive;
@@ -527,6 +551,23 @@ public class EndingSequence : MonoBehaviour
     /// oynatiyor ve hamleyle yarisip kopegi titretiyor.
     /// </summary>
     /// <summary>
+    /// Kopegin atlayacagi yukseklik.
+    ///
+    /// Oyuncu ZEMINDEYSE onun yuksekligine cikar (engelin/platformun ustune).
+    /// HAVADAYSA kopek kendi zemininde kalir — yoksa ucar gibi gorunur ve
+    /// tahtanin dustugu yerle iliskisi kopar.
+    /// </summary>
+    float ResolveLungeY(float dogY, float playerY)
+    {
+        if (player == null) return playerY;
+
+        PlayerController pc = player.GetComponent<PlayerController>();
+        bool grounded = pc == null || pc.IsGrounded;
+
+        return grounded ? playerY : dogY;
+    }
+
+    /// <summary>
     /// A FAZI — kopek oyuncunun YANINA kosar, uzerine degil.
     /// `dogContactGap` kadar beride durur; temas ancak B fazinda olur.
     /// </summary>
@@ -577,8 +618,18 @@ public class EndingSequence : MonoBehaviour
 
         Transform t = dog.transform;
         Vector3 from = t.position;
-        // Sadece X: kopek zemininde kalsin, oyuncu havadaysa ucmasin.
-        Vector3 to = new Vector3(impactPoint.x, from.y, from.z);
+
+        // ⭐ KOPEK OYUNCUNUN EKSENINE GELMELI — X'ine DE Y'sine DE.
+        //
+        // Eskiden sadece X aliniyordu ("kopek kendi zemininde kalsin" diye).
+        // Ama oyuncu bir engelin/platformun ustunde duruyorsa kopek onun
+        // ALTINDA kaliyordu: "engelin ustune cikip beni kurtarmiyor" sikayeti
+        // tam olarak buydu. Tahta da oyuncunun durdugu yere dusuyor, yani
+        // kopek yanlis yukseklikte oluyordu.
+        //
+        // Tek istisna oyuncunun HAVADA olmasi: o zaman kopek ucar gibi gorunur.
+        // Zemindeyse (ki sahne oyle tasarlandi) tam ustune ciksin.
+        Vector3 to = new Vector3(impactPoint.x, ResolveLungeY(from.y, impactPoint.y), from.z);
 
         SpriteRenderer sr = dog.GetComponentInChildren<SpriteRenderer>();
         if (sr != null) sr.flipX = to.x < from.x;
@@ -587,12 +638,43 @@ public class EndingSequence : MonoBehaviour
         // bitiyordu ve "kopek onume gecti" cumlesi hic kurulmuyordu.
         float duration = cinematicDeath ? cinematicLungeDuration : dogLungeDuration;
 
+        Vector3 dogBaseScale = t.localScale;
+
+        // ---- ANTICIPATION — ziplamadan once comelme ----
+        // Animasyonun "gercek" hissettirmesi ucuncu bir kareden degil, bu
+        // hazirlik anindan geliyor: kopek once cokuyor, sonra firliyor.
+        // Olmadan hareket "kaydi" gibi duruyordu.
+        if (cinematicDeath)
+        {
+            float a = 0f;
+            while (a < lungeCrouchDuration)
+            {
+                a += Time.deltaTime;
+                float ak = Mathf.Clamp01(a / lungeCrouchDuration);
+                t.localScale = Vector3.Lerp(dogBaseScale,
+                    new Vector3(dogBaseScale.x * 1.18f, dogBaseScale.y * 0.78f, dogBaseScale.z), ak);
+                yield return null;
+            }
+        }
+
         float e = 0f;
         while (e < duration)
         {
             e += Time.deltaTime;
             float k = Mathf.Clamp01(e / duration);
             k = k * k * (3f - 2f * k);          // SmoothStep — atilis hissi
+
+            // ---- STRETCH — havadayken uzama ----
+            // Yukselirken ince-uzun, inerken toparlanir. Klasik squash&stretch;
+            // tek basina hareketi "ziplayan bir canli" yapan sey bu.
+            if (cinematicDeath)
+            {
+                float air = Mathf.Sin(k * Mathf.PI);          // 0 -> 1 -> 0
+                t.localScale = new Vector3(
+                    dogBaseScale.x * Mathf.Lerp(1f, 0.88f, air),
+                    dogBaseScale.y * Mathf.Lerp(1f, 1.18f, air),
+                    dogBaseScale.z);
+            }
 
             Vector3 p = Vector3.Lerp(from, to, k);
 
@@ -607,6 +689,32 @@ public class EndingSequence : MonoBehaviour
         }
 
         t.position = to;
+
+        // ---- LANDING SQUASH — yere carpma ----
+        // Varista ezilip toparlanir. Bu olmadan ziplama havada bitiyormus
+        // gibi duruyor; agirligin yere aktarilmasi buradan okunuyor.
+        if (cinematicDeath)
+        {
+            float l = 0f;
+            while (l < lungeLandDuration)
+            {
+                l += Time.deltaTime;
+                float lk = Mathf.Clamp01(l / lungeLandDuration);
+
+                // Once sert ezilme, sonra normale donus.
+                float squash = Mathf.Sin(lk * Mathf.PI);
+                t.localScale = new Vector3(
+                    dogBaseScale.x * Mathf.Lerp(1f, 1.22f, squash),
+                    dogBaseScale.y * Mathf.Lerp(1f, 0.76f, squash),
+                    dogBaseScale.z);
+                yield return null;
+            }
+        }
+
+        // ⚠️ Olcegi TABANA dondur: PinDogUnderDebris birazdan bunun uzerine
+        // ezme carpani uyguluyor. Bozuk olcekle carpilirsa kopek garip donuyor.
+        t.localScale = dogBaseScale;
+
         dogLastPosition = to;                   // tasma buraya dusecek
     }
 
@@ -694,6 +802,48 @@ public class EndingSequence : MonoBehaviour
 
         deathDebris.transform.position = basePos;
         if (sr != null) sr.color = baseColor;
+    }
+
+    /// <summary>
+    /// HAYALET BOSS'A CARPAR — sahnenin odemesi.
+    ///
+    /// Oyuncu bu alevi soldurmaya calisti ve olduremedi; alev her seferinde
+    /// geri buyudu. Simdi ayni alev TEK vurusla cokuyor. Fark oyuncunun
+    /// yetersizligi degil, kopegin borcunu odemesi — o yuzden vurusun
+    /// gorulmesi sart, yoksa "gecti ve boss bitti" gibi duruyor.
+    /// </summary>
+    IEnumerator StrikeBossRoutine()
+    {
+        if (bossObject == null) yield break;
+
+        Debug.Log("[Final] Hayalet boss'a carpti.");
+
+        SpriteRenderer bossSprite = bossObject.GetComponentInChildren<SpriteRenderer>();
+        Color baseColor = bossSprite != null ? bossSprite.color : Color.white;
+        Vector3 baseScale = bossObject.transform.localScale;
+
+        if (CameraShake.Instance != null)
+            CameraShake.Instance.Shake(bossStrikeShakeDuration, bossStrikeShakeMagnitude);
+
+        // 1) BEYAZ PATLAMA — alev bir an icin akkor olur.
+        float e = 0f;
+        while (e < bossStrikeFlashDuration)
+        {
+            e += Time.unscaledDeltaTime;
+            float k = Mathf.Clamp01(e / bossStrikeFlashDuration);
+
+            if (bossSprite != null)
+                bossSprite.color = Color.Lerp(Color.white, baseColor, k);
+
+            // Vurus aninda sisip geri cekilir — darbenin bedende karsiligi.
+            float punch = Mathf.Sin(k * Mathf.PI);
+            bossObject.transform.localScale = baseScale * Mathf.Lerp(1f, 1.22f, punch);
+
+            yield return null;
+        }
+
+        if (bossSprite != null) bossSprite.color = baseColor;
+        bossObject.transform.localScale = baseScale;
     }
 
     /// <summary>
@@ -830,7 +980,21 @@ public class EndingSequence : MonoBehaviour
     {
         SetPlayerControl(false);
 
-        if (useCinematicBars) CinematicBars.Show(barHeightFraction, barFadeDuration);
+        // ---- "SANIRIM BURAYA KADARDI" ----
+        // Once teslimiyet dile gelir. Oyuncu kaybettigini KENDI agzindan
+        // duyunca umut gercekten bitiyor; sonrasindaki kurtaris o kadar
+        // beklenmedik oluyor.
+        if (useSpeech && player != null)
+        {
+            SpeechBubble.Say(player, lineGiveUp, lineDuration, playerLineColor);
+            yield return new WaitForSecondsRealtime(lineDuration * 0.75f);
+        }
+
+        // ---- PERDELER KAPANIR ----
+        // Sinema bandi degil: ekrani KAPATAN bir perde. Yavas yavas
+        // kararir — "oyun bitiyor" gibi. Bu, oyuncunun oldugunu sandigi an.
+        if (useCinematicBars)
+            CinematicBars.Show(closingBarHeight, closingDuration);
 
         // Boss artik direnmeyi biraksin: yenilenmesi dursun ve olcegi serbest
         // kalsin. Yoksa BossCore ile FadeOutBoss ayni localScale'i cekistirir.
@@ -848,11 +1012,14 @@ public class EndingSequence : MonoBehaviour
         // Bu bosluk kurtarilmanin bedeli. Hayalet dogrudan gelirse "sahne
         // devam etti" olur; once umut tamamen bitmeli ki gelisi bir sey ifade
         // etsin. Bosluk ne kadar rahatsiz edici olursa havlama o kadar guclu.
+        // Perdeler neredeyse kapanana kadar bekle — ama TAM kapanmadan.
+        // Ekran tamamen kararirsa oyuncu "oldum, sahne bitti" der ve
+        // kurtarilma bir devam degil, yeni bir sahne gibi baslar.
         float previousVolume = AudioListener.volume;
         AudioListener.volume = 0f;
-        yield return new WaitForSecondsRealtime(despairSilenceDuration);
+        yield return new WaitForSecondsRealtime(closingDuration * 0.9f);
 
-        // ---- HAVLAMA ----
+        // ---- HAVLAMA — PERDELER KAPANMAYA AZ KALA ----
         // Sessizligi yirtan tek ses. Oyuncu daha hicbir sey gormeden, sadece
         // duyarak kim geldigini anliyor — goruntuden once TANIMA geliyor.
         AudioListener.volume = previousVolume;
@@ -860,6 +1027,11 @@ public class EndingSequence : MonoBehaviour
 
         if (CameraShake.Instance != null)
             CameraShake.Instance.Shake(0.45f, 0.35f);
+
+        // Perdeler GERI ACILIR — havlamayla birlikte. Kapanan ekranin geri
+        // acilmasi "hayir, bitmedi" cumlesini gorsel olarak kuruyor.
+        if (useCinematicBars)
+            CinematicBars.Show(barHeightFraction, barFadeDuration);
 
         yield return new WaitForSecondsRealtime(ghostBarkLead);
 
@@ -881,6 +1053,7 @@ public class EndingSequence : MonoBehaviour
             // kelime etmeden kaybolmasi "olay" gibi okunuyordu; durup konusmasi
             // onu bir KARSILASMA yapiyor.
             bool spokeArrive = false;
+            bool struckBoss = false;
             float t = 0f;
             while (t < ghostCrossDuration)
             {
@@ -889,6 +1062,17 @@ public class EndingSequence : MonoBehaviour
 
                 ghostVisual.transform.position =
                     Vector3.Lerp(ghostStart.position, ghostEnd.position, k);
+
+                // ---- HAYALET BOSS'A CARPAR ----
+                // Eskiden hayalet sadece ekrani geciyor, boss ayri bir islem
+                // olarak soluyordu — arada NEDEN-SONUC yoktu, "gecti ve boss
+                // bitti" gibi duruyordu. Artik carpma ani var: beyaz patlama,
+                // sarsinti, ve boss o andan itibaren cokuyor.
+                if (!struckBoss && k >= bossStrikeAt)
+                {
+                    struckBoss = true;
+                    yield return StrikeBossRoutine();
+                }
 
                 // Yolun ortasinda dur ve konus.
                 if (!spokeArrive && k >= ghostPauseAt)

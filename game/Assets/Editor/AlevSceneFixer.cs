@@ -56,6 +56,40 @@ public static class AlevSceneFixer
             "Boss artik cikis kapisinda doguyor.\nCtrl+S ile kaydetmeyi unutmayin.", "Tamam");
     }
 
+    /// <summary>
+    /// Kovalayan alev duvarini sahneden TAMAMEN siler.
+    ///
+    /// Kod tarafinda zaten kapali (`wallEnabled = false` -> Start'ta
+    /// SetActive(false)), ama devre disi bir obje sahnede durunca hem
+    /// kafa karistiriyor hem de eski `chaseSpeed` verisi uzerinde kaliyor.
+    /// </summary>
+    [MenuItem("ALEV/Alev Duvarini Sahneden Sil", false, 52)]
+    public static void DeleteFlameWall()
+    {
+        var walls = Object.FindObjectsByType<FlameWallGate>(
+            FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+        if (walls.Length == 0)
+        {
+            EditorUtility.DisplayDialog("Sonuc",
+                "Sahnede FlameWallGate bulunamadi — zaten silinmis.", "Tamam");
+            return;
+        }
+
+        foreach (var w in walls)
+        {
+            Debug.Log($"🗑 {w.name} sahneden silindi (kovalayan alev duvari).");
+            Undo.DestroyObjectImmediate(w.gameObject);
+        }
+
+        UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
+            UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene());
+
+        EditorUtility.DisplayDialog("Tamam",
+            $"{walls.Length} alev duvari silindi.\n\nCtrl+S ile kaydetmeyi unutmayin.\n" +
+            "(Geri almak isterseniz Ctrl+Z calisir.)", "Tamam");
+    }
+
     [MenuItem("ALEV/Sahneyi Guncelle (Hizli Duzeltme)", false, 50)]
     public static void FixScene()
     {

@@ -96,6 +96,12 @@ public class DogCompanion : MonoBehaviour
              "inleyen sey canli degil metronom gibi duyuluyor.")]
     public float whineIntervalJitter = 2.5f;
 
+    [Tooltip("En UZAKTAN duyulan inleme sesi (0-1).\n\n" +
+             "Mesafeye gore duz oranti kullanildiginda Koridor'da ~%20 cikiyor " +
+             "ve yangin citirtisinin altinda kayboluyordu. Taban deger oyuncunun " +
+             "kopegi duymasini garantiliyor; yaklastikca yine %100'e gidiyor.")]
+    [Range(0f, 1f)] public float whineMinVolume = 0.35f;
+
     [Header("Ses — mutlu havlama (Freed / Petted)")]
     public AudioClip happyBarkClip;
     [Tooltip("Her calista perde bu kadar rastgele sapar (0.08 = ±%8).\n" +
@@ -289,7 +295,15 @@ public class DogCompanion : MonoBehaviour
         // Neredeyse duyulmayacak kadar kisiksa hic calma — sesi bosa harcama.
         if (t < 0.05f) return;
 
-        PlayVaried(whineClip, t);
+        // TABAN SES.
+        //
+        // Duz `t` kullanmak teoride dogru (uzaktan kisik) ama pratikte
+        // duyulmuyordu: Koridor'da t ~0.2 cikiyor ve inleme yangin citirtisinin
+        // altinda kayboluyor. Oyuncunun kopegi DUYMASI gerekiyor — PLAN.md'nin
+        // "kopegi gormeden once ara" akisi buna bagli.
+        //
+        // Taban 0.35: en uzaktan bile fark ediliyor, yakinlastikca yine yukseliyor.
+        PlayVaried(whineClip, Mathf.Lerp(whineMinVolume, 1f, t));
     }
 
     /// <summary>
