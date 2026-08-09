@@ -8,6 +8,9 @@ using UnityEngine;
 /// Sessizce duran bir kapi, oyuncuya "burasi duvar" der ve geri doner.
 /// Sarsilma + kilit sesi + kisa bir renk parlamasi, "kilitli, anahtar lazim"
 /// mesajini kelime kullanmadan verir.
+///
+/// YENİ: requiresRoomCleared aciksa, odadaki tum canavarlar ve buyumus
+/// yer atesleri yok edilmeden kapi acilmaz — anahtar olsa bile.
 /// </summary>
 [RequireComponent(typeof(Collider2D))]
 public class LockedDoor : MonoBehaviour
@@ -17,6 +20,15 @@ public class LockedDoor : MonoBehaviour
 
     [Tooltip("Kapiyi engelleyen KATI collider. Trigger olan ayri.")]
     public Collider2D blocker;
+
+    [Header("Oda Temizligi")]
+    [Tooltip("ACIK: Oyuncu anahtari alsa bile, odadaki canli dusman " +
+             "kaldigi surece kapi acilmaz.")]
+    public bool requiresRoomCleared = true;
+
+    [Tooltip("Kapinin bu yaricaptaki dusmanlari tarar. Odanin yarisina " +
+             "esit olmali (yaklasik 15-20 birim).")]
+    public float roomScanRadius = 20f;
 
     [Header("Acilma")]
     [Tooltip("Kapi yukari kayarak acilir.")]
@@ -67,6 +79,17 @@ public class LockedDoor : MonoBehaviour
 
         if (inv.Has(requiredKey))
         {
+            // Oda temizligi kontrolu
+            if (requiresRoomCleared && !IsRoomCleared())
+            {
+                if (Time.time - lastFeedback < feedbackCooldown) return;
+                lastFeedback = Time.time;
+                Debug.Log($"[LockedDoor] {name}: Anahtar var ama odada hala " +
+                          "canli dusman var! Once temizle.");
+                StartCoroutine(LockedRoutine());
+                return;
+            }
+
             opened = true;
             StartCoroutine(OpenRoutine());
         }
@@ -76,6 +99,27 @@ public class LockedDoor : MonoBehaviour
             lastFeedback = Time.time;
             StartCoroutine(LockedRoutine());
         }
+    }
+
+    /// <summary>
+    /// Kapinin etrafinda (roomScanRadius) canli WallMonster veya buyumus
+    /// FloorFire var mi? Varsa oda henuz temiz degil.
+    /// </summary>
+    bool IsRoomCleared()
+    {
+        foreach (Collider2D c in Physics2D.OverlapCircleAll(transform.position, roomScanRadius))
+        {
+            // Canli duvar canavari var mi?
+            WallMonster monster = c.GetComponentInParent<WallMonster>();
+            if (monster != null && !monster.IsDead)
+                return false;
+
+            // Buyumus ve sonmemis yer atesi var mi?
+            FloorFire fire = c.GetComponent<FloorFire>();
+            if (fire != null && fire.IsGrown && !fire.IsExtinguished)
+                return false;
+        }
+        return true;
     }
 
     IEnumerator OpenRoutine()

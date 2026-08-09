@@ -55,21 +55,17 @@ public class DogCompanion : MonoBehaviour
              "0 = kapali.")]
     public float warpDistance = 20f;
 
-    [Header("Koruma ani — onunde canavar varsa durur")]
-    [Tooltip("Karabas onunde CANLI bir duvar canavari varsa durur ve havlar.\n" +
-             "Oyuncu canavari sondurunce devam eder.\n\n" +
-             "PLAN.md madde 7: 'bir kez oyuncu kopegi korusun'. Escort\n" +
-             "bolumunun tek mekanik ani bu — yoksa oyuncu sadece yuruyup\n" +
-             "kopegin atesleri sondurmesini izliyor.")]
-    public bool stopAtMonsters = true;
-    [Tooltip("Onunde bu mesafede canavar varsa durur.")]
-    public float monsterBlockRange = 6f;
-    [Tooltip("Beklerken kac saniyede bir havlasin — 'buraya gecemiyorum'.")]
-    public float blockedBarkInterval = 1.8f;
+    [Header("Gezinme (Idle Wander)")]
+    [Tooltip("Beklerken oyuncunun saginda solunda rastgele dolasma mesafesi.")]
+    public float maxWanderOffset = 2.5f;
+    [Tooltip("Gezinme yonunu degistirme araligi.")]
+    public float wanderInterval = 3f;
 
     [Header("Yoldaki atesi sondurme (Following sirasinda)")]
     [Tooltip("Bu yaricapta buyumus bir FloorFire varsa ustune atlayip sondurur.")]
-    public float fireDetectRange = 1.0f;
+    public float fireDetectRange = 8.0f;
+    [Tooltip("Atese bu kadar yaklasinca zıplar.")]
+    public float fireStompRange = 1.0f;
     public float stompHopHeight = 0.3f;
     public float stompHopDuration = 0.3f;
 
@@ -135,9 +131,9 @@ public class DogCompanion : MonoBehaviour
     float whineTimer;
     bool isStomping;
     float petSquashUntil;
-    float blockedBarkTimer;
-    bool wasBlocked;
     bool isDead;
+    float wanderTimer;
+    float currentWanderOffset;
 
     /// <summary>Kopek oldu mu? EndingSequence Die() ile set eder.</summary>
     public bool IsDead => isDead;
@@ -314,36 +310,52 @@ public class DogCompanion : MonoBehaviour
         // kopegi geride birakip finale kopeksiz varirdi.
         if (TryWarpToPlayer()) return;
 
-        // Onunde canlı bir canavar varsa gecmiyor — oyuncunun sondurmesi lazim.
-        if (stopAtMonsters && IsBlockedByMonster())
-        {
-            // Durumu bir kez bildir: "kopek neden durdu / neden durmadi"
-            // sorusunu tahminle degil Console'dan cevaplayalim.
-            if (!wasBlocked)
-            {
-                wasBlocked = true;
-                Debug.Log($"[Karabas] Canavar yolu kesti (x={transform.position.x:0.#}), " +
-                          "oyuncunun sondurmesini bekliyor.");
-            }
+        FloorFire targetFire = FindNearbyFire();
 
-            UpdateBlockedBark();
-            SnapToGround(false);
+        if (targetFire != null)
+        {
+            float fDist = Mathf.Abs(targetFire.transform.position.x - transform.position.x);
+            if (fDist > fireStompRange) // Yaklasmasi lazim
+            {
+                float dir = targetFire.transform.position.x > transform.position.x ? 1f : -1f;
+                Vector3 target = transform.position + Vector3.right * dir * fDist;
+                transform.position = Vector3.MoveTowards(transform.position, target, followSpeed * Time.deltaTime);
+
+                if (sprite != null) sprite.flipX = dir < 0f;
+                SnapToGround(false);
+            }
+            else
+            {
+                // Yeterince yaklasti, saldir
+                StartCoroutine(StompFireRoutine(targetFire));
+            }
             return;
         }
 
-        if (wasBlocked)
+        // ---- Idle Wander (Gezinme) ----
+        wanderTimer -= Time.deltaTime;
+        if (wanderTimer <= 0f)
         {
-            wasBlocked = false;
-            Debug.Log("[Karabas] Yol acildi, devam ediyor.");
+            wanderTimer = wanderInterval + Random.Range(-1f, 1f);
+            currentWanderOffset = Random.Range(-maxWanderOffset, maxWanderOffset);
         }
 
-        float dist = Mathf.Abs(player.position.x - transform.position.x);
+        // Oyuncuya olan hedef mesafemiz (followDistance) uzerine wander offset ekliyoruz.
+        // Ama oyuncunun etrafinda dolanmasi icin gercek hedefi (player.x + offset) olarak dusunebiliriz.
+        // Oyuncunun yonune gore kopek bazen arkasinda bazen onunde dolanabilir.
+        float pDir = player.position.x > transform.position.x ? 1f : -1f;
+        float baseTargetX = player.position.x - pDir * followDistance; // Normalde durdugu yer (oyuncunun arkasi)
+        
+        // Gezinme hedefi
+        float wanderTargetX = player.position.x + currentWanderOffset;
 
-        if (dist > followDistance)
+        float distToTarget = Mathf.Abs(wanderTargetX - transform.position.x);
+
+        if (distToTarget > 0.1f)
         {
-            float dir = player.position.x > transform.position.x ? 1f : -1f;
-            Vector3 target = transform.position + Vector3.right * dir * dist;
-            transform.position = Vector3.MoveTowards(transform.position, target, followSpeed * Time.deltaTime);
+            float dir = wanderTargetX > transform.position.x ? 1f : -1f;
+            Vector3 target = transform.position + Vector3.right * dir * distToTarget;
+            transform.position = Vector3.MoveTowards(transform.position, target, (followSpeed * 0.6f) * Time.deltaTime);
 
             if (sprite != null) sprite.flipX = dir < 0f;
         }
@@ -356,46 +368,47 @@ public class DogCompanion : MonoBehaviour
     }
 
     /// <summary>
-    /// Kopegin ILERISINDE canli bir duvar canavari var mi?
-    ///
-    /// Canavar oldugunde GameObject yok ediliyor, yani bileseni bulabiliyorsak
-    /// hala hayattadir. Ayri bir "olu mu" bayragi okumaya gerek yok.
+    /// Kopegin etrafindaki canli bir yer atesini bulur.
     /// </summary>
-    bool IsBlockedByMonster()
+    FloorFire FindNearbyFire()
     {
-        if (player == null) return false;
-
-        float dir = player.position.x > transform.position.x ? 1f : -1f;
-        float half = monsterBlockRange * 0.5f;
-
-        // Sadece ILERIYE bak: arkada kalan canavar kopegi durdurmamalı.
-        // Canavarlar yuksekte (or. y=3.45) kopek zeminde (y=1) olabilecegi icin
-        // arama merkezini biraz yukari (y+1.5) aliyoruz ki dikeydeki canavarlar da kapsama girsin.
-        Vector2 center = (Vector2)transform.position + Vector2.up * 1.5f + Vector2.right * dir * half;
-
-        foreach (Collider2D c in Physics2D.OverlapCircleAll(center, half))
+        // Yaricapta dairesel arama
+        foreach (Collider2D c in Physics2D.OverlapCircleAll(transform.position, fireDetectRange))
         {
-            WallMonster monster = c.GetComponentInParent<WallMonster>();
-            // Sadece tamamen cikmis ve canli canavarlar yolu keser.
-            // Duvarin icinde gizli veya olu canavarlar kopegi durdurmasin.
-            if (monster != null && monster.IsFullyEmerged && !monster.IsDead)
-                return true;
+            FloorFire fire = c.GetComponent<FloorFire>();
+            if (fire != null && fire.IsGrown && !fire.IsExtinguished)
+            {
+                return fire;
+            }
         }
-
-        return false;
+        return null;
     }
 
-    /// <summary>Beklerken araliklarla havlar — "buraya gecemiyorum".</summary>
-    void UpdateBlockedBark()
+    IEnumerator StompFireRoutine(FloorFire fire)
     {
-        if (sprite != null && player != null)
-            sprite.flipX = player.position.x < transform.position.x;
+        isStomping = true;
+        
+        // 2 vurusta yok etmek icin, her vurusta max canin %60'ini (garanti olsun diye) alir.
+        fire.TakeWater(fire.maxHealth * 0.6f);
+        
+        if (audioSource != null && happyBarkClip != null)
+            PlayVaried(happyBarkClip, 0.6f);
 
-        blockedBarkTimer -= Time.deltaTime;
-        if (blockedBarkTimer > 0f) return;
+        // Kucuk bir ziplama animasyonu
+        Vector3 start = transform.position;
+        float t = 0f;
 
-        blockedBarkTimer = blockedBarkInterval;
-        PlayVaried(happyBarkClip, 0.75f);
+        while (t < stompHopDuration)
+        {
+            t += Time.deltaTime;
+            float k = t / stompHopDuration;
+            float hop = Mathf.Sin(k * Mathf.PI) * stompHopHeight * 1.5f; 
+            transform.position = start + Vector3.up * hop;
+            yield return null;
+        }
+
+        transform.position = start;
+        isStomping = false;
     }
 
     /// <summary>

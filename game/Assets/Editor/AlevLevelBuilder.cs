@@ -561,11 +561,11 @@ public static class AlevLevelBuilder
 
     static void BuildTriggers()
     {
-        var death = Zone("Tetik_KopeginOlumu", 264f, 2f, 2f, 4f,
+        var death = Zone("Tetik_KopeginOlumu", 264f, 10f, 2f, 20f,
                          EndingTriggerZone.What.DogDeath);
-        death.requiredKeyCount = 3;
+        death.requiredKeyCount = 0; // Anahtar zorunlulugu kaldirildi
 
-        var boss = Zone("Tetik_BossSahnesi", 300f, 2f, 2f, 4f,
+        var boss = Zone("Tetik_BossSahnesi", 300f, 10f, 2f, 20f,
                         EndingTriggerZone.What.BossScene);
         boss.requires = death;
 
