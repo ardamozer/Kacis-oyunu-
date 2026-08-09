@@ -137,6 +137,10 @@ public class DogCompanion : MonoBehaviour
     float petSquashUntil;
     float blockedBarkTimer;
     bool wasBlocked;
+    bool isDead;
+
+    /// <summary>Kopek oldu mu? EndingSequence Die() ile set eder.</summary>
+    public bool IsDead => isDead;
 
     SpriteRenderer sprite;
     Vector3 baseScale;
@@ -197,6 +201,8 @@ public class DogCompanion : MonoBehaviour
 
     void Update()
     {
+        if (isDead) return;
+
         if (state == State.Stuck) UpdateWhine();
         if (state == State.Following && !isStomping) FollowUpdate();
 
@@ -347,7 +353,11 @@ public class DogCompanion : MonoBehaviour
 
         foreach (Collider2D c in Physics2D.OverlapCircleAll(center, half))
         {
-            if (c.GetComponentInParent<WallMonster>() != null) return true;
+            WallMonster monster = c.GetComponentInParent<WallMonster>();
+            // Sadece tamamen cikmis ve canli canavarlar yolu keser.
+            // Duvarin icinde gizli veya olu canavarlar kopegi durdurmasin.
+            if (monster != null && monster.IsFullyEmerged && !monster.IsDead)
+                return true;
         }
 
         return false;
@@ -495,6 +505,24 @@ public class DogCompanion : MonoBehaviour
     public void StartFollowing()
     {
         state = State.Following;
+    }
+
+    /// <summary>
+    /// Kopek oldu — gorunmez olur, tum hareketi durur.
+    ///
+    /// EndingSequence coroutine yield'leri arasinda kopek hareket etmeye
+    /// devam ediyordu; bu metod ANINDA her seyi durdurur.
+    /// SetActive(false) sonrasi zaten Update calismaz ama coroutine
+    /// icinde yield'lerden once kopegi durdurmak icin bu bayrak gerekli.
+    /// </summary>
+    public void Die()
+    {
+        if (isDead) return;
+        isDead = true;
+        enabled = false;
+
+        // Gorseli hemen gizle — oyuncu "olu kopek hala yanimda" gormesin.
+        if (sprite != null) sprite.enabled = false;
     }
 
     /// <summary>

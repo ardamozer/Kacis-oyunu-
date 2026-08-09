@@ -221,8 +221,13 @@ public class EndingSequence : MonoBehaviour
         AudioListener.volume = 0f;
 
         // Kopek gorunmez olur — kanli/grafik degil, sessiz ve yumusak (PLAN.md).
-        // Tahta indikten SONRA gizleniyor ki carpma gorunur olsun.
-        if (dog != null) dog.gameObject.SetActive(false);
+        // Die() sprite'i aninda gizler + isDead bayragini set eder; boylece
+        // coroutine yield'leri arasinda kopek tekrar gorulmuyor.
+        if (dog != null)
+        {
+            dog.Die();
+            dog.gameObject.SetActive(false);
+        }
 
         yield return new WaitForSeconds(silenceDuration);
 

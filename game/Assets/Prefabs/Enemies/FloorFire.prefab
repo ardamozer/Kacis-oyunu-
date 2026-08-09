@@ -188,6 +188,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FloorFire
   fillTime: 4
+  startGrown: 0
   fillBar: {fileID: 6045882202768832220}
   grownScale: 1.7
   contactDamage: 1
