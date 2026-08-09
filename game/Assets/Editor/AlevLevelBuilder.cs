@@ -172,8 +172,14 @@ public static class AlevLevelBuilder
             WallDetail(name, x0, x1, h, tints[i]);
         }
 
-        // Koridor'un ALCAK TAVANI — oynanabilir yukseklik 6.5, bogucu
-        Solid(geo, "Koridor_AlcakTavan", 170f, 8.75f, 36f, 4.5f, CWall);
+        // ⚠️ KORIDOR'UN ALCAK TAVANI KALDIRILDI (eskiden: 170, 8.75, 36x4.5).
+        // Oynanabilir yuksekligi 6.5'e indiriyordu ve "bogucu koridor"
+        // atmosferi icin konmustu. Ama Koridor_Raf'in ustu 4.45; oyuncu
+        // 1.6 boyunda, yani rafta kafasiyla tavan arasi 0.45 birim kaliyor
+        // ve ORADA ZIPLAYAMIYORDU. Playtest'te oyuncu parkurda sikisti.
+        // Atmosfer, oynanabilirlikten once gelemez.
+        // Geri koyacaksan once rafi asagi al ya da tavani sadece parkurun
+        // OLMADIGI x araliginda birak.
 
         // Odalar arasi duvarlar + kapi bosluklari
         for (int i = 1; i < RoomDefs.Length; i++)
@@ -250,7 +256,13 @@ public static class AlevLevelBuilder
         Plat("Salon_PiyanoTabure", 81f, 0.7f, 3f, 1.4f);
 
         // ---- Tirmanis: her platform duvara DIREKLE bagli, havada durmuyor ----
-        ClimbStep("Salon_T1", 46f, 1.9f, 6f);
+        // ⚠️ Salon_T1 YOK, bilerek. Eskiden (46, 1.9, w=6) idi: ust=2.15,
+        // Salon_Koltuk ise 46-54 arasinda ust=2.20. Yani T1 koltukla hem
+        // yatayda cakisiyor hem de koltuk 0.05 DAHA YUKSEK oldugu icin
+        // uzerine hic basilamiyordu — koltuktan cikan islevsiz bir tahta
+        // gibi duruyordu. Playtest'te "buglu tahta" diye bildirildi.
+        // Kulenin ilk basamagi artik KOLTUGUN KENDISI (ust 2.20, zeminden
+        // cikilabilir sinir 2.25). Mobilyaya tirmanmak daha dogal duruyor.
         ClimbStep("Salon_T2", 54f, 4.2f, 5f);
         ClimbStep("Salon_T3", 62f, 6.0f, 5f);
         // ⚠️ Genislikler ve x'ler SERBEST DEGIL. Kule zigzag: tek basamaklar
@@ -340,8 +352,14 @@ public static class AlevLevelBuilder
 
         Prop("Koridor_Hali", 170f, 0.2f, 32f, 0.4f, new Color(0.25f, 0.13f, 0.12f), 1);
 
-        Plat("Koridor_DevrikDolap", 166f, 1.5f, 4.5f, 0.6f);
-        Plat("Koridor_Basamak1", 170.5f, 1.5f, 3f);
+        // ⚠️ Koridor_Basamak1 YOK ve dolak saga kaydirildi, bilerek.
+        // Eskiden DevrikDolap (166, ust 1.80) ile Basamak1 (170.5, ust 1.75)
+        // yan yanaydi ve IKINCISI 0.05 DAHA ALCAKTI: oyuncu tirmandigini
+        // sanip aslinda asagi iniyordu. Salon_T1/Koltuk ile ayni hata.
+        // Playtest'te "bir tahtaya takilip geri donemedim" diye bildirildi.
+        // Cozum: gereksiz basamagi kaldir, dolabi saga kaydirip Basamak2'ye
+        // olan bosluğu kapat. Zincir: zemin → dolap 1.80 → 3.15 → 4.45.
+        Plat("Koridor_DevrikDolap", 168.55f, 1.5f, 4.5f, 0.6f);
         Plat("Koridor_Basamak2", 174f, 2.9f, 3f);
         Plat("Koridor_Raf", 177.5f, 4.2f, 3.5f);
         Prop("Koridor_RafDirek", 177.5f, 3.2f, 0.3f, 1.6f, CProp2, -1);
@@ -381,6 +399,18 @@ public static class AlevLevelBuilder
         Plat("Cocuk_Sandik", 208f, 0.9f, 3.5f, 1.8f);
         Plat("Cocuk_Raf", 213f, 3.2f, 4f);
         Prop("Cocuk_RafDirek", 213f, 2.2f, 0.3f, 1.6f, CProp2, -1);
+
+        // ⚠️ SUSUZ SERIT — bu radyator olmadan Mutfak kuvetinden (x=146)
+        // Arka koridor muslugana (x=240) kadar 94 birim sonsuz su yoktu.
+        // Haritanin en uzun kurak parcasi ve tam da Karabas'i kurtardigin
+        // yer. Ustelik x=188'de alev duvari yukselip geri donusu kapatiyor:
+        // susuz kalan oyuncu geri de donemiyordu.
+        // PLAN kurali "her bolgede erisilebilir sonsuz su" diyor; tek
+        // kasitli istisna Koridor ve orada yer atesi YOK. Cocuk odasinda
+        // ise yer atesi VAR (x=212), yani istisna olmasi gerekmiyordu.
+        // Playtest: "kopegi kurtarmaya giderken su cok bitti".
+        Tap("Cocuk_Radyator", 191f, 1.2f, WaterSource.SourceType.Infinite, 25f,
+            new Color(0.25f, 0.60f, 0.95f), 1f, 2.2f);
 
         // Yerde oyuncaklar
         for (int i = 0; i < 4; i++)
@@ -605,7 +635,14 @@ public static class AlevLevelBuilder
         (SpawnMarker.Kind.Boss,        328f, 1f, "Dev alev, arka kapiyi kapatir. Cani hic azalmaz."),
 
         (SpawnMarker.Kind.WallMonster,  21f, 1f, "Antre - ilk, ZAYIF (can 40)"),
-        (SpawnMarker.Kind.WallMonster,  68f,12f, "Salon kitapligi - YUKSEK, tirmanis rotasinda"),
+        // ⚠️ Y'yi degistirirken platform hizasina bak. Mermi YATAY gidiyor
+        // (FlameProjectile, duz cizgi). Onceden y=12'ydi: kitapligin tepesi
+        // 9.5, kulenin T5'i 9.85, T7'si 13.45 — yani canavar iki basamagin
+        // ARASINDA, hicbir oyuncu govdesine denk gelmeyen bir yukseklikte
+        // asili duruyordu ve mermileri bosluga gidiyordu. Playtest'te
+        // "ustteki canavarin etkisi yok" denmesinin sebebi buydu.
+        // 10.65 = T5'in ustu (9.85) + govde yarisi. Tirmanan oyuncuya nisan alir.
+        (SpawnMarker.Kind.WallMonster,  68f,10.65f, "Salon kule - T5 hizasi, tirmanisi korur"),
         (SpawnMarker.Kind.WallMonster,  88f, 4f, "Salon - Piyano kenari, koltuktan atlayisi korur"),
         (SpawnMarker.Kind.WallMonster, 126f, 8f, "Mutfak"),
         (SpawnMarker.Kind.WallMonster, 166f, 1.9f, "Koridor 1/3 - Devrik dolap ustu, su YOK"),
