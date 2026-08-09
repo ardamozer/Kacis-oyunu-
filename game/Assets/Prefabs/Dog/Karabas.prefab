@@ -392,14 +392,21 @@ MonoBehaviour:
   groundProbeDown: 8
   verticalSpeed: 14
   warpDistance: 20
+  stopAtMonsters: 1
+  monsterBlockRange: 6
+  blockedBarkInterval: 1.8
   fireDetectRange: 1
   stompHopHeight: 0.3
   stompHopDuration: 0.3
+  openingBark: 1
+  openingBarkDelay: 1.5
+  openingBarkVolume: 0.5
   audioSource: {fileID: 859303257762125793}
   whineClip: {fileID: 8300000, guid: 500bdd0b5e5b5174ead7ec1e42899bf3, type: 3}
-  minDistanceForMaxVolume: 2
-  maxHearDistance: 15
-  whineInterval: 3
+  minDistanceForMaxVolume: 4
+  maxHearDistance: 32
+  whineInterval: 7
+  whineIntervalJitter: 2.5
   happyBarkClip: {fileID: 8300000, guid: c5ccd1a7bee8ab348acf82bef868bda0, type: 3}
   pitchVariation: 0.08
   heartParticlePrefab: {fileID: 8543539251548474356, guid: b3f1720cc8d49554e88c20f7844fbe8f, type: 3}
